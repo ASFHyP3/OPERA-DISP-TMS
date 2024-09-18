@@ -104,9 +104,9 @@ def create_coh_tile_set(min_lon, min_lat, max_lon, max_lat, n_parts_lon=1, n_par
     print('All mosaics complete')
 
 
-def upload_tileset_s3(prefix='summer_vv_COH12'):
+def upload_tileset_s3(prefix='summer_vv_COH12_v2', wildcard='summer_vv_COH12'):
     s3 = boto3.client('s3')
-    files = list(Path.cwd().glob(f'{prefix}*.tif'))
+    files = list(Path.cwd().glob(f'{wildcard}*.tif'))
     for file in files:
         s3.upload_file(str(file), UPLOAD_S3.split('/')[-1], f'{prefix}/{file.name}')
 
@@ -120,4 +120,4 @@ if __name__ == '__main__':
     # lon_lat_box = [-119, 36, -115, 40]
     # output_paths = create_coh_tile_set(*lon_lat_box, n_parts_lon=2, n_parts_lat=2)
 
-    # upload_tileset_s3()
+    upload_tileset_s3()
