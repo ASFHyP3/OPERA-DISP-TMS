@@ -113,11 +113,11 @@ def upload_tileset_s3(prefix='summer_vv_COH12'):
 
 if __name__ == '__main__':
     # Full North America: 6,148 tiles, 34 GB uncompressed, 24 compressed
-    # lon_lat_box = [-169, 14, -63, 72]
-    # output_paths = create_coh_tile_set(*lon_lat_box, n_parts_lon=5, n_parts_lat=5)
+    lon_lat_box = [-169, 14, -63, 72]
+    output_paths = create_coh_tile_set(*lon_lat_box, n_parts_lon=3, n_parts_lat=3)
 
     # Smaller test_area
-    lon_lat_box = [-119, 36, -115, 40]
-    output_paths = create_coh_tile_set(*lon_lat_box, n_parts_lon=2, n_parts_lat=2)
+    # lon_lat_box = [-119, 36, -115, 40]
+    # output_paths = create_coh_tile_set(*lon_lat_box, n_parts_lon=2, n_parts_lat=2)
 
     # upload_tileset_s3()
