@@ -7,6 +7,7 @@ import boto3
 from botocore import UNSIGNED
 from botocore.client import Config
 from botocore.exceptions import ClientError
+from mapbox_tilesets.scripts.cli import upload_raster_source  # create, publish
 from osgeo import gdal
 
 
@@ -16,8 +17,8 @@ gdal.UseExceptions()
 S3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))
 SOURCE_S3 = 's3://sentinel-1-global-coherence-earthbigdata/data/tiles'
 UPLOAD_S3 = 's3://opera-disp-tms-dev'
-MAPBOX_ACCOUNT = os.environ['MAPBOX_ACCOUNT']
-MAPBOX_SOURCE_NAME = 'summer_vv_COH12'
+# MAPBOX_ACCOUNT = os.environ['MAPBOX_ACCOUNT']
+# MAPBOX_ACCESS_TOKEN = os.environ['MAPBOX_ACCOUNT']
 
 
 def create_coh_s3_path(lon, lat, coh_prod='summer_vv_COH12'):
@@ -103,23 +104,25 @@ def create_coh_tile_set(min_lon, min_lat, max_lon, max_lat, n_parts_lon=1, n_par
     print('All mosaics complete')
 
 
-def upload_tileset(coh_prod='summer_vv_COH12'):
+def upload_tileset_s3(prefix='summer_vv_COH12'):
     s3 = boto3.client('s3')
-    files = list(Path.cwd().glob(f'{coh_prod}*.tif'))
+    files = list(Path.cwd().glob(f'{prefix}*.tif'))
     for file in files:
-        s3.upload_file(str(file), UPLOAD_S3.split('/')[-1], f'{coh_prod}/{file.name}')
+        s3.upload_file(str(file), UPLOAD_S3.split('/')[-1], f'{prefix}/{file.name}')
 
 
-def create_template(minzoom=1, maxzoom=12, offset=0, scale=1, units='meters'):
+def create_template(
+    mapbox_account, tileset_name, minzoom=2, maxzoom=6, offset=0, scale=1, units='meters', outname='template.json'
+):
     template = {
         'version': 1,
         'type': 'rasterarray',
-        'sources': [{'uri': f'mapbox://tileset-source/{MAPBOX_ACCOUNT}/{MAPBOX_SOURCE_NAME}'}],
+        'sources': [{'uri': f'mapbox://tileset-source/{mapbox_account}/{tileset_name}'}],
         'minzoom': minzoom,
         'maxzoom': maxzoom,
         'layers': {
             '12-Day Summber Coherence': {
-                'tilesize': 256,
+                'tilesize': 512,
                 'offset': offset,
                 'scale': scale,
                 'resampling': 'bilinear',
@@ -128,13 +131,31 @@ def create_template(minzoom=1, maxzoom=12, offset=0, scale=1, units='meters'):
             },
         },
     }
-    with open('template.json', 'w') as f:
-        f.write(json.dumps(template))
+    with open(outname, 'w') as f:
+        f.write(json.dumps(template, indent=2))
+
+
+def upload_tileset(username, id, wildcard='summer_vv_COH12'):
+    files = [str(x) for x in Path.cwd().glob(f'{wildcard}*.tif')][:0]
+    ctx = dict()
+    upload_raster_source(ctx, username, id, files)
+
+
+### Tileset CLI commands:
+# tilesets upload-raster-source ffwilliams2 summer-vv-coh12-source ./summer_vv_COH12_1.tif
+# tilesets create ffwilliams2.summer-vv-coh12 --recipe ./summer-vv-coh12.json --name "Coherence 12-Day Summer"
+# tilesets publish ffwilliams2.summer-vv-coh12
 
 
 if __name__ == '__main__':
+    mapbox_source_name = 'summer-vv-coh12'
+    recipe_location = './summer-vv-coh12.json'
+    source_name = 'summer-vv-coh12-source'
+
     # Full North America: 6,148 tiles, 34 GB uncompressed, 24 compressed
     lon_lat_box = [-169, 14, -63, 72]
     # lon_lat_box = [-119, 36, -115, 40]
-    # output_paths = create_coh_tile_set(*lon_lat_box, n_parts_lon=5, n_parts_lat=5)
-    upload_tileset()
+    output_paths = create_coh_tile_set(*lon_lat_box, n_parts_lon=5, n_parts_lat=5)
+    upload_tileset_s3()
+
+    # create_template(mapbox_account=MAPBOX_ACCOUNT, tileset_name=source_name, outname=recipe_location, maxzoom=12)
