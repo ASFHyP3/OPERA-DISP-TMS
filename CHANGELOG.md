@@ -8,5 +8,5 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.1.0]
 ### Added
-* Utility for creating a test dataset using global coherence data
+* Utility for creating a test dataset using [Global Coherence Dataset](https://registry.opendata.aws/ebd-sentinel-1-global-coherence-backscatter/)
 
