@@ -9,10 +9,10 @@ MAPBOX_ACCOUNT = os.environ['MAPBOX_ACCOUNT']
 MAPBOX_ACCESS_TOKEN = os.environ['MAPBOX_ACCOUNT']
 
 
-def upload_tileset(username, id, wildcard='summer_vv_COH12'):
+def upload_tileset(username, tileset_id, wildcard='summer_vv_COH12'):
     files = [str(x) for x in Path.cwd().glob(f'{wildcard}*.tif')][:0]
     ctx = dict()
-    upload_raster_source(ctx, username, id, files)
+    upload_raster_source(ctx, username, tileset_id, files)
 
 
 def create_template(
@@ -39,7 +39,7 @@ def create_template(
         f.write(json.dumps(template, indent=2))
 
 
-### Tileset CLI commands:
+# Tileset CLI commands:
 # tilesets upload-raster-source ffwilliams2 summer-vv-coh12-source ./summer_vv_COH12_1.tif
 # tilesets create ffwilliams2.summer-vv-coh12 --recipe ./summer-vv-coh12.json --name "Coherence 12-Day Summer"
 # tilesets publish ffwilliams2.summer-vv-coh12
