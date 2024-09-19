@@ -1,5 +1,9 @@
+"""Generate a set tiles for the Global Seasonal Sentinel-1 Interferometric Coherence and Backscatter Data Set
+See https://registry.opendata.aws/ebd-sentinel-1-global-coherence-backscatter/ for more details on the dataset
+"""
 from itertools import product
 from pathlib import Path
+from typing import Iterable
 
 import boto3
 from botocore import UNSIGNED
@@ -16,7 +20,16 @@ SOURCE_S3 = 's3://sentinel-1-global-coherence-earthbigdata/data/tiles'
 UPLOAD_S3 = 's3://opera-disp-tms-dev'
 
 
-def create_coh_s3_path(lon, lat, coh_prod='summer_vv_COH12'):
+def create_coh_s3_path(lon: int, lat: int, coh_prod: str = 'summer_vv_COH12') -> str:
+    """Create S3 path for a given lon, lat and coherence product
+    Args:
+        lon: longitude
+        lat: latitude
+        coh_prod: coherence product name
+
+    Returns:
+        str: S3 path
+    """
     lon_prefix = 'E' if lon >= 0 else 'W'
     lat_prefix = 'N' if lat >= 0 else 'S'
     key = f'{lat_prefix}{abs(lat):02d}{lon_prefix}{abs(lon):03d}'
@@ -24,7 +37,14 @@ def create_coh_s3_path(lon, lat, coh_prod='summer_vv_COH12'):
     return s3_path
 
 
-def download_coh(s3_path):
+def download_coh(s3_path: str) -> str:
+    """Download coherence tile from S3
+    Args:
+        s3_path: S3 path
+
+    Returns:
+        s3_path if download was successfule
+    """
     if not Path(s3_path.split('/')[-1]).exists():
         bucket = s3_path.split('/')[2]
         path = '/'.join(s3_path.split('/')[3:])
@@ -39,7 +59,18 @@ def download_coh(s3_path):
         return s3_path
 
 
-def create_coh_tile(min_lon, min_lat, max_lon, max_lat, coh_prod='summer_vv_COH12', gtiff=True):
+def create_coh_tile(bbox: Iterable[int], coh_prod: str = 'summer_vv_COH12', gtiff: bool = True) -> str:
+    """Create a mosaic of coherence tiles for a given bounding box
+
+    Args:
+        bbox: bounding box [min_lon, min_lat, max_lon, max_lat]
+        coh_prod: coherence product name
+        gtiff: save as GeoTIFF or COG
+
+    Returns:
+        str: path to the mosaic
+    """
+    min_lon, min_lat, max_lon, max_lat = bbox
     s3_paths = []
     for lon in range(min_lon, max_lon):
         for lat in range(min_lat, max_lat):
@@ -83,7 +114,16 @@ def create_coh_tile(min_lon, min_lat, max_lon, max_lat, coh_prod='summer_vv_COH1
     return output_path
 
 
-def split_range(start_value, end_value, n):
+def split_range(start_value: int, end_value: int, n: int) -> list:
+    """Split a range into n parts
+    Args:
+        start_value: start of the range
+        end_value: end of the range
+        n: number of parts
+
+    Returns:
+        list of tuples with the ranges
+    """
     step = (end_value - start_value) // n
     ranges = []
     for i in range(n):
@@ -93,18 +133,34 @@ def split_range(start_value, end_value, n):
     return ranges
 
 
-def create_coh_tile_set(min_lon, min_lat, max_lon, max_lat, n_parts_lon=1, n_parts_lat=1, coh_prod='summer_vv_COH12'):
+def create_coh_tile_set(
+    bbox: Iterable[int], n_parts_lon: int = 1, n_parts_lat: int = 1, coh_prod: str = 'summer_vv_COH12'
+) -> None:
+    """Create a set of mosaics for a given bounding box
+
+    Args:
+        bbox: bounding box [min_lon, min_lat, max_lon, max_lat]
+        n_parts_lon: number of parts to split the longitude range into
+        n_parts_lat: number of parts to split the latitude range into
+        coh_prod: coherence product name
+    """
+    min_lon, min_lat, max_lon, max_lat = bbox
     lon_ranges = split_range(min_lon, max_lon, n_parts_lon)
     lat_ranges = split_range(min_lat, max_lat, n_parts_lat)
     lon_lat_bboxes = [(lon[0], lat[0], lon[1], lat[1]) for lon, lat in product(lon_ranges, lat_ranges)]
     output_paths = []
     for lon_lat_box in lon_lat_bboxes:
-        output_path = create_coh_tile(*lon_lat_box, coh_prod=coh_prod)
+        output_path = create_coh_tile(lon_lat_box, coh_prod=coh_prod)
         output_paths.append(output_path)
     print('All mosaics complete')
 
 
-def upload_tileset_s3(prefix='summer_vv_COH12_v2', wildcard='summer_vv_COH12'):
+def upload_tileset_s3(prefix: str = 'summer_vv_COH12_v2', wildcard: str = 'summer_vv_COH12') -> None:
+    """Upload a set of files to S3
+    Args:
+        prefix: S3 prefix to upload files to
+        wildcard: wildcard to filter files by
+    """
     s3 = boto3.client('s3')
     files = list(Path.cwd().glob(f'{wildcard}*.tif'))
     for file in files:
@@ -114,7 +170,7 @@ def upload_tileset_s3(prefix='summer_vv_COH12_v2', wildcard='summer_vv_COH12'):
 if __name__ == '__main__':
     # Full North America: 6,148 tiles, 34 GB uncompressed, 24 compressed
     lon_lat_box = [-169, 14, -63, 72]
-    output_paths = create_coh_tile_set(*lon_lat_box, n_parts_lon=3, n_parts_lat=3)
+    output_paths = create_coh_tile_set(lon_lat_box, n_parts_lon=3, n_parts_lat=3)
 
     # Smaller test_area
     # lon_lat_box = [-119, 36, -115, 40]
