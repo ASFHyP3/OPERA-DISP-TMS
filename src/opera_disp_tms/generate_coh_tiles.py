@@ -81,8 +81,12 @@ def create_coh_tile(bbox: Iterable[int], coh_prod: str = 'summer_vv_COH12', gtif
     s3_paths = [download_coh(x) for x in s3_paths]
     names = [x.split('/')[-1] for x in s3_paths if x is not None]
 
-    def lon_string(lon): return f'E{abs(lon):03d}' if lon >= 0 else f'W{abs(lon):03d}'
-    def lat_string(lat): return f'N{abs(lat):02d}' if lat >= 0 else f'S{abs(lat):02d}'
+    def lon_string(lon):
+        return f'E{abs(lon):03d}' if lon >= 0 else f'W{abs(lon):03d}'
+
+    def lat_string(lat):
+        return f'N{abs(lat):02d}' if lat >= 0 else f'S{abs(lat):02d}'
+
     bbox_str = f'{lat_string(min_lat)}{lon_string(min_lon)}_{lat_string(max_lat)}{lon_string(max_lon)}'
 
     product_name = f'{coh_prod}_{bbox_str}'
@@ -122,10 +126,15 @@ def split_range(start_value: int, end_value: int, n: int) -> list:
     Returns:
         list of tuples with the ranges
     """
-    step = (stop-start) // n
-    offset = (stop-start) % n
-    ranges = [(a, b) for (a, b) in zip(range(start, stop, step), range(start+step, stop-offset+step, step))]
-    ranges[-1] = (ranges[-1][0], stop)
+    step = (end_value - start_value) // n
+    offset = (end_value - start_value) % n
+    ranges = [
+        (a, b)
+        for (a, b) in zip(
+            range(start_value, end_value, step), range(start_value + step, end_value - offset + step, step)
+        )
+    ]
+    ranges[-1] = (ranges[-1][0], end_value)
     return ranges
 
 
