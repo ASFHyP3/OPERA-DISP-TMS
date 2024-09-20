@@ -81,11 +81,9 @@ def create_coh_tile(bbox: Iterable[int], coh_prod: str = 'summer_vv_COH12', gtif
     s3_paths = [download_coh(x) for x in s3_paths]
     names = [x.split('/')[-1] for x in s3_paths if x is not None]
 
-    min_lat_str = f'N{abs(min_lat):02d}' if min_lat >= 0 else f'S{abs(min_lat):02d}'
-    min_lon_str = f'E{abs(min_lon):03d}' if min_lon >= 0 else f'W{abs(min_lon):03d}'
-    max_lat_str = f'N{abs(max_lat):02d}' if max_lat >= 0 else f'S{abs(max_lat):02d}'
-    max_lon_str = f'E{abs(max_lon):03d}' if max_lon >= 0 else f'W{abs(max_lon):03d}'
-    bbox_str = f'{min_lat_str}{min_lon_str}_{max_lat_str}{max_lon_str}'
+    def lon_string(lon): return f'E{abs(lon):03d}' if lon >= 0 else f'W{abs(lon):03d}'
+    def lat_string(lat): return f'N{abs(lat):02d}' if lat >= 0 else f'S{abs(lat):02d}'
+    bbox_str = f'{lat_string(min_lat)}{lon_string(min_lon)}_{lat_string(max_lat)}{lon_string(max_lon)}'
 
     product_name = f'{coh_prod}_{bbox_str}'
     vrt_path = f'{product_name}.vrt'
