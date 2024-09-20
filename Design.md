@@ -19,6 +19,7 @@ To go from the 1x1 degree COGs to a MapBox tileset source we must mosaic the 1x1
 LZW or another compression method will be used for all files to reduce file sizes.
 
 ## Cumulative Displacement
+### Format
 To fully understand the context of InSAR-derived displacement data (such as the OPERA-Disp products) multiple pieces are required for each pixel:
 
 1. The geographic location of the pixel (from the GDAL metadata)
@@ -29,13 +30,57 @@ This is a lot of information, and we will need to ensure that we provide access 
 
 To do this, the 1x1 degree cumulative displacement COGs will have the following bands:
 1. Float32 short wavelength cumulative displacement sourced directly from the products
-2. UInt16 indicating the frame number the cumulative displacement value is sourced from
-3. UInt16 indicating cumulative displacement **reference date** represented as days since 1/1/2014 (beginning of Sentinel-1 Mission)
-4. UInt16 indicating cumulative displacement **secondary date** represented as days since 1/1/2014 (beginning of Sentinel-1 Mission)
-5. UInt32 indicating the pixel position of the reference pixel counting from left-to-right down the product array rows
+2. UInt16 indicating cumulative displacement **secondary date** represented as days since 1/1/2014 (first calendar year of Sentinel-1 Mission)
+3. UInt16 indicating the frame number the cumulative displacement value is sourced from
 
-Instead of including the reference pixel band, The combination of reference/secondary date and frame number is enough to identify which product a pixel observation came from, which could then accessed to identify the reference pixel location. However, this process is cumbersome and would slow down future velocity calculations, which require knowing the reference pixel location.
+In addition to this per-COG information, there will also be one accompanying metadata rasters (in COG format) for each tile location (i.e., one per footprint). The metadata raster will have the same resolution, extent, and projection as the cumulative displacement COGs, and in fact will serve as the template for create cumulative displacement COGs. The metadata raster will have the following band:
+1. UInt16 indicating the frame number the cumulative displacement value is sourced from
 
-**For a given pixel location in a 1x1 degree COG, the same source frame must be used for all cumulative displacement products for that locations.** Otherwise, future differencing of cumulative displacement products to obtain alternate reference will provide incorrect data.
+In addition, it will include the following metadata tags:
+1. A list of the frames present in the frame band
+2. The frame reference date in the format YYYY/MM/DD for each frame present in the tile
+3. The frame reference point location encoded as the geographic coordinates of the reference pixel in the native projection of the frame for each frame present in the tile
 
+For example, the fields in metadata raster may look like:
+```
+OPERA_FRAMES: "1, 2"
+FRAME_1_REF_POINT: "129877.23, 128383.28"
+FRAME_1_REF_DATE: "2015/01/01"
+FRAME_2_REF_POINT: "22348.23, 38973.28"
+FRAME_2_REF_DATE: "2015/02/01"
+```
+**Note: a time-series stack of OPERA-DISP products from the same frame are not guaranteed to have the same reference date or location!** However having 
+the same spatiotemporal reference for each pixel in a time-series stack is an important requirement for date/location re-referencing and velocity calcultions. Thus, we standardize the spatiotemporal reference for each product before mosaicking. 
+
+Note that we only standardize the spatiotemporal reference so that each location is consistent through time. We do not standardize this information across space. Non-continuous frame coverage, and varying data collection dates makes standardizing across space a difficult challenge that is planned to be undertaken during the creation of the OPERA-DISP Vertical Land Motion project.
+
+### 1x1 Degree Tile Creation
+Prior to mosaicking of OPERA-DISP products, we generate the metadata rasters.
+
+For each 1x1 degree tile, there is one metadata raster for each orbit direction, for a total of two per tile. The metadata rasters will each span a 1x1 degree area in the web mercator (EPSG:3857) projection with a 30 m pixel spacing. The frame band is created by cross-referencing each tile's extent with the OPERA-DISP frame footprints. A geospatial representation of the OPERA-DISP frame footprints can be created using the [OPERA burst_db utility](https://github.com/opera-adt/burst_db). Frames will be overlaid so that frames from the same relative orbit are contiguous. Relative orbits are stacked from East to West on the ascending pass (West on top), and from West to East on the descending pass (East on top). Within a relative orbit, frames are overlaid so that older frames are on top of younger frames. This corresponds to North on top for the ascending pass, and South on top for the descending pass.
+
+Once the frame band has been constructed, we set the spatiotemporal reference metadata using the values present in the earliest product available for each frame.
+
+We then use the generated metadata rasters as a guide for creating all 1x1 degree cumulative displacement tiles in a time-series stack. The procedure is as follows:
+
+- Specify a date range you want to generate a tile for
+- Generate a new raster with the same projection, resolution, and extent as the metadata raster with three bands
+    - Cumulative displacement
+    - Days since 2014/01/01
+    - Frame number
+- Obtain the list of needed frames from the metadata raster metadata tags
+- For each needed frame
+    - Find OPERA-DISP product with the latest available secondary date within the date range
+        - If a frame has no available product within the date range, raise an exception
+    - Check that the product's spatiotemporal reference date is the same as the metadata raster
+        - If this is not the case, re-reference the product (methodology will be written soon)
+    - Reproject the product's cumulative displacement band to the same projection, resolution, and extent as the metadata raster
+    - For the cells that correspond to the frame in question within the new raster
+        - Set the cumulative displacement band values to the ones from the reprojected OPERA-DISP product
+        - Set the Days since 2014/01/01 to the secondary date of the OPERA-DISP product
+- Copy the frame number band from the metadata raster to the new raster
+- Copy the spatiotemporal reference metadata from the metadata raster to the new raster
+
+### MapBox Tileset Generation
+TODO
 
