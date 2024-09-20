@@ -168,8 +168,4 @@ if __name__ == '__main__':
     lon_lat_box = [-169, 14, -63, 72]
     output_paths = create_coh_tile_set(lon_lat_box, n_parts_lon=3, n_parts_lat=3)
 
-    # Smaller test_area
-    # lon_lat_box = [-119, 36, -115, 40]
-    # output_paths = create_coh_tile_set(*lon_lat_box, n_parts_lon=2, n_parts_lat=2)
-
     upload_tileset_s3()
