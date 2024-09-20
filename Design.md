@@ -28,29 +28,36 @@ To fully understand the context of InSAR-derived displacement data (such as the 
 
 This is a lot of information, and we will need to ensure that we provide access to all of this data (or at least make it trackable) for every pixel in the mosaic.
 
-To do this, the 1x1 degree cumulative displacement COGs will have the following bands:
-1. Float32 short wavelength cumulative displacement sourced directly from the products
-2. UInt16 indicating cumulative displacement **secondary date** represented as days since 1/1/2014 (first calendar year of Sentinel-1 Mission)
-3. UInt16 indicating the frame number the cumulative displacement value is sourced from
+To do this, the 1x1 degree cumulative displacement COGs will have the following components:
+1. A Float32 short wavelength cumulative displacement band sourced directly from the products
+2. A sidecar metadata file (likely a STAC item) containing frame, spatiotemporal reference data, and a link to an external tile frame image (see below)
 
-In addition to this per-COG information, there will also be one accompanying metadata rasters (in COG format) for each tile location (i.e., one per footprint). The metadata raster will have the same resolution, extent, and projection as the cumulative displacement COGs, and in fact will serve as the template for create cumulative displacement COGs. The metadata raster will have the following band:
-1. UInt16 indicating the frame number the cumulative displacement value is sourced from
-
-In addition, it will include the following metadata tags:
-1. A list of the frames present in the frame band
-2. The frame reference date in the format YYYY/MM/DD for each frame present in the tile
-3. The frame reference point location encoded as the geographic coordinates of the reference pixel in the native projection of the frame for each frame present in the tile
+The sidecar metadata will contain the following fields:
+1. List of OPERA frames present in the cumulative displacement COG
+2. The frame reference and secondary date in the format YYYY/MM/DD for each frame present in the tile
+3. The frame reference point location encoded as both the array coordinates (row/column) and the geographic coordinates of the reference pixel in the native projection of the frame for each frame present in the tile
+4. A URL pointing to the location of OPERA frame image for that tile (see below)
 
 For example, the fields in metadata raster may look like:
 ```
 OPERA_FRAMES: "1, 2"
 FRAME_1_REF_POINT: "129877.23, 128383.28"
+FRAME_1_REF_POINT_ARRAY: "10, 20"
 FRAME_1_REF_DATE: "2015/01/01"
+FRAME_1_SEC_DATE: "2015/01/02"
 FRAME_2_REF_POINT: "22348.23, 38973.28"
+FRAME_2_REF_POINT_ARRAY: "20, 11"
 FRAME_2_REF_DATE: "2015/02/01"
+FRAME_2_SEC_DATE: "2015/02/02"
 ```
-**Note: a time-series stack of OPERA-DISP products from the same frame are not guaranteed to have the same reference date or location!** However having 
-the same spatiotemporal reference for each pixel in a time-series stack is an important requirement for date/location re-referencing and velocity calcultions. Thus, we standardize the spatiotemporal reference for each product before mosaicking. 
+
+In addition to this per-COG information, there will also be one accompanying metadata raster (in COG format) for each tile location (i.e., one per footprint). The metadata raster will have the same resolution, extent, and projection as the cumulative displacement COGs, and in fact will serve as the template for create cumulative displacement COGs. The metadata raster will have the following components
+1. A UInt16 band indicating the frame number the cumulative displacement value each pixel is sourced from
+2. A sidecar metadata file with the same information as the cumulative displacement sidecar files, except for secondary date and OPERA frame image URL
+
+**Note: a time-series stack of OPERA-DISP products from the same frame are not guaranteed to have the same reference date or location!**
+
+However having the same spatiotemporal reference for each pixel in a time-series stack is an important requirement for date/location re-referencing and velocity calcultions. Thus, we standardize the spatiotemporal reference for each product before mosaicking. 
 
 Note that we only standardize the spatiotemporal reference so that each location is consistent through time. We do not standardize this information across space. Non-continuous frame coverage, and varying data collection dates makes standardizing across space a difficult challenge that is planned to be undertaken during the creation of the OPERA-DISP Vertical Land Motion project.
 
