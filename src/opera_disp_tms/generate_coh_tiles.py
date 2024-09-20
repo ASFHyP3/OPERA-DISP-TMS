@@ -122,12 +122,10 @@ def split_range(start_value: int, end_value: int, n: int) -> list:
     Returns:
         list of tuples with the ranges
     """
-    step = (end_value - start_value) // n
-    ranges = []
-    for i in range(n):
-        start = start_value + i * step
-        end = start_value + (i + 1) * step
-        ranges.append((start, end))
+    step = (stop-start) // n
+    offset = (stop-start) % n
+    ranges = [(a, b) for (a, b) in zip(range(start, stop, step), range(start+step, stop-offset+step, step))]
+    ranges[-1] = (ranges[-1][0], stop)
     return ranges
 
 
