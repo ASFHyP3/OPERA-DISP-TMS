@@ -80,6 +80,7 @@ We then use the generated metadata rasters as a guide for creating all 1x1 degre
         - Set the Days since 2014/01/01 to the secondary date of the OPERA-DISP product
 - Copy the frame number band from the metadata raster to the new raster
 - Copy the spatiotemporal reference metadata from the metadata raster to the new raster
+- Write to COG with LZW compression
 
 ### MapBox Tileset Generation
 TODO
