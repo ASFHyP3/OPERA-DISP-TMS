@@ -19,3 +19,4 @@ dependencies:
   # For Running
   - gdal
   - boto3
+  - asf_search
