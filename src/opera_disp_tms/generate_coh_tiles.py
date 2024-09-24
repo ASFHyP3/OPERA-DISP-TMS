@@ -81,11 +81,13 @@ def create_coh_tile(bbox: Iterable[int], coh_prod: str = 'summer_vv_COH12', gtif
     s3_paths = [download_coh(x) for x in s3_paths]
     names = [x.split('/')[-1] for x in s3_paths if x is not None]
 
-    min_lat_str = f'N{abs(min_lat):02d}' if min_lat >= 0 else f'S{abs(min_lat):02d}'
-    min_lon_str = f'E{abs(min_lon):03d}' if min_lon >= 0 else f'W{abs(min_lon):03d}'
-    max_lat_str = f'N{abs(max_lat):02d}' if max_lat >= 0 else f'S{abs(max_lat):02d}'
-    max_lon_str = f'E{abs(max_lon):03d}' if max_lon >= 0 else f'W{abs(max_lon):03d}'
-    bbox_str = f'{min_lat_str}{min_lon_str}_{max_lat_str}{max_lon_str}'
+    def lon_string(lon):
+        return f'E{abs(lon):03d}' if lon >= 0 else f'W{abs(lon):03d}'
+
+    def lat_string(lat):
+        return f'N{abs(lat):02d}' if lat >= 0 else f'S{abs(lat):02d}'
+
+    bbox_str = f'{lat_string(min_lat)}{lon_string(min_lon)}_{lat_string(max_lat)}{lon_string(max_lon)}'
 
     product_name = f'{coh_prod}_{bbox_str}'
     vrt_path = f'{product_name}.vrt'
@@ -125,11 +127,14 @@ def split_range(start_value: int, end_value: int, n: int) -> list:
         list of tuples with the ranges
     """
     step = (end_value - start_value) // n
-    ranges = []
-    for i in range(n):
-        start = start_value + i * step
-        end = start_value + (i + 1) * step
-        ranges.append((start, end))
+    offset = (end_value - start_value) % n
+    ranges = [
+        (a, b)
+        for (a, b) in zip(
+            range(start_value, end_value, step), range(start_value + step, end_value - offset + step, step)
+        )
+    ]
+    ranges[-1] = (ranges[-1][0], end_value)
     return ranges
 
 
@@ -171,9 +176,5 @@ if __name__ == '__main__':
     # Full North America: 6,148 tiles, 34 GB uncompressed, 24 compressed
     lon_lat_box = [-169, 14, -63, 72]
     output_paths = create_coh_tile_set(lon_lat_box, n_parts_lon=3, n_parts_lat=3)
-
-    # Smaller test_area
-    # lon_lat_box = [-119, 36, -115, 40]
-    # output_paths = create_coh_tile_set(*lon_lat_box, n_parts_lon=2, n_parts_lat=2)
 
     upload_tileset_s3()
