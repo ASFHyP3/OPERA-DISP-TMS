@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Optional, Union
 
-import pandas as pd
 import requests
 from shapely import from_wkt
 from shapely.geometry import Polygon, box
@@ -23,15 +22,15 @@ class Frame:
     geom: Polygon
 
     @classmethod
-    def from_record(cls, record):
+    def from_row(cls, row):
         return cls(
-            frame_id=record['frame_id'],
-            epsg=record['epsg'],
-            relative_orbit_number=record['relative_orbit_number'],
-            orbit_pass=record['orbit_pass'],
-            is_land=record['is_land'],
-            is_north_america=record['is_north_america'],
-            geom=from_wkt(record['wkt']),
+            frame_id=row[0],
+            epsg=row[1],
+            relative_orbit_number=row[2],
+            orbit_pass=row[3],
+            is_land=row[4],
+            is_north_america=row[5],
+            geom=from_wkt(row[6]),
         )
 
 
@@ -81,7 +80,7 @@ def intersect(
     orbit_pass: Optional[str] = None,
     is_north_america: Optional[bool] = None,
     is_land: Optional[bool] = None,
-) -> pd.DataFrame:
+) -> Iterable[Frame]:
     """Query for frames intersecting a given bounding box or WKT geometry, optionally filtering by orbit pass."""
     if orbit_pass and orbit_pass not in ['ASCENDING', 'DESCENDING']:
         raise ValueError('orbit_pass must be either "ASCENDING" or "DESCENDING"')
@@ -133,7 +132,9 @@ AND Intersects((SELECT g FROM given_geom), GeomFromGPB(geom))
     with sqlite3.connect(DB_PATH) as con:
         con.enable_load_extension(True)
         con.load_extension('mod_spatialite')
-        df_intersecting_frames = pd.read_sql_query(query, con, params=params)
+        cursor = con.cursor()
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
 
-    intersecting_frames = df_intersecting_frames.apply(Frame.from_record, axis=1)
+    intersecting_frames = [Frame.from_row(row) for row in rows]
     return intersecting_frames

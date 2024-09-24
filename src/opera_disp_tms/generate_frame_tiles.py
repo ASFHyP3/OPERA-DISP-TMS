@@ -71,7 +71,6 @@ def burn_frame(frame: Frame, tile_path: Path):
     frame_ds = None
     tile_band.FlushCache()
     tile_ds = None
-    # tmp_tiff.unlink()
 
 
 def create_empty_frame_tile(bbox: Iterable[int], out_path: Path) -> Path:
