@@ -38,7 +38,7 @@ Geotiff metadata attributes will contain the following fields:
 3. The frame reference point location encoded as both the array coordinates (row/column) and the geographic coordinates of the reference pixel in the native projection of the frame for each frame present in the tile
 4. A URL pointing to the location of OPERA frame image for that tile (see below)
 
-For example, the fields in metadata raster may look like:
+For example, the geotiff metadata attributes may look like:
 ```
 OPERA_FRAMES: "1, 2"
 FRAME_1_REF_POINT: "129877.23, 128383.28"
@@ -56,9 +56,21 @@ TILE_METADATA_URL: "https://mybucket.s3-us-west-2.amazonaws.com/metadata_tiffs/N
 
 In addition to this per-COG information, there will also be one accompanying metadata raster (in tiled GTiff format) for each tile location (i.e., one per footprint). The metadata raster will have the same resolution, extent, and projection as the cumulative displacement COGs, and in fact will serve as the template for creating cumulative displacement COGs. The metadata raster will have the following components
 1. A UInt16 band indicating the frame number the cumulative displacement value each pixel is sourced from
-2. Geotiff metadata attributes with the same information as the cumulative displacement sidecar files, except for secondary date and tile metadata URL
+2. Geotiff metadata attributes detailing the reference date and reference point that will be enforced for all tiles created using the metadata raster.
 
-TODO: expand metadata description
+For example, the geotiff metadata attributes may look like:
+```
+OPERA_FRAMES: "1, 2"
+FRAME_1_REF_POINT: "129877.23, 128383.28"
+FRAME_1_EPSG: "12345"
+FRAME_1_REF_POINT_ARRAY: "10, 20"
+FRAME_1_REF_DATE: "2015/01/01"
+FRAME_2_REF_POINT: "22348.23, 38973.28"
+FRAME_2_EPSG: "12345"
+FRAME_2_REF_POINT_ARRAY: "20, 11"
+FRAME_2_REF_DATE: "2015/02/01"
+```
+This is similar to the short wavelength displacement metadata fields, but with the exclusion of the secondary date and metadata raster URL information.
 
 **Note: a time-series stack of OPERA-DISP products from the same frame are not guaranteed to have the same reference date or location!**
 
@@ -71,7 +83,8 @@ Prior to mosaicking of OPERA-DISP products, we generate the metadata rasters.
 
 For each 1x1 degree tile, there is one metadata raster for each orbit direction, for a total of two per tile. The metadata rasters will each span a 1x1 degree area in the web mercator (EPSG:3857) projection with a 30 m pixel spacing. The frame band is created by cross-referencing each tile's extent with the OPERA-DISP frame footprints. A geospatial representation of the OPERA-DISP frame footprints can be created using the [OPERA burst_db utility](https://github.com/opera-adt/burst_db). Frames will be overlaid so that frames from the same relative orbit are contiguous. Within a relative orbit, frames are overlaid so that older frames are on top of younger frames. This corresponds to North on top for the ascending pass, and South on top for the descending pass. The layering of relative orbits will be done so that higher frames number on top of lower frame numbers. We will assess the impact of this choice once we create a full mosaic.
 
-TODO: add overlay picture
+This is what the frame overlap looks like when frames are order by frame number:
+![Frame ordered overlap](/assets/frame_ordered_overlap.png)
 
 Once the frame band has been constructed, we set the spatiotemporal reference metadata using the values present in the latest product available for each frame.
 
