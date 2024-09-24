@@ -57,7 +57,7 @@ def burn_frame(frame: Frame, tile_path: Path):
     tmp_band.FlushCache()
     tmp_ds = None
 
-    # Reopen the dataset and copy the data to the tile 
+    # Reopen the dataset and copy the data to the tile
     frame_ds = gdal.Open(str(tmp_tiff))
     frame_array = frame_ds.GetRasterBand(1).ReadAsArray()
 
