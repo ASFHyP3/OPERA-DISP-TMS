@@ -20,3 +20,7 @@ dependencies:
   - gdal
   - boto3
   - asf_search
+  - sqlite
+  - shapely
+  - pyproj
+  - pandas
