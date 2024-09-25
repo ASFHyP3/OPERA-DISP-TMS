@@ -9,4 +9,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [0.1.0]
 ### Added
 * Utility for creating a test dataset using [Global Coherence Dataset](https://registry.opendata.aws/ebd-sentinel-1-global-coherence-backscatter/)
+* Design document with implementation details for tile generation
+* Utility for identifying California test dataset
+* Utility for generating metadata tile images
 
