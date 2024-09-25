@@ -1,8 +1,11 @@
 """Find all OPERA L3 DISP S1 PROVISIONAL V0.4 granules created for California test dataset.
 see https://github.com/nasa/opera-sds/issues/54 for dataset creation request.
 """
+import csv
+from dataclasses import dataclass
 from datetime import datetime
-from typing import List
+from pathlib import Path
+from typing import Iterable, List
 
 import asf_search as asf
 
@@ -86,7 +89,48 @@ ASC_FRAMES = [
 CAL_FRAMES = sorted(ASC_FRAMES + DES_FRAMES)
 
 
-def find_test_data(desired_version: str = '0.4') -> asf.ASFSearchResults:
+@dataclass
+class Granule:
+    scene_name: str
+    frame: int
+    orbit_pass: str
+    s3_uri: str
+    reference_date: datetime
+    secondary_date: datetime
+    creation_date: datetime
+
+    @classmethod
+    def from_search_result(cls, search_product: asf.ASFProduct):
+        scene_name = search_product.properties['sceneName']
+        frame = int(scene_name.split('_')[4][1:])
+        reference_date = datetime.strptime(scene_name.split('_')[-4], DATE_FORMAT)
+        secondary_date = datetime.strptime(scene_name.split('_')[-3], DATE_FORMAT)
+        creation_date = datetime.strptime(scene_name.split('_')[-1], DATE_FORMAT)
+        orbit_pass = 'ASCENDING' if frame in ASC_FRAMES else 'DESCENDING'
+        s3_uri = f's3://asf-cumulus-test-opera-products/OPERA_L3_DISP-S1_PROVISIONAL_V0/{scene_name}/{scene_name}.nc'
+        return cls(
+            scene_name=scene_name,
+            frame=frame,
+            orbit_pass=orbit_pass,
+            s3_uri=s3_uri,
+            reference_date=reference_date,
+            secondary_date=secondary_date,
+            creation_date=creation_date,
+        )
+
+    def to_tuple(self):
+        return (
+            self.scene_name,
+            self.frame,
+            self.orbit_pass,
+            self.s3_uri,
+            datetime.strftime(self.reference_date, DATE_FORMAT),
+            datetime.strftime(self.secondary_date, DATE_FORMAT),
+            datetime.strftime(self.creation_date, DATE_FORMAT),
+        )
+
+
+def find_test_data(desired_version: str = '0.4') -> Granule:
     """Find all OPERA L3 DISP S1 PROVISIONAL granules created for a specific version.
 
     Args:
@@ -104,43 +148,92 @@ def find_test_data(desired_version: str = '0.4') -> asf.ASFSearchResults:
     granule_name_wildcard = [f'*_v{desired_version}_*']
     granule_name_wildcard = ['*']
     results = asf.search(opts=disp_opts, cmr_keywords=cmr_keywords, granule_list=granule_name_wildcard)
-    return results
+    granules = [Granule.from_search_result(result) for result in results]
+    return granules
 
 
-def filter_restults_to_california_dataset(results: asf.ASFSearchResults) -> List[asf.ASFProduct]:
+def filter_restults_to_california_dataset(granules: Iterable[Granule]) -> List[Granule]:
     """Filter the search results to only include granules from the California test dataset.
 
     Args:
-        results: The search results to filter.
+        results: The granules to filter.
 
     Returns:
         A list of granules that are part of the California test dataset.
     """
-    desired_results = []
-    for result in results:
-        scene_name = result.properties['sceneName']
-        frame = int(scene_name.split('_')[4][1:])
-        reference_date = datetime.strptime(scene_name.split('_')[-4], DATE_FORMAT)
-        secondary_date = datetime.strptime(scene_name.split('_')[-3], DATE_FORMAT)
-        creation_date = datetime.strptime(scene_name.split('_')[-1], DATE_FORMAT)
-
-        reference_within_data_date_range = DATA_START <= reference_date <= DATA_END
-        secondary_within_data_date_range = DATA_START <= secondary_date <= DATA_END
+    desired_granules = []
+    for granule in granules:
+        reference_within_data_date_range = DATA_START <= granule.reference_date <= DATA_END
+        secondary_within_data_date_range = DATA_START <= granule.secondary_date <= DATA_END
         within_data_date_range = reference_within_data_date_range and secondary_within_data_date_range
-        within_processing_date_range = PROCESSING_START <= creation_date <= PROCESSING_END
-        desired_frame = frame in CAL_FRAMES
+        within_processing_date_range = PROCESSING_START <= granule.creation_date <= PROCESSING_END
+        desired_frame = granule.frame in CAL_FRAMES
 
         if within_data_date_range and within_processing_date_range and desired_frame:
-            desired_results.append(result)
-    return desired_results
+            desired_granules.append(granule)
+
+    return desired_granules
 
 
-def find_california_dataset() -> List[asf.ASFProduct]:
+def generate_granule_file(granules: Iterable[Granule], out_path: Path) -> None:
+    """Generate a CSV file containing the information for a set of granules.
+
+    Args:
+        granules: The granules to write to the file.
+        out_path: The path to write the file to.
+    """
+    with open(out_path, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(
+            ['SCENE_NAME', 'FRAME', 'ORBIT_PASS', 'S3_URI', 'REFERENCE_DATE', 'SECONDARY_DATE', 'CREATION_DATE']
+        )
+        writer.writerows([granule.to_tuple() for granule in granules])
+
+
+def read_granule_file(in_path: Path) -> List['Granule']:
+    """Read a CSV file containing granule information.
+
+    Args:
+        in_path: The path to the file to read.
+
+    Returns:
+        A list of granules read from the file.
+    """
+    granules = []
+    with open(in_path, mode='r', newline='') as file:
+        reader = csv.reader(file)
+        next(reader)
+        for row in reader:
+            name, frame, orbit_pass, s3_uri, reference_date, secondary_date, creation_date = row
+            granule = Granule(
+                scene_name=name,
+                frame=int(frame),
+                orbit_pass=orbit_pass,
+                s3_uri=s3_uri,
+                reference_date=datetime.strptime(reference_date, DATE_FORMAT),
+                secondary_date=datetime.strptime(secondary_date, DATE_FORMAT),
+                creation_date=datetime.strptime(creation_date, DATE_FORMAT),
+            )
+            granules.append(granule)
+    return granules
+
+
+def find_california_dataset() -> List[str]:
     """Find all OPERA L3 DISP S1 PROVISIONAL V0.4 granules created for California test dataset.
 
     Returns:
         A list of granules that are part of the California test dataset.
     """
-    results = find_test_data()
-    desired_results = filter_restults_to_california_dataset(results)
-    return desired_results
+    granule_list_path = Path(__file__).parent / 'california_dataset.csv'
+    if granule_list_path.exists():
+        print('Reading granule file...')
+        granules = read_granule_file(granule_list_path)
+    else:
+        granules = find_test_data()
+        desired_granules = filter_restults_to_california_dataset(granules)
+        generate_granule_file(desired_granules, granule_list_path)
+    return granules
+
+
+if __name__ == '__main__':
+    find_california_dataset()
