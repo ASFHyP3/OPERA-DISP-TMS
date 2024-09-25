@@ -5,7 +5,7 @@ import csv
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable, List
+from typing import Iterable, List, Tuple
 
 import asf_search as asf
 
@@ -94,6 +94,7 @@ class Granule:
     scene_name: str
     frame: int
     orbit_pass: str
+    url: str
     s3_uri: str
     reference_date: datetime
     secondary_date: datetime
@@ -103,19 +104,33 @@ class Granule:
     def from_search_result(cls, search_product: asf.ASFProduct):
         scene_name = search_product.properties['sceneName']
         frame = int(scene_name.split('_')[4][1:])
+        orbit_pass = 'ASCENDING' if frame in ASC_FRAMES else 'DESCENDING'
+        url = f'https://cumulus-test.asf.alaska.edu/RTC/OPERA-S1/OPERA_L3_DISP-S1_PROVISIONAL_V0/{scene_name}/{scene_name}.nc'
+        s3_uri = f's3://asf-cumulus-test-opera-products/OPERA_L3_DISP-S1_PROVISIONAL_V0/{scene_name}/<id>.nc'
         reference_date = datetime.strptime(scene_name.split('_')[-4], DATE_FORMAT)
         secondary_date = datetime.strptime(scene_name.split('_')[-3], DATE_FORMAT)
         creation_date = datetime.strptime(scene_name.split('_')[-1], DATE_FORMAT)
-        orbit_pass = 'ASCENDING' if frame in ASC_FRAMES else 'DESCENDING'
-        s3_uri = f's3://asf-cumulus-test-opera-products/OPERA_L3_DISP-S1_PROVISIONAL_V0/{scene_name}/{scene_name}.nc'
         return cls(
             scene_name=scene_name,
             frame=frame,
             orbit_pass=orbit_pass,
+            url=url,
             s3_uri=s3_uri,
             reference_date=reference_date,
             secondary_date=secondary_date,
             creation_date=creation_date,
+        )
+
+    def from_tuple(cls, tup: Tuple):
+        name, frame, orbit_pass, url, reference_date, secondary_date, creation_date = tup
+        return cls(
+            scene_name=name,
+            frame=int(frame),
+            orbit_pass=orbit_pass,
+            url=url,
+            reference_date=datetime.strptime(reference_date, DATE_FORMAT),
+            secondary_date=datetime.strptime(secondary_date, DATE_FORMAT),
+            creation_date=datetime.strptime(creation_date, DATE_FORMAT),
         )
 
     def to_tuple(self):
@@ -123,6 +138,7 @@ class Granule:
             self.scene_name,
             self.frame,
             self.orbit_pass,
+            self.url,
             self.s3_uri,
             datetime.strftime(self.reference_date, DATE_FORMAT),
             datetime.strftime(self.secondary_date, DATE_FORMAT),
@@ -185,7 +201,7 @@ def generate_granule_file(granules: Iterable[Granule], out_path: Path) -> None:
     with open(out_path, mode='w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(
-            ['SCENE_NAME', 'FRAME', 'ORBIT_PASS', 'S3_URI', 'REFERENCE_DATE', 'SECONDARY_DATE', 'CREATION_DATE']
+            ['SCENE_NAME', 'FRAME', 'ORBIT_PASS', 'URL', 'S3_URI', 'REFERENCE_DATE', 'SECONDARY_DATE', 'CREATION_DATE']
         )
         writer.writerows([granule.to_tuple() for granule in granules])
 
@@ -204,17 +220,7 @@ def read_granule_file(in_path: Path) -> List['Granule']:
         reader = csv.reader(file)
         next(reader)
         for row in reader:
-            name, frame, orbit_pass, s3_uri, reference_date, secondary_date, creation_date = row
-            granule = Granule(
-                scene_name=name,
-                frame=int(frame),
-                orbit_pass=orbit_pass,
-                s3_uri=s3_uri,
-                reference_date=datetime.strptime(reference_date, DATE_FORMAT),
-                secondary_date=datetime.strptime(secondary_date, DATE_FORMAT),
-                creation_date=datetime.strptime(creation_date, DATE_FORMAT),
-            )
-            granules.append(granule)
+            granules.append(Granule.from_tuple(row))
     return granules
 
 
