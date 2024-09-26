@@ -106,7 +106,7 @@ class Granule:
         frame = int(scene_name.split('_')[4][1:])
         orbit_pass = 'ASCENDING' if frame in ASC_FRAMES else 'DESCENDING'
         url = f'https://cumulus-test.asf.alaska.edu/RTC/OPERA-S1/OPERA_L3_DISP-S1_PROVISIONAL_V0/{scene_name}/{scene_name}.nc'
-        s3_uri = f's3://asf-cumulus-test-opera-products/OPERA_L3_DISP-S1_PROVISIONAL_V0/{scene_name}/<id>.nc'
+        s3_uri = f's3://asf-cumulus-test-opera-products/OPERA_L3_DISP-S1_PROVISIONAL_V0/{scene_name}/{scene_name}.nc'
         reference_date = datetime.strptime(scene_name.split('_')[-4], DATE_FORMAT)
         secondary_date = datetime.strptime(scene_name.split('_')[-3], DATE_FORMAT)
         creation_date = datetime.strptime(scene_name.split('_')[-1], DATE_FORMAT)
@@ -121,13 +121,15 @@ class Granule:
             creation_date=creation_date,
         )
 
+    @classmethod
     def from_tuple(cls, tup: Tuple):
-        name, frame, orbit_pass, url, reference_date, secondary_date, creation_date = tup
+        name, frame, orbit_pass, url, s3_uri, reference_date, secondary_date, creation_date = tup
         return cls(
             scene_name=name,
             frame=int(frame),
             orbit_pass=orbit_pass,
             url=url,
+            s3_uri = s3_uri,
             reference_date=datetime.strptime(reference_date, DATE_FORMAT),
             secondary_date=datetime.strptime(secondary_date, DATE_FORMAT),
             creation_date=datetime.strptime(creation_date, DATE_FORMAT),

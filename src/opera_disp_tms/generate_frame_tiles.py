@@ -175,7 +175,7 @@ def burn_frame(frame: Frame, tile_path: Path):
 
 def get_granule_reference_info_s3(s3_granule_path: str) -> Tuple:
     """Get the reference information for an OPERA DISP granule stored in S3
-    
+
     Args:
         s3_granule_path: The S3 URI to the granule
 
@@ -195,7 +195,10 @@ def get_granule_reference_info_s3(s3_granule_path: str) -> Tuple:
         },
     }
     creds = get_credentials()
-    fs = s3fs.S3FileSystem(key=creds['accessKeyId'], secret=creds['secretAccessKey'], **io_params['s3fs_params'])
+    fs = s3fs.S3FileSystem(
+        key=creds['accessKeyId'], secret=creds['secretAccessKey'], token='sessionToken', **io_params['s3fs_params']
+    )
+    fs = s3fs.S3FileSystem(key=creds['accessKeyId'], secret=creds['secretAccessKey'], token=creds['sessionToken'])
     with fs.open(s3_granule_path, 'rb') as f:
         with h5py.File(f, 'r', **io_params['h5py_params']['driver_kwds']) as hdf:
             ref_point_array, ref_point_geo, epsg = read_reference_info(hdf)
