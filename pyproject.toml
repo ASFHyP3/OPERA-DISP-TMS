@@ -48,7 +48,7 @@ Homepage = "https://github.com/ASFHyP3/OPERA-DISP-TMS"
 Documentation = "https://github.com/ASFHyP3/opera-disp-tms/tree/develop?tab=readme-ov-file#opera-disp-tms"
 
 [project.scripts]
-generate_frame_tile = "opera_disp_tms.generate_frame_tiles:main"
+generate_frame_tile = "opera_disp_tms.generate_frame_tile:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
