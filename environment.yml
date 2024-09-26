@@ -23,3 +23,5 @@ dependencies:
   - sqlite
   - shapely
   - pyproj
+  - h5py
+  - s3fs

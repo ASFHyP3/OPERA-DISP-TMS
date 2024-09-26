@@ -1,13 +1,17 @@
 import argparse
 from pathlib import Path
-from typing import Iterable, List
+from typing import Iterable, List, Tuple
 
+import h5py
 import numpy as np
 import pyproj
+import s3fs
 from osgeo import gdal, ogr, osr
 from shapely.ops import transform
 
+from opera_disp_tms.find_california_dataset import find_california_dataset
 from opera_disp_tms.frames import Frame, intersect
+from opera_disp_tms.tmp_aws import get_credentials
 
 
 gdal.UseExceptions()
@@ -169,6 +173,96 @@ def burn_frame(frame: Frame, tile_path: Path):
     tmp_tiff.unlink()
 
 
+def get_granule_reference_info_s3(s3_granule_path: str) -> Tuple:
+    """Get the reference information for an OPERA DISP granule stored in S3
+    
+    Args:
+        s3_granule_path: The S3 URI to the granule
+
+    Returns:
+        A tuple containing the reference point in array coordinates, geographic coordinates, and EPSG code
+    """
+    io_params = {
+        's3fs_params': {
+            'default_cache_type': 'blockcache',
+            'default_block_size': 8 * 1024 * 1024,
+        },
+        'h5py_params': {
+            'driver_kwds': {
+                'page_buf_size': 32 * 1024 * 1024,
+                'rdcc_nbytes': 8 * 1024 * 1024,
+            }
+        },
+    }
+    creds = get_credentials()
+    fs = s3fs.S3FileSystem(key=creds['accessKeyId'], secret=creds['secretAccessKey'], **io_params['s3fs_params'])
+    with fs.open(s3_granule_path, 'rb') as f:
+        with h5py.File(f, 'r', **io_params['h5py_params']['driver_kwds']) as hdf:
+            ref_point_array, ref_point_geo, epsg = read_reference_info(hdf)
+    return ref_point_array, ref_point_geo, epsg
+
+
+def read_reference_info(h5_fobj: h5py.File) -> Tuple:
+    """Find the reference information for an OPERA DISP granule
+
+    Args:
+        h5_fobj: An open HDF5 file object for an OPERA DISP granule
+
+    Returns:
+        A tuple containing the reference point in array coordinates, geographic coordinates, and EPSG code
+    """
+    ref_point = h5_fobj['corrections']['reference_point'].attrs
+    ref_col = int(ref_point['cols'][0])
+    ref_row = int(ref_point['rows'][0])
+    ref_lat = float(ref_point['latitudes'][0])
+    ref_lon = float(ref_point['longitudes'][0])
+
+    srs = osr.SpatialReference()
+    srs.ImportFromWkt(h5_fobj['spatial_ref'].attrs['crs_wkt'])
+    epsg = int(srs.GetAuthorityCode(None))
+
+    ref_point_geo = (ref_lon, ref_lat)
+    ref_point_array = (ref_col, ref_row)
+    return ref_point_array, ref_point_geo, epsg
+
+
+def add_metadata_to_tile(tile_path: Path, ascending=True) -> None:
+    """Add metadata to the frame metadata tile
+
+    Args:
+        tile_path: The path to the frame metadata tile
+    """
+    tile_ds = gdal.Open(str(tile_path), gdal.GA_Update)
+    band = tile_ds.GetRasterBand(1)
+    array = band.ReadAsArray()
+    frames = np.unique(array)
+
+    cal_data = find_california_dataset()
+    frame_metadata = {}
+    for frame in frames:
+        first_granule = min([x for x in cal_data if x.frame == frame], key=lambda x: x.reference_date)
+
+        ref_point_array, ref_point_geo, epsg = get_granule_reference_info_s3(first_granule.s3_uri)
+        frame_metadata[f'FRAME_{frame}_REF_POINT_ARRAY'] = ', '.join([str(x) for x in ref_point_array])
+        frame_metadata[f'FRAME_{frame}_REF_POINT_GEO'] = ', '.join([str(x) for x in ref_point_geo])
+        frame_metadata[f'FRAME_{frame}_EPSG'] = str(epsg)
+
+        frame_metadata[f'FRAME_{frame}_REF_TIME'] = first_granule.reference_date.strftime('%Y%m%dT%H%M%SZ')
+
+    tile_ds.SetMetadata(
+        {
+            'TITLE': 'OPERA Frame Metadata',
+            'DESCRIPTION': 'A raster tile containing the frame metadata for the OPERA DISP dataset',
+            'CREATOR': 'ASF',
+            'FRAMES': ', '.join([str(frame) for frame in frames]),
+            **frame_metadata,
+        }
+    )
+
+    tile_ds.FlushCache()
+    tile_ds = None
+
+
 def create_tile_for_bbox(bbox, ascending=True) -> Path:
     """Create the frame metadata tile for a specific bounding box
 
@@ -187,6 +281,7 @@ def create_tile_for_bbox(bbox, ascending=True) -> Path:
     create_empty_frame_tile(bbox, out_path)
     for frame in ordered_frames:
         burn_frame(frame, out_path)
+    add_metadata_to_tile(out_path)
     return out_path
 
 
