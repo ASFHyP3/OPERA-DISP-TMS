@@ -252,15 +252,7 @@ def add_metadata_to_tile(tile_path: Path, ascending=True) -> None:
 
         frame_metadata[f'FRAME_{frame}_REF_TIME'] = first_granule.reference_date.strftime('%Y%m%dT%H%M%SZ')
 
-    tile_ds.SetMetadata(
-        {
-            'TITLE': 'OPERA Frame Metadata',
-            'DESCRIPTION': 'A raster tile containing the frame metadata for the OPERA DISP dataset',
-            'CREATOR': 'ASF',
-            'FRAMES': ', '.join([str(frame) for frame in frames]),
-            **frame_metadata,
-        }
-    )
+    tile_ds.SetMetadata({'OPERA_FRAMES': ', '.join([str(frame) for frame in frames]), **frame_metadata})
 
     tile_ds.FlushCache()
     tile_ds = None

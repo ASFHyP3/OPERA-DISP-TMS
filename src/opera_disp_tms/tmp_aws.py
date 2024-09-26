@@ -46,16 +46,19 @@ def in_aws_and_region(region='us-west-2') -> bool:
     return True
 
 
-def get_tmp_access_keys() -> dict:
+def get_tmp_access_keys(tea_url: str = 'https://cumulus-test.asf.alaska.edu/s3credentials') -> dict:
     """Get temporary AWS access keys for direct
-    access to OPERA data in ASF UAT.
+    access to ASF data
 
     Assumes credentials are stored in your .netrc file.
+
+    Args:
+        tea_url: URL to request temporary credentials
 
     Returns:
         dictionary of credentials
     """
-    resp = requests.get('https://cumulus-test.asf.alaska.edu/s3credentials')
+    resp = requests.get(tea_url)
     resp.raise_for_status()
     CREDS_PATH.write_bytes(resp.content)
     return resp.json()
@@ -81,7 +84,7 @@ def get_credentials(edl_token: str = None) -> dict:
     current_time = datetime.now(timezone.utc)
 
     if current_time >= expiration_time:
-        credentials = get_tmp_access_keys(CREDS_PATH, edl_token)
+        credentials = get_tmp_access_keys()
 
     return credentials
 
