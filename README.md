@@ -6,7 +6,7 @@ Package for [OPERA DISP](https://www.jpl.nasa.gov/go/opera/products/disp-product
 See [Develop Setup](#developer-setup)
 
 ## Credentials
-This repositories assumes that you have credentials for `urs.earthdata.nasa.gov` (Earthdata login) and `uat.urs.earthdata.nasa.gov` (Earthdata login UAT) configured in your `netrc` file.
+This repository assumes that you have credentials for `urs.earthdata.nasa.gov` (Earthdata login) and `uat.urs.earthdata.nasa.gov` (Earthdata login UAT) configured in your `netrc` file.
 
 For instructions on setting up your Earthdata login (and Earthdata login UAT) via a `.netrc` file, check out this [guide](https://harmony.earthdata.nasa.gov/docs#getting-started).
 
@@ -21,9 +21,9 @@ The `generate_frame_tile` CLI command can be used to generate a frame metadata t
 ```bash
 generate_frame_tile -122 37 -121 38 --ascending
 ```
-Where `-122 37 -121 38` is a desired bounding box in INTEGER `minx, miny, max, maxy` longitude/latitude values, and `--ascending` specifies which orbit direction you want to generate a frame metadata tile for (`--ascending` for ascending, omit for descending).
+Where `-122 37 -121 38` is a desired bounding box in **integer** `minx, miny, max, maxy` longitude/latitude values, and `--ascending` specifies which orbit direction you want to generate a frame metadata tile for (`--ascending` for ascending, omit for descending).
 
-For TMS generation ASF will be using 1x1 degree tiles
+For TMS generation ASF will be using 1x1 degree tiles.
 
 ### Create temp S3 credentials
 The `get_tmp_s3_creds` CLI command can be used to generate temporary S3 access credentials for a NASA Cumulus Thin Egress App (TEA):
