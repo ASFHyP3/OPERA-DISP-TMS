@@ -94,7 +94,9 @@ def get_credentials(
 
 
 def main():
-    """CLI entrypoint for getting temporary S3 credentials"""
+    """CLI entrypoint for getting temporary S3 credentials
+    Example: get_tmp_s3_creds --tea-url https://cumulus-test.asf.alaska.edu/s3credentials --creds-path ./creds.json
+    """
     parser = argparse.ArgumentParser(description='Get temporary S3 credentials')
     parser.add_argument(
         '--tea-url',
