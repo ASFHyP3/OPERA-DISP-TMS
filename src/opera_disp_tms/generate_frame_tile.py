@@ -11,7 +11,7 @@ from shapely.ops import transform
 
 from opera_disp_tms.find_california_dataset import find_california_dataset
 from opera_disp_tms.frames import Frame, intersect
-from opera_disp_tms.tmp_aws import get_credentials
+from opera_disp_tms.tmp_s3_access import get_credentials
 
 
 gdal.UseExceptions()
