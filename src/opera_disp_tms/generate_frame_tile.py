@@ -11,7 +11,7 @@ from shapely.ops import transform
 
 from opera_disp_tms.find_california_dataset import find_california_dataset
 from opera_disp_tms.frames import Frame, intersect
-from opera_disp_tms.tmp_aws import get_credentials
+from opera_disp_tms.tmp_s3_access import get_credentials
 
 
 gdal.UseExceptions()
@@ -23,6 +23,17 @@ def check_bbox_all_int(bbox: Iterable[int]):
 
 
 def create_product_name(parts: Iterable[str], orbit_pass: str, bbox: Iterable[int]) -> str:
+    """Create a product name for a frame metadata tile
+    Should be in the format: metadata_ascendign_N02E001_N04E003
+
+    Args:
+        parts: The parts of the product name
+        orbit_pass: The orbit pass of the frames
+        bbox: The bounding box of the frames
+
+    Returns:
+        The product name
+    """
     check_bbox_all_int(bbox)
 
     def lat_string(lat):
@@ -56,7 +67,6 @@ def reorder_frames(frame_list: Iterable[Frame], order_by: str = 'frame_number') 
         if order_by == 'frame_number':
             metric = max([x.frame_id for x in frames])
         elif order_by == 'west_most':
-            # TODO: check anti-meridian crossing
             metric = max([x.geom.bounds[0] for x in frames])
         else:
             raise ValueError('Invalid order_by parameter. Please use "frame_number" or "west_most".')
