@@ -1,11 +1,12 @@
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Optional, Union
+from typing import Iterable, Optional, Tuple
 
-import requests
 from shapely import from_wkt
 from shapely.geometry import Polygon, box
+
+from opera_disp_tms.utils import download_file
 
 
 DB_PATH = Path(__file__).parent / 'opera-s1-disp-0.5.0.post1.dev20-2d.gpkg'
@@ -34,60 +35,42 @@ class Frame:
         )
 
 
-def download_file(
-    url: str,
-    download_path: Union[Path, str] = '.',
-    chunk_size=10 * (2**20),
-) -> Path:
-    """Download a file without authentication.
-
-    Args:
-        url: URL of the file to download
-        download_path: Path to save the downloaded file to
-        chunk_size: Size to chunk the download into
-
-    Returns:
-        download_path: The path to the downloaded file
-    """
-    session = requests.Session()
-
-    with session.get(url, stream=True) as s:
-        s.raise_for_status()
-        with open(download_path, 'wb') as f:
-            for chunk in s.iter_content(chunk_size=chunk_size):
-                if chunk:
-                    f.write(chunk)
-    session.close()
-
-
-def download_frame_db() -> Path:
+def download_frame_db(db_path: Path = DB_PATH) -> Path:
     """Download the OPERA burst database.
     Currently using a version created using opera-adt/burst_db v0.5.0, but hope to switch to ASF-provide source.
+
+    Args:
+        db_path: Path to save the database file to
 
     Returns:
         Path to the downloaded database
     """
-    if DB_PATH.exists():
-        return DB_PATH
+    if db_path.exists():
+        return db_path
 
     print('Downloading frame database...')
-    url = f'https://opera-disp-tms-dev.s3.us-west-2.amazonaws.com/{DB_PATH.name}'
-    download_file(url, DB_PATH)
+    url = f'https://opera-disp-tms-dev.s3.us-west-2.amazonaws.com/{db_path.name}'
+    download_file(url, db_path)
 
 
-def intersect(
+def build_query(
     bbox: Iterable[int],
     orbit_pass: Optional[str] = None,
     is_north_america: Optional[bool] = None,
     is_land: Optional[bool] = None,
-) -> Iterable[Frame]:
-    """Query for frames intersecting a given bounding box or WKT geometry, optionally filtering by orbit pass."""
-    if orbit_pass and orbit_pass not in ['ASCENDING', 'DESCENDING']:
-        raise ValueError('orbit_pass must be either "ASCENDING" or "DESCENDING"')
+) -> Tuple:
+    """Build a query for identifying OPERA frames intersecting a given bounding box, optionally filtering by more fields.
 
-    download_frame_db()
+    Args:
+        bbox: Bounding box to query for
+        orbit_pass: Filter by orbit pass (either 'ASCENDING' or 'DESCENDING')
+        is_north_america: Filter by whether the frame intersects North America
+        is_land: Filter by whether the frame intersects land
+
+    Returns:
+        Tuple with the query and parameters to pass to the query
+    """
     wkt_str = box(*bbox).wkt
-
     query = """
 WITH given_geom AS (
     SELECT PolygonFromText(?, 4326) as g
@@ -129,6 +112,31 @@ AND Intersects((SELECT g FROM given_geom), GeomFromGPB(geom))
         query += ' AND is_land = ?'
         params.append(int(is_land))
 
+    return query, params
+
+
+def intersect(
+    bbox: Iterable[int],
+    orbit_pass: Optional[str] = None,
+    is_north_america: Optional[bool] = None,
+    is_land: Optional[bool] = None,
+) -> Iterable[Frame]:
+    """Query OPERA frame database to obtain frames intersecting a given bounding box, optionally filtering by more fields.
+
+    Args:
+        bbox: Bounding box to query for
+        orbit_pass: Filter by orbit pass (either 'ASCENDING' or 'DESCENDING')
+        is_north_america: Filter by whether the frame intersects North America
+        is_land: Filter by whether the frame intersects land
+
+    Returns:
+        Iterable of Frame objects matching the input criteria
+    """
+    if orbit_pass and orbit_pass not in ['ASCENDING', 'DESCENDING']:
+        raise ValueError('orbit_pass must be either "ASCENDING" or "DESCENDING"')
+
+    download_frame_db()
+    query, params = build_query(bbox, orbit_pass, is_north_america, is_land)
     with sqlite3.connect(DB_PATH) as con:
         con.enable_load_extension(True)
         con.load_extension('mod_spatialite')
