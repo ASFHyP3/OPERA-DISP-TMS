@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import warnings
@@ -46,9 +47,10 @@ def in_aws_and_region(region='us-west-2') -> bool:
     return True
 
 
-def get_tmp_access_keys(tea_url: str = 'https://cumulus-test.asf.alaska.edu/s3credentials') -> dict:
-    """Get temporary AWS access keys for direct
-    access to ASF data
+def get_tmp_access_keys(
+    tea_url: str = 'https://cumulus-test.asf.alaska.edu/s3credentials', creds_path: str = CREDS_PATH
+) -> dict:
+    """Get temporary AWS access keys for direct access to ASF-hosted data in S3
 
     Assumes credentials are stored in your .netrc file.
 
@@ -60,34 +62,52 @@ def get_tmp_access_keys(tea_url: str = 'https://cumulus-test.asf.alaska.edu/s3cr
     """
     resp = requests.get(tea_url)
     resp.raise_for_status()
-    CREDS_PATH.write_bytes(resp.content)
+    creds_path.write_bytes(resp.content)
     return resp.json()
 
 
-def get_credentials(edl_token: str = None) -> dict:
-    """Gets temporary ASF AWS credentials from
-    file or request new credentials if credentials
+def get_credentials(
+    tea_url: str = 'https://cumulus-test.asf.alaska.edu/s3credentials', creds_path: str = CREDS_PATH
+) -> dict:
+    """Gets temporary AWS S3 access credentials from file or requests new credentials if credentials
     are not present or expired.
+
+    Args:
+        tea_url: URL to request temporary credentials from
+        creds_path: Path to save credentials file to
 
     Returns:
         dictionary of credentials
     """
-    if not in_aws_and_region():
-        warnings.warn('Not in AWS or in the wrong region. Temporary credentials will not work.')
-
-    if not CREDS_PATH.exists():
-        credentials = get_tmp_access_keys()
+    if not creds_path.exists():
+        credentials = get_tmp_access_keys(tea_url=tea_url, creds_path=creds_path)
         return credentials
 
-    credentials = json.loads(CREDS_PATH.read_text())
+    credentials = json.loads(creds_path.read_text())
     expiration_time = datetime.fromisoformat(credentials['expiration'])
     current_time = datetime.now(timezone.utc)
 
     if current_time >= expiration_time:
-        credentials = get_tmp_access_keys()
+        credentials = get_tmp_access_keys(tea_url=tea_url, creds_path=creds_path)
 
     return credentials
 
 
+def main():
+    """CLI entrypoint for getting temporary S3 credentials"""
+    parser = argparse.ArgumentParser(description='Get temporary S3 credentials')
+    parser.add_argument(
+        '--tea-url',
+        default='https://cumulus-test.asf.alaska.edu/s3credentials',
+        help='URL to request temporary credentials from',
+    )
+    parser.add_argument('--creds-path', default=CREDS_PATH, help='Path to save credentials file to')
+    args = parser.parse_args()
+    creds = get_credentials(args.tea_url, args.creds_path)
+    print(f'export AWS_ACCESS_KEY_ID={creds["accessKeyId"]}')
+    print(f'export AWS_SECRET_ACCESS_KEY={creds["secretAccessKey"]}')
+    print(f'export AWS_SESSION_TOKEN={creds["sessionToken"]}')
+
+
 if __name__ == '__main__':
-    print(get_credentials())
+    main()
