@@ -59,7 +59,8 @@ def build_query(
     is_north_america: Optional[bool] = None,
     is_land: Optional[bool] = None,
 ) -> Tuple:
-    """Build a query for identifying OPERA frames intersecting a given bounding box, optionally filtering by more fields.
+    """Build a query for identifying OPERA frames intersecting a given bounding box,
+    optionally filtering by more fields.
 
     Args:
         bbox: Bounding box to query for
@@ -121,7 +122,8 @@ def intersect(
     is_north_america: Optional[bool] = None,
     is_land: Optional[bool] = None,
 ) -> Iterable[Frame]:
-    """Query OPERA frame database to obtain frames intersecting a given bounding box, optionally filtering by more fields.
+    """Query OPERA frame database to obtain frames intersecting a given bounding box,
+    optionally filtering by more fields.
 
     Args:
         bbox: Bounding box to query for
