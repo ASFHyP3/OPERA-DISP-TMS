@@ -24,4 +24,6 @@ dependencies:
   - shapely
   - pyproj
   - h5py
+  - h5netcdf
+  - xarray
   - s3fs

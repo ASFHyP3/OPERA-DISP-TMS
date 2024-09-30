@@ -29,6 +29,8 @@ dependencies = [
     "pyproj",
     "h5py",
     "s3fs",
+    "h5netcdf",
+    "xarray",
 ]
 dynamic = ["version", "readme"]
 

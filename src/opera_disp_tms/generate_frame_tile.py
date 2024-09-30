@@ -12,38 +12,10 @@ from shapely.ops import transform
 from opera_disp_tms.find_california_dataset import find_california_dataset
 from opera_disp_tms.frames import Frame, intersect
 from opera_disp_tms.tmp_s3_access import get_credentials
+from opera_disp_tms.utils import check_bbox_all_int, create_product_name
 
 
 gdal.UseExceptions()
-
-
-def check_bbox_all_int(bbox: Iterable[int]):
-    if not all(isinstance(i, int) for i in bbox):
-        raise ValueError('Bounding box must be integers')
-
-
-def create_product_name(parts: Iterable[str], orbit_pass: str, bbox: Iterable[int]) -> str:
-    """Create a product name for a frame metadata tile
-    Should be in the format: metadata_ascendign_N02E001_N04E003
-
-    Args:
-        parts: The parts of the product name
-        orbit_pass: The orbit pass of the frames
-        bbox: The bounding box of the frames
-
-    Returns:
-        The product name
-    """
-    check_bbox_all_int(bbox)
-
-    def lat_string(lat):
-        return ('N' if lat >= 0 else 'S') + f'{abs(lat):02}'
-
-    def lon_string(lon):
-        return ('E' if lon >= 0 else 'W') + f'{abs(lon):03}'
-
-    bbox_str = f'{lat_string(bbox[1])}{lon_string(bbox[0])}_{lat_string(bbox[3])}{lon_string(bbox[2])}'
-    return '_'.join([*parts, orbit_pass, bbox_str])
 
 
 def reorder_frames(frame_list: Iterable[Frame], order_by: str = 'frame_number') -> List[Frame]:

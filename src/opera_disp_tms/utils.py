@@ -1,13 +1,17 @@
+from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional, Union
+from typing import Iterable, Union
 
 import requests
+import rioxarray  # noqa
 import s3fs
 import xarray as xr
+from osgeo import osr
 
 from opera_disp_tms.tmp_s3_access import get_credentials
 
 
+DATE_FORMAT = '%Y%m%dT%H%M%SZ'
 IO_PARAMS = {
     'fsspec_params': {
         # "skip_instance_cache": True
@@ -49,18 +53,86 @@ def download_file(
     session.close()
 
 
-def open_opera_disp_product(s3_uri: str, dataset_path: Optional[str] = None):
+def round_to_nearest_day(dt: datetime) -> datetime:
+    return (dt + timedelta(hours=12)).replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+def wkt_from_epsg(epsg_code):
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(epsg_code)
+    wkt = srs.ExportToWkt()
+    return wkt
+
+
+def transform_point(x, y, source_wkt, target_wkt):
+    source_srs = osr.SpatialReference()
+    source_srs.ImportFromWkt(source_wkt)
+
+    target_srs = osr.SpatialReference()
+    target_srs.ImportFromWkt(target_wkt)
+
+    transform = osr.CoordinateTransformation(source_srs, target_srs)
+    x_transformed, y_transformed, _ = transform.TransformPoint(y, x)
+    return x_transformed, y_transformed
+
+
+def check_bbox_all_int(bbox: Iterable[int]):
+    if not all(isinstance(i, int) for i in bbox):
+        raise ValueError('Bounding box must be integers')
+
+
+def create_product_name(parts: Iterable[str], orbit_pass: str, bbox: Iterable[int]) -> str:
+    """Create a product name for a frame metadata tile
+    Should be in the format: metadata_ascendign_N02E001_N04E003
+
+    Args:
+        parts: The parts of the product name
+        orbit_pass: The orbit pass of the frames
+        bbox: The bounding box of the frames
+
+    Returns:
+        The product name
+    """
+    check_bbox_all_int(bbox)
+
+    def lat_string(lat):
+        return ('N' if lat >= 0 else 'S') + f'{abs(lat):02}'
+
+    def lon_string(lon):
+        return ('E' if lon >= 0 else 'W') + f'{abs(lon):03}'
+
+    bbox_str = f'{lat_string(bbox[1])}{lon_string(bbox[0])}_{lat_string(bbox[3])}{lon_string(bbox[2])}'
+    return '_'.join([*parts, orbit_pass, bbox_str])
+
+
+def open_opera_disp_granule(s3_uri: str, dataset=str):
     creds = get_credentials()
-    s3_fs = s3fs.S3FileSystem(key=creds['accessKeyId'], secret=creds['secretAccessKey'], token='sessionToken')
-
-    group = dict()
-    if dataset_path:
-        group['group'] = dataset_path
-
+    s3_fs = s3fs.S3FileSystem(key=creds['accessKeyId'], secret=creds['secretAccessKey'], token=creds['sessionToken'])
     ds = xr.open_dataset(
         s3_fs.open(s3_uri, **IO_PARAMS['fsspec_params']),
         engine='h5netcdf',
-        **group,
         **IO_PARAMS['h5py_params'],
     )
-    return ds
+    data = ds[dataset]
+    ds_metadata = xr.open_dataset(
+        s3_fs.open(s3_uri, **IO_PARAMS['fsspec_params']),
+        group='/corrections',
+        engine='h5netcdf',
+        **IO_PARAMS['h5py_params'],
+    )
+    row = int(ds_metadata['reference_point'].attrs['rows'])
+    col = int(ds_metadata['reference_point'].attrs['cols'])
+    data.attrs['reference_point_array'] = (row, col)
+
+    longitude = float(ds_metadata['reference_point'].attrs['longitudes'])
+    latitude = float(ds_metadata['reference_point'].attrs['latitudes'])
+    data.attrs['reference_point_geo'] = (longitude, latitude)
+
+    reference_date = datetime.strptime(s3_uri.split('/')[-1].split('_')[6], DATE_FORMAT)
+    data.attrs['reference_date'] = reference_date
+
+    frame = int(s3_uri.split('/')[-1].split('_')[4][1:])
+    data.attrs['frame'] = frame
+
+    data.rio.write_crs(ds['spatial_ref'].attrs['crs_wkt'], inplace=True)
+    return data
