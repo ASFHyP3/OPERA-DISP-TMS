@@ -178,7 +178,7 @@ def get_granule_reference_info_s3(s3_granule_path: str) -> Tuple:
     }
     creds = get_credentials()
     fs = s3fs.S3FileSystem(
-        key=creds['accessKeyId'], secret=creds['secretAccessKey'], token='sessionToken', **io_params['s3fs_params']
+        key=creds['accessKeyId'], secret=creds['secretAccessKey'], token=creds['sessionToken'], **io_params['s3fs_params']
     )
     with fs.open(s3_granule_path, 'rb') as f:
         with h5py.File(f, 'r', **io_params['h5py_params']['driver_kwds']) as hdf:
