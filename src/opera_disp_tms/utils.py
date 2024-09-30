@@ -1,7 +1,26 @@
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 import requests
+import s3fs
+import xarray as xr
+
+from opera_disp_tms.tmp_s3_access import get_credentials
+
+
+IO_PARAMS = {
+    'fsspec_params': {
+        # "skip_instance_cache": True
+        'cache_type': 'blockcache',  # or "first" with enough space
+        'block_size': 8 * 1024 * 1024,  # could be bigger
+    },
+    'h5py_params': {
+        'driver_kwds': {  # only recent versions of xarray and h5netcdf allow this correctly
+            'page_buf_size': 32 * 1024 * 1024,  # this one only works in repacked files
+            'rdcc_nbytes': 8 * 1024 * 1024,  # this one is to read the chunks
+        }
+    },
+}
 
 
 def download_file(
@@ -28,3 +47,20 @@ def download_file(
                 if chunk:
                     f.write(chunk)
     session.close()
+
+
+def open_opera_disp_product(s3_uri: str, dataset_path: Optional[str] = None):
+    creds = get_credentials()
+    s3_fs = s3fs.S3FileSystem(key=creds['accessKeyId'], secret=creds['secretAccessKey'], token='sessionToken')
+
+    group = dict()
+    if dataset_path:
+        group['group'] = dataset_path
+
+    ds = xr.open_dataset(
+        s3_fs.open(s3_uri, **IO_PARAMS['fsspec_params']),
+        engine='h5netcdf',
+        **group,
+        **IO_PARAMS['h5py_params'],
+    )
+    return ds
