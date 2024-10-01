@@ -1,3 +1,4 @@
+import json
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
@@ -33,6 +34,28 @@ class Frame:
             is_north_america=row[5],
             geom=from_wkt(row[6]),
         )
+
+    def to_geojson(self, out_path: Path):
+        """Save frame geometry to a GeoJSON file.
+        Keep all the attributes in the GeoJSON properties
+
+        Args:
+            out_path: Path to save the GeoJSON file to
+        """
+        geojson = {
+            'type': 'Feature',
+            'geometry': json.loads(self.geom.__geo_interface__),
+            'properties': {
+                'frame_id': self.frame_id,
+                'epsg': self.epsg,
+                'relative_orbit_number': self.relative_orbit_number,
+                'orbit_pass': self.orbit_pass,
+                'is_land': self.is_land,
+                'is_north_america': self.is_north_america,
+            },
+        }
+        with open(out_path, 'w') as f:
+            json.dump(geojson, f)
 
 
 def download_frame_db(db_path: Path = DB_PATH) -> Path:
@@ -73,30 +96,30 @@ def build_query(
     """
     wkt_str = box(*bbox).wkt
     query = (
-        "WITH given_geom AS ( "
-        "    SELECT PolygonFromText(?, 4326) as g "
-        "), "
-        "BBox AS ( "
-        "    SELECT "
-        "        MbrMinX(g) AS minx, "
-        "        MbrMaxX(g) AS maxx, "
-        "        MbrMinY(g) AS miny, "
-        "        MbrMaxY(g) AS maxy "
-        "    FROM given_geom "
-        ") "
-        "SELECT fid as frame_id, epsg, relative_orbit_number, orbit_pass, "
-        "       is_land, is_north_america, ASText(GeomFromGPB(geom)) AS wkt "
-        "FROM frames "
-        "WHERE fid IN ( "
-        "    SELECT id "
-        "    FROM rtree_frames_geom "
-        "    JOIN BBox ON "
-        "        rtree_frames_geom.minx <= BBox.maxx AND "
-        "        rtree_frames_geom.maxx >= BBox.minx AND "
-        "        rtree_frames_geom.miny <= BBox.maxy AND "
-        "        rtree_frames_geom.maxy >= BBox.miny "
-        ") "
-        "AND Intersects((SELECT g FROM given_geom), GeomFromGPB(geom))"
+        'WITH given_geom AS ( '
+        '    SELECT PolygonFromText(?, 4326) as g '
+        '), '
+        'BBox AS ( '
+        '    SELECT '
+        '        MbrMinX(g) AS minx, '
+        '        MbrMaxX(g) AS maxx, '
+        '        MbrMinY(g) AS miny, '
+        '        MbrMaxY(g) AS maxy '
+        '    FROM given_geom '
+        ') '
+        'SELECT fid as frame_id, epsg, relative_orbit_number, orbit_pass, '
+        '       is_land, is_north_america, ASText(GeomFromGPB(geom)) AS wkt '
+        'FROM frames '
+        'WHERE fid IN ( '
+        '    SELECT id '
+        '    FROM rtree_frames_geom '
+        '    JOIN BBox ON '
+        '        rtree_frames_geom.minx <= BBox.maxx AND '
+        '        rtree_frames_geom.maxx >= BBox.minx AND '
+        '        rtree_frames_geom.miny <= BBox.maxy AND '
+        '        rtree_frames_geom.maxy >= BBox.miny '
+        ') '
+        'AND Intersects((SELECT g FROM given_geom), GeomFromGPB(geom))'
     )
 
     params = [wkt_str]

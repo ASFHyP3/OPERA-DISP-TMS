@@ -81,30 +81,6 @@ def check_bbox_all_int(bbox: Iterable[int]):
         raise ValueError('Bounding box must be integers')
 
 
-def create_product_name(parts: Iterable[str], orbit_pass: str, bbox: Iterable[int]) -> str:
-    """Create a product name for a frame metadata tile
-    Should be in the format: metadata_ascendign_N02E001_N04E003
-
-    Args:
-        parts: The parts of the product name
-        orbit_pass: The orbit pass of the frames
-        bbox: The bounding box of the frames
-
-    Returns:
-        The product name
-    """
-    check_bbox_all_int(bbox)
-
-    def lat_string(lat):
-        return ('N' if lat >= 0 else 'S') + f'{abs(lat):02}'
-
-    def lon_string(lon):
-        return ('E' if lon >= 0 else 'W') + f'{abs(lon):03}'
-
-    bbox_str = f'{lat_string(bbox[1])}{lon_string(bbox[0])}_{lat_string(bbox[3])}{lon_string(bbox[2])}'
-    return '_'.join([*parts, orbit_pass, bbox_str])
-
-
 def open_opera_disp_granule(s3_uri: str, dataset=str):
     creds = get_credentials()
     s3_fs = s3fs.S3FileSystem(key=creds['accessKeyId'], secret=creds['secretAccessKey'], token=creds['sessionToken'])

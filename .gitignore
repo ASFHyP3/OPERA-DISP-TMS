@@ -243,6 +243,8 @@ tags
 
 # Data
 src/opera_disp_tms/*gpkg
+src/opera_disp_tms/*gpkg-shm
+src/opera_disp_tms/*gpkg-wal
 src/opera_disp_tms/*csv
 src/opera_disp_tms/credentials.json
 *.tif
