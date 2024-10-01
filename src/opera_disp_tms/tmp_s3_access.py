@@ -12,7 +12,7 @@ import requests
 CREDS_PATH = Path(__file__).parent / 'credentials.json'
 
 
-def in_aws_and_region(region='us-west-2') -> bool:
+def in_aws_and_region(region: str = 'us-west-2') -> bool:
     """Determine if you're in a given AWS region
 
     Args:
