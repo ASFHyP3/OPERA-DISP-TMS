@@ -1,5 +1,4 @@
 import argparse
-import shutil
 import warnings
 from dataclasses import dataclass
 from datetime import datetime
@@ -11,7 +10,6 @@ from rasterio.transform import Affine
 
 from opera_disp_tms.find_california_dataset import find_california_dataset
 from opera_disp_tms.utils import (
-    create_product_name,
     open_opera_disp_granule,
     round_to_nearest_day,
     transform_point,
@@ -88,24 +86,24 @@ def update_spatiotemporal_reference(in_granule: xr.DataArray, frame: Frame) -> x
     return in_granule
 
 
-def create_blank_copy_tile(input_path, output_path, dtype = 'float32'):
+def create_blank_copy_tile(input_path, output_path, dtype='float32'):
     if dtype not in ['int16', 'float32']:
-        raise NotImplementedErr(f'Dtype {dtype} not implemented')
+        raise NotImplementedError(f'Dtype {dtype} not implemented')
 
-    ds = gdal.Open(str(output_path))
+    ds = gdal.Open(str(input_path))
     band = ds.GetRasterBand(1)
-    driver = gdal.GetDriverByName('GTiff')
     data = band.ReadAsArray()
     data[:] = 0
 
     if dtype == 'int16':
-        data_int16 = data.astype(int)
+        data = data.astype(int)
         gdal_dtype = gdal.GDT_Int16
     else:
-        data_int16 = data.astype(float)
+        data = data.astype(float)
         gdal_dtype = gdal.GDT_Float32
 
     opts = ['TILED=YES', 'COMPRESS=LZW', 'NUM_THREADS=ALL_CPUS']
+    driver = gdal.GetDriverByName('GTiff')
     out_ds = driver.Create(str(output_path), ds.RasterXSize, ds.RasterYSize, 1, gdal_dtype, options=opts)
 
     out_band = out_ds.GetRasterBand(1)
@@ -116,6 +114,7 @@ def create_blank_copy_tile(input_path, output_path, dtype = 'float32'):
     out_band.FlushCache()
     out_ds = None
     ds = None
+
 
 def get_frame_map(metadata_path):
     ds = gdal.Open(str(metadata_path))
@@ -140,7 +139,6 @@ def create_sw_disp_tile(begin_date: datetime, end_date: datetime, metadata_path:
     band = ds.GetRasterBand(1)
     sw_cumul_disp = band.ReadAsArray()
 
-
     transfrom = Affine.from_gdal(*gdal.Open(str(metadata_path)).GetGeoTransform())
     frames = frames_from_metadata(metadata_path)
     frame_ids = [x.frame for x in frames]
@@ -152,7 +150,7 @@ def create_sw_disp_tile(begin_date: datetime, end_date: datetime, metadata_path:
         granule = granule.rio.reproject('EPSG:3857', transform=transfrom, shape=frame_map.shape)
         frame_locations = frame_map == granule.attrs['frame']
         sw_cumul_disp[frame_locations] = granule.data[frame_locations].astype(float)
-    
+
     band.WriteArray(sw_cumul_disp)
     band.SetNoDataValue(0)
     secondary_dates = {f'FRAME_{x.frame}_SEC_TIME': x.reference_date.strftime(DATE_FORMAT) for x in frames}
@@ -163,7 +161,9 @@ def create_sw_disp_tile(begin_date: datetime, end_date: datetime, metadata_path:
 
 def main():
     """CLI entrpypoint
-    Example: generate_sw_disp_tile metadata_N37W122_N38W121.tif --begin-date 20160701T000000Z --end-date 20240922T154629Z
+    Example:
+    generate_sw_disp_tile metadata_ASCENDING_N37W122_N38W121.tif \
+        --begin-date 20160701T000000Z --end-date 20240922T154629Z
     """
     parser = argparse.ArgumentParser(description='Create a short wavelength cumulative displacement tile')
     parser.add_argument('metadata_path', type=str, help='Path to the metadata GeoTiff file')
