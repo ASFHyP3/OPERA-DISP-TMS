@@ -271,7 +271,7 @@ def add_metadata_to_tile(tile_path: Path, ascending=True) -> None:
 
 
 def update_frame_geometry(frame: Frame, buffer_size: int = -3500) -> Frame:
-    """Update the geometry of the frames to better align with OPERA DISP granules
+    """Apply a buffer to the geometry of a frame to better align it with OPERA DISP granules
 
     Args:
         frame: The frame to update
