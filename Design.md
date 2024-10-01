@@ -14,7 +14,7 @@ These 1x1 degree COGs are then summarized into a set of files that are ingestabl
 - No more than 10 input files per tileset source
 A single tile map layer can be composed of multiple tileset sources if necessary to get around the 10 file limit, but testing has shown that we can meet the requirements above for a single tileset source that includes all of North America, which is sufficient for this project.
 
-To go from the 1x1 degree COGs to a MapBox tileset source we must mosaic the 1x1 degree COGs into 10 or fewer tiled GeoTiffs with a UInt8 datatype. GeoTiffs are used because the overviews included in COGs are unused by MapBox, and only serve to increase file size. Dataset-specific discussions will need to had with the OPERA team concerning how to represent the datasets as UInt8 datatypes, but an initial guess of `round(pixel_value,2)*100) + 1` will be used for all datsets during initial development. Values above and below this range will be clipped to 255 and 0 respectively.
+To go from the 1x1 degree COGs to a MapBox tileset source, we must mosaic the 1x1 degree COGs into 10 or fewer tiled GeoTiffs with a UInt8 datatype. GeoTiffs are used because the overviews included in COGs are unused by MapBox and only serve to increase file size. Dataset-specific discussions will need to be had with the OPERA team concerning how to represent the datasets as UInt8 datatypes, but an initial guess of `round(pixel_value,2)*100) + 1` will be used for all datasets during initial development. Values above and below this range will be clipped to 255 and 0, respectively.
 
 LZW or another compression method will be used for all files to reduce file sizes.
 
