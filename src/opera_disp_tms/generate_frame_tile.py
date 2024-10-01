@@ -290,9 +290,8 @@ def update_frame_geometry(frame: Frame, buffer_size: int = -3500) -> Frame:
 
     utm2latlon = pyproj.Transformer.from_crs(crs_utm, crs_latlon, always_xy=True).transform
     geom_latlon = transform(utm2latlon, geom_shrunk)
-
-    return frame
     frame.geom = geom_latlon
+    return frame
 
 
 def create_tile_for_bbox(bbox, ascending=True) -> Path:
