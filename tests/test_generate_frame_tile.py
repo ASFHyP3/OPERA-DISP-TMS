@@ -40,7 +40,7 @@ def test_reorder_frames():
     frame_2_3 = StubFrame(2, 3, Geom([0, 0, 2, 2]), 'ASC')
     frame_2_4 = StubFrame(2, 4, Geom([2, 2, 3, 3]), 'ASC')
 
-    result = generate_frame_tile.reorder_frames([frame_2_4, frame_1_2, frame_2_3, frame_1_1])
+    result = generate_frame_tile.reorder_frames([frame_2_4, frame_1_2, frame_2_3, frame_1_1], order_by='frame_number')
     assert result == [frame_2_4, frame_2_3, frame_1_2, frame_1_1]
 
     result = generate_frame_tile.reorder_frames([frame_2_4, frame_1_2, frame_2_3, frame_1_1], order_by='west_most')
