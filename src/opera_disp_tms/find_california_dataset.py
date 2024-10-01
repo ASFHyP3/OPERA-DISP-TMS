@@ -101,10 +101,23 @@ class Granule:
     creation_date: datetime
 
     @classmethod
-    def from_search_result(cls, search_product: asf.ASFProduct):
+    def from_search_result(cls, search_product: asf.ASFProduct) -> 'Granule':
+        """Create a Granule object from an ASF search result.
+
+        Args:
+            search_product: The search result to create the Granule from.
+
+        Returns:
+            A Granule object created from the search result.
+        """
         scene_name = search_product.properties['sceneName']
         frame = int(scene_name.split('_')[4][1:])
-        orbit_pass = 'ASCENDING' if frame in ASC_FRAMES else 'DESCENDING'
+        if frame in ASC_FRAMES:
+            orbit_pass = 'ASCENDING'
+        elif frame in DES_FRAMES:
+            orbit_pass = 'DESCENDING'
+        else:
+            raise ValueError(f'Frame {frame} not in the California dataset.')
         url_base = 'https://cumulus-test.asf.alaska.edu/RTC/OPERA-S1/OPERA_L3_DISP-S1_PROVISIONAL_V0'
         url = f'{url_base}/{scene_name}/{scene_name}.nc'
         s3_base = 's3://asf-cumulus-test-opera-products/OPERA_L3_DISP-S1_PROVISIONAL_V0'
@@ -124,7 +137,15 @@ class Granule:
         )
 
     @classmethod
-    def from_tuple(cls, tup: Tuple):
+    def from_tuple(cls, tup: Tuple) -> 'Granule':
+        """Create a Granule object from a tuple.
+
+        Args:
+            tup: The tuple to create the Granule from.
+
+        Returns:
+            A Granule object created from the tuple.
+        """
         name, frame, orbit_pass, url, s3_uri, reference_date, secondary_date, creation_date = tup
         return cls(
             scene_name=name,
