@@ -260,7 +260,7 @@ def create_tile_for_bbox(bbox, ascending=True) -> Path:
     create_empty_frame_tile(bbox, out_path)
     for frame in ordered_frames:
         burn_frame(frame, out_path)
-    # add_metadata_to_tile(out_path)
+    add_metadata_to_tile(out_path)
     return out_path
 
 
