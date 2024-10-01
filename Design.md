@@ -20,7 +20,7 @@ LZW or another compression method will be used for all files to reduce file size
 
 ## Cumulative Displacement
 ### Format
-To fully understand the context of InSAR-derived displacement data (such as the OPERA-Disp products) multiple pieces are required for each pixel:
+To fully understand the context of InSAR-derived displacement data (such as the OPERA-Disp products), multiple pieces are required for each pixel:
 
 1. The geographic location of the pixel (from the GDAL metadata)
 2. The start and end date for the displacement observation
@@ -74,7 +74,7 @@ This is similar to the short wavelength displacement metadata fields, but with t
 
 **Note: a time-series stack of OPERA-DISP products from the same frame are not guaranteed to have the same reference date or location!**
 
-However having the same spatiotemporal reference for each pixel in a time-series stack is an important requirement for date/location re-referencing and velocity calcultions. Thus, we standardize the spatiotemporal reference for each product before mosaicking. 
+However, having the same spatiotemporal reference for each pixel in a time-series stack is an important requirement for date/location re-referencing and velocity calculations. Thus, we standardize the spatiotemporal reference for each product before mosaicking. 
 
 Note that we only standardize the spatiotemporal reference so that each location is consistent through time. We do not standardize this information across space. Non-continuous frame coverage, and varying data collection dates makes standardizing across space a difficult challenge that is planned to be undertaken during the creation of the OPERA-DISP Vertical Land Motion project.
 
