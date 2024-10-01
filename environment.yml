@@ -26,4 +26,5 @@ dependencies:
   - h5py
   - h5netcdf
   - xarray
+  - rioxarray
   - s3fs

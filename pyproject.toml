@@ -30,6 +30,7 @@ dependencies = [
     "h5py",
     "s3fs",
     "h5netcdf",
+    "rioxarray",
     "xarray",
 ]
 dynamic = ["version", "readme"]
