@@ -130,7 +130,7 @@ def create_sw_disp_tile(begin_date: datetime, end_date: datetime, metadata_path:
     if begin_date > end_date:
         raise ValueError('Begin date must be before end date')
 
-    product_path = metadata_path.parent / metadata_path.name.replace('metadata', 'sw_cumul_disp')
+    product_path = metadata_path.parent / metadata_path.name.replace('METADATA', 'SW_CUMUL_DISP')
 
     frame_map = get_frame_map(metadata_path)
 
