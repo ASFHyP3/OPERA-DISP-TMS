@@ -121,7 +121,7 @@ class Granule:
         url_base = 'https://cumulus-test.asf.alaska.edu/RTC/OPERA-S1/OPERA_L3_DISP-S1_PROVISIONAL_V0'
         url = f'{url_base}/{scene_name}/{scene_name}.nc'
         s3_base = 's3://asf-cumulus-test-opera-products/OPERA_L3_DISP-S1_PROVISIONAL_V0'
-        s3_uri = f'{s3_base}/OPERA_L3_DISP-S1_PROVISIONAL_V0/{scene_name}/{scene_name}.nc'
+        s3_uri = f'{s3_base}/{scene_name}/{scene_name}.nc'
         reference_date = datetime.strptime(scene_name.split('_')[-4], DATE_FORMAT)
         secondary_date = datetime.strptime(scene_name.split('_')[-3], DATE_FORMAT)
         creation_date = datetime.strptime(scene_name.split('_')[-1], DATE_FORMAT)
