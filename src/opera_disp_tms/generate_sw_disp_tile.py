@@ -162,8 +162,8 @@ def create_sw_disp_tile(begin_date: datetime, end_date: datetime, metadata_path:
 def main():
     """CLI entrpypoint
     Example:
-    generate_sw_disp_tile metadata_ASCENDING_N37W122_N38W121.tif \
-        --begin-date 20160701T000000Z --end-date 20240922T154629Z
+    generate_sw_disp_tile METADATA_ASCENDING_N41W125_N42W124.tif \
+        --begin-date 20170901T000000Z --end-date 20171231T000000Z
     """
     parser = argparse.ArgumentParser(description='Create a short wavelength cumulative displacement tile')
     parser.add_argument('metadata_path', type=str, help='Path to the metadata GeoTiff file')
