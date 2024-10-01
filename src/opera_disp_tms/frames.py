@@ -72,33 +72,32 @@ def build_query(
         Tuple with the query and parameters to pass to the query
     """
     wkt_str = box(*bbox).wkt
-    query = """
-WITH given_geom AS (
-    SELECT PolygonFromText(?, 4326) as g
-),
-BBox AS (
-    SELECT
-        MbrMinX(g) AS minx,
-        MbrMaxX(g) AS maxx,
-        MbrMinY(g) AS miny,
-        MbrMaxY(g) AS maxy
-    FROM given_geom
-)
-
-SELECT fid as frame_id, epsg, relative_orbit_number, orbit_pass,
-       is_land, is_north_america, ASText(GeomFromGPB(geom)) AS wkt
-FROM frames
-WHERE fid IN (
-    SELECT id
-    FROM rtree_frames_geom
-    JOIN BBox ON
-        rtree_frames_geom.minx <= BBox.maxx AND
-        rtree_frames_geom.maxx >= BBox.minx AND
-        rtree_frames_geom.miny <= BBox.maxy AND
-        rtree_frames_geom.maxy >= BBox.miny
-)
-AND Intersects((SELECT g FROM given_geom), GeomFromGPB(geom))
-"""
+    query = (
+        "WITH given_geom AS ( "
+        "    SELECT PolygonFromText(?, 4326) as g "
+        "), "
+        "BBox AS ( "
+        "    SELECT "
+        "        MbrMinX(g) AS minx, "
+        "        MbrMaxX(g) AS maxx, "
+        "        MbrMinY(g) AS miny, "
+        "        MbrMaxY(g) AS maxy "
+        "    FROM given_geom "
+        ") "
+        "SELECT fid as frame_id, epsg, relative_orbit_number, orbit_pass, "
+        "       is_land, is_north_america, ASText(GeomFromGPB(geom)) AS wkt "
+        "FROM frames "
+        "WHERE fid IN ( "
+        "    SELECT id "
+        "    FROM rtree_frames_geom "
+        "    JOIN BBox ON "
+        "        rtree_frames_geom.minx <= BBox.maxx AND "
+        "        rtree_frames_geom.maxx >= BBox.minx AND "
+        "        rtree_frames_geom.miny <= BBox.maxy AND "
+        "        rtree_frames_geom.maxy >= BBox.miny "
+        ") "
+        "AND Intersects((SELECT g FROM given_geom), GeomFromGPB(geom))"
+    )
 
     params = [wkt_str]
     if orbit_pass in ['ASCENDING', 'DESCENDING']:
