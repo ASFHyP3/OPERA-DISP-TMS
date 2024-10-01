@@ -46,7 +46,7 @@ def create_product_name(parts: Iterable[str], orbit_pass: str, bbox: Iterable[in
     return '_'.join([*parts, orbit_pass, bbox_str])
 
 
-def reorder_frames(frame_list: Iterable[Frame], order_by: str = 'frame_number') -> List[Frame]:
+def reorder_frames(frame_list: Iterable[Frame], order_by: str = 'west_most') -> List[Frame]:
     """Reorder the frames based on the relative orbit number
 
     Args:
@@ -270,6 +270,31 @@ def add_metadata_to_tile(tile_path: Path, ascending=True) -> None:
     tile_ds = None
 
 
+def update_frame_geometry(frame: Frame, buffer_size: int = -3500) -> Frame:
+    """Update the geometry of the frames to better align with OPERA DISP granules
+
+    Args:
+        frame: The frame to update
+        buffer_size: The buffer size to apply to the geometry
+
+    Returns:
+        The updated frame
+    """
+    crs_latlon = pyproj.CRS('EPSG:4326')
+    crs_utm = pyproj.CRS(f'EPSG:{frame.epsg}')
+
+    latlon2utm = pyproj.Transformer.from_crs(crs_latlon, crs_utm, always_xy=True).transform
+    geom_utm = transform(latlon2utm, frame.geom)
+
+    geom_shrunk = geom_utm.buffer(buffer_size, join_style='mitre')
+
+    utm2latlon = pyproj.Transformer.from_crs(crs_utm, crs_latlon, always_xy=True).transform
+    geom_latlon = transform(utm2latlon, geom_shrunk)
+
+    frame.geom = geom_latlon
+    return frame
+
+
 def create_tile_for_bbox(bbox, ascending=True) -> Path:
     """Create the frame metadata tile for a specific bounding box
 
@@ -284,7 +309,8 @@ def create_tile_for_bbox(bbox, ascending=True) -> Path:
     orbit_pass = 'ASCENDING' if ascending else 'DESCENDING'
     out_path = Path(create_product_name(['metadata'], orbit_pass, bbox) + '.tif')
     relevant_frames = intersect(bbox=bbox, orbit_pass=orbit_pass, is_north_america=True, is_land=True)
-    ordered_frames = reorder_frames(relevant_frames)
+    updated_frames = [update_frame_geometry(x) for x in relevant_frames]
+    ordered_frames = reorder_frames(updated_frames)
     create_empty_frame_tile(bbox, out_path)
     for frame in ordered_frames:
         burn_frame(frame, out_path)
