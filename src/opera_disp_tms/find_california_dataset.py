@@ -256,7 +256,6 @@ def find_california_dataset() -> List[str]:
         A list of granules that are part of the California test dataset.
     """
     granule_list_path = Path(__file__).parent / 'california_dataset.csv'
-    breakpoint()
     if not granule_list_path.exists():
         all_granules = find_test_data()
         desired_granules = filter_restults_to_california_dataset(all_granules)
