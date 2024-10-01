@@ -39,7 +39,7 @@ def create_product_name(parts: Iterable[str], orbit_pass: str, bbox: Iterable[in
         return ('E' if lon >= 0 else 'W') + f'{abs(lon):03}'
 
     bbox_str = f'{lat_string(bbox[1])}{lon_string(bbox[0])}_{lat_string(bbox[3])}{lon_string(bbox[2])}'
-    return '_'.join([*parts, orbit_pass, bbox_str])
+    return '_'.join([*parts, orbit_pass, bbox_str]).upper()
 
 
 def reorder_frames(frame_list: Iterable[Frame], order_by: str = 'west_most') -> List[Frame]:
@@ -287,8 +287,8 @@ def update_frame_geometry(frame: Frame, buffer_size: int = -3500) -> Frame:
     utm2latlon = pyproj.Transformer.from_crs(crs_utm, crs_latlon, always_xy=True).transform
     geom_latlon = transform(utm2latlon, geom_shrunk)
 
-    frame.geom = geom_latlon
     return frame
+    frame.geom = geom_latlon
 
 
 def create_tile_for_bbox(bbox, ascending=True) -> Path:
@@ -316,7 +316,7 @@ def create_tile_for_bbox(bbox, ascending=True) -> Path:
 
 def main():
     """CLI entrpypoint
-    Example: generate_frame_tile -122 37 -121 38 --ascending
+    Example: generate_frame_tile -125 41 -124 42 --ascending
     """
     parser = argparse.ArgumentParser(description='Create a frame metadata tile for a given bounding box')
     parser.add_argument('bbox', type=int, nargs=4, help='Bounding box in the form of min_lon min_lat max_lon max_lat')
