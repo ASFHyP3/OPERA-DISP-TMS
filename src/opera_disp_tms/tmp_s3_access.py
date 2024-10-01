@@ -62,7 +62,7 @@ def get_tmp_access_keys(
     """
     resp = requests.get(tea_url)
     resp.raise_for_status()
-    creds_path.write_bytes(resp.content)
+    Path(creds_path).write_bytes(resp.content)
     return resp.json()
 
 
