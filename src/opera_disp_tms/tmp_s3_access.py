@@ -79,7 +79,7 @@ def get_credentials(
     Returns:
         dictionary of credentials
     """
-    if not creds_path.exists():
+    if not Path(creds_path).exists():
         credentials = get_tmp_access_keys(tea_url=tea_url, creds_path=creds_path)
         return credentials
 
