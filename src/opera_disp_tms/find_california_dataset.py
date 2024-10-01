@@ -117,7 +117,7 @@ class Granule:
         elif frame in DES_FRAMES:
             orbit_pass = 'DESCENDING'
         else:
-            raise ValueError(f'Frame {frame} not in the California dataset.')
+            orbit_pass = 'UNKNOWN'
         url_base = 'https://cumulus-test.asf.alaska.edu/RTC/OPERA-S1/OPERA_L3_DISP-S1_PROVISIONAL_V0'
         url = f'{url_base}/{scene_name}/{scene_name}.nc'
         s3_base = 's3://asf-cumulus-test-opera-products/OPERA_L3_DISP-S1_PROVISIONAL_V0'
@@ -256,13 +256,12 @@ def find_california_dataset() -> List[str]:
         A list of granules that are part of the California test dataset.
     """
     granule_list_path = Path(__file__).parent / 'california_dataset.csv'
-    if granule_list_path.exists():
-        print('Reading granule file...')
-        granules = read_granule_file(granule_list_path)
-    else:
-        granules = find_test_data()
-        desired_granules = filter_restults_to_california_dataset(granules)
+    breakpoint()
+    if not granule_list_path.exists():
+        all_granules = find_test_data()
+        desired_granules = filter_restults_to_california_dataset(all_granules)
         generate_granule_file(desired_granules, granule_list_path)
+    granules = read_granule_file(granule_list_path)
     return granules
 
 
