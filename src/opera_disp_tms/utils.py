@@ -2,13 +2,17 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Iterable, Union
 
+import numpy as np
 import requests
 import rioxarray  # noqa
 import s3fs
 import xarray as xr
-from osgeo import osr
+from osgeo import gdal, osr
 
 from opera_disp_tms.tmp_s3_access import get_credentials
+
+
+gdal.UseExceptions()
 
 
 DATE_FORMAT = '%Y%m%dT%H%M%SZ'
@@ -25,6 +29,23 @@ IO_PARAMS = {
         }
     },
 }
+
+
+def get_raster_array(raster_path: Path, band: int = 1) -> np.ndarray:
+    """Read a raster band as a numpy array
+
+    Args:
+        raster_path: Path to the raster file
+        band: Band to read
+
+    Returns:
+        Numpy array of the raster band
+    """
+    ds = gdal.Open(str(raster_path))
+    band = ds.GetRasterBand(band)
+    frame_map = band.ReadAsArray()
+    ds = None
+    return frame_map
 
 
 def download_file(

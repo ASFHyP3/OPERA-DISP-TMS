@@ -114,10 +114,15 @@ def update_spatiotemporal_reference(in_granule: xr.DataArray, frame: Frame) -> x
     return in_granule
 
 
-def create_blank_copy_tile(input_path, output_path):
+def create_blank_copy_tile(input_path: Path, output_path: Path) -> None:
+    """Create a blank copy of a GeoTiff file
+
+    Args:
+        input_path: Path to the input GeoTiff file
+        output_path: Path to the output GeoTiff file
+    """
     ds = gdal.Open(str(input_path))
     metadata = ds.GetMetadata()
-    del metadata['AREA_OR_POINT']
     transform = ds.GetGeoTransform()
     projection = ds.GetProjection()
     x_size = ds.RasterXSize
@@ -142,14 +147,6 @@ def create_blank_copy_tile(input_path, output_path):
     out_ds = None
 
 
-def get_frame_map(metadata_path):
-    ds = gdal.Open(str(metadata_path))
-    band = ds.GetRasterBand(1)
-    frame_map = band.ReadAsArray()
-    ds = None
-    return frame_map
-
-
 def create_sw_disp_tile(begin_date: datetime, end_date: datetime, metadata_path: Path):
     if not metadata_path.exists():
         raise FileNotFoundError(f'{metadata_path} does not exist')
@@ -158,7 +155,7 @@ def create_sw_disp_tile(begin_date: datetime, end_date: datetime, metadata_path:
 
     product_path = metadata_path.parent / metadata_path.name.replace('METADATA', 'SW_CUMUL_DISP')
 
-    frame_map = get_frame_map(metadata_path)
+    frame_map = utils.get_raster_array(metadata_path)
 
     create_blank_copy_tile(metadata_path, product_path)
     ds = gdal.Open(str(product_path), gdal.GA_Update)
