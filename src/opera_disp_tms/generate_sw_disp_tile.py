@@ -4,17 +4,13 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
+import numpy as np
 import xarray as xr
 from osgeo import gdal
 from rasterio.transform import Affine
 
+from opera_disp_tms import utils
 from opera_disp_tms.find_california_dataset import find_california_dataset
-from opera_disp_tms.utils import (
-    open_opera_disp_granule,
-    round_to_nearest_day,
-    transform_point,
-    wkt_from_epsg,
-)
 
 
 gdal.UseExceptions()
@@ -68,14 +64,16 @@ def update_spatiotemporal_reference(in_granule: xr.DataArray, frame: Frame) -> x
     if in_granule.attrs['frame'] != frame.frame:
         raise ValueError('Granule frame does not match frame metadata')
 
-    if round_to_nearest_day(in_granule.attrs['reference_date']) != round_to_nearest_day(frame.reference_date):
+    if utils.round_to_nearest_day(in_granule.attrs['reference_date']) != utils.round_to_nearest_day(
+        frame.reference_date
+    ):
         raise NotImplementedError('Granule reference date does not match frame metadata, this is not yet supported.')
 
     if in_granule.attrs['reference_point_geo'] != frame.reference_point_geo:
-        ref_x, ref_y = transform_point(
+        ref_x, ref_y = utils.transform_point(
             frame.reference_point_geo[0],
             frame.reference_point_geo[1],
-            wkt_from_epsg(4326),
+            utils.wkt_from_epsg(4326),
             in_granule['spatial_ref'].attrs['crs_wkt'],
         )
         ref_value = in_granule.sel(x=ref_x, y=ref_y, method='nearest').data.item()
@@ -86,34 +84,32 @@ def update_spatiotemporal_reference(in_granule: xr.DataArray, frame: Frame) -> x
     return in_granule
 
 
-def create_blank_copy_tile(input_path, output_path, dtype='float32'):
-    if dtype not in ['int16', 'float32']:
-        raise NotImplementedError(f'Dtype {dtype} not implemented')
-
+def create_blank_copy_tile(input_path, output_path):
     ds = gdal.Open(str(input_path))
+    metadata = ds.GetMetadata()
+    del metadata['AREA_OR_POINT']
+    transform = ds.GetGeoTransform()
+    projection = ds.GetProjection()
+    x_size = ds.RasterXSize
+    y_size = ds.RasterYSize
     band = ds.GetRasterBand(1)
-    data = band.ReadAsArray()
-    data[:] = 0
+    data = band.ReadAsArray().astype(float)
+    data[:] = np.nan
+    ds = None
 
-    if dtype == 'int16':
-        data = data.astype(int)
-        gdal_dtype = gdal.GDT_Int16
-    else:
-        data = data.astype(float)
-        gdal_dtype = gdal.GDT_Float32
-
-    opts = ['TILED=YES', 'COMPRESS=LZW', 'NUM_THREADS=ALL_CPUS']
     driver = gdal.GetDriverByName('GTiff')
-    out_ds = driver.Create(str(output_path), ds.RasterXSize, ds.RasterYSize, 1, gdal_dtype, options=opts)
+    opts = ['TILED=YES', 'COMPRESS=LZW', 'NUM_THREADS=ALL_CPUS']
+    out_ds = driver.Create(str(output_path), x_size, y_size, 1, gdal.GDT_Float32, options=opts)
 
     out_band = out_ds.GetRasterBand(1)
+    out_band.SetNoDataValue(np.nan)
     out_band.WriteArray(data)
-    out_ds.SetGeoTransform(ds.GetGeoTransform())
-    out_ds.SetProjection(ds.GetProjection())
+    out_ds.SetGeoTransform(transform)
+    out_ds.SetProjection(projection)
+    out_ds.SetMetadata(metadata)
 
     out_band.FlushCache()
     out_ds = None
-    ds = None
 
 
 def get_frame_map(metadata_path):
@@ -144,7 +140,7 @@ def create_sw_disp_tile(begin_date: datetime, end_date: datetime, metadata_path:
     frame_ids = [x.frame for x in frames]
     needed_granules = find_needed_granules(frame_ids, begin_date, end_date)
     for granule in needed_granules:
-        granule = open_opera_disp_granule(granule.s3_uri, 'short_wavelength_displacement')
+        granule = utils.open_opera_disp_granule(granule.s3_uri, 'short_wavelength_displacement')
         granule_frame = [x for x in frames if x.frame == granule.attrs['frame']][0]
         granule = update_spatiotemporal_reference(granule, granule_frame)
         granule = granule.rio.reproject('EPSG:3857', transform=transfrom, shape=frame_map.shape)
@@ -152,9 +148,10 @@ def create_sw_disp_tile(begin_date: datetime, end_date: datetime, metadata_path:
         sw_cumul_disp[frame_locations] = granule.data[frame_locations].astype(float)
 
     band.WriteArray(sw_cumul_disp)
-    band.SetNoDataValue(0)
+    metadata = ds.GetMetadata()
     secondary_dates = {f'FRAME_{x.frame}_SEC_TIME': x.reference_date.strftime(DATE_FORMAT) for x in frames}
-    ds.SetMetadata(secondary_dates)
+    metadata.update(secondary_dates)
+    ds.SetMetadata(metadata)
     ds.FlushCache()
     ds = None
 
