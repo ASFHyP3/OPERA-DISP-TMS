@@ -19,3 +19,8 @@ dependencies:
   # For Running
   - gdal
   - boto3
+  - asf_search
+  - shapely
+  - pyproj
+  - h5py
+  - s3fs
