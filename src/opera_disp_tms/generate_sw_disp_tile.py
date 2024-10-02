@@ -94,9 +94,7 @@ def update_spatiotemporal_reference(in_granule: xr.DataArray, frame: Frame) -> x
     if in_granule.attrs['frame'] != frame.frame:
         raise ValueError('Granule frame does not match frame metadata')
 
-    if utils.round_to_nearest_day(in_granule.attrs['reference_date']) != utils.round_to_nearest_day(
-        frame.reference_date
-    ):
+    if utils.round_to_day(in_granule.attrs['reference_date']) != utils.round_to_day(frame.reference_date):
         raise NotImplementedError('Granule reference date does not match frame metadata, this is not yet supported.')
 
     if in_granule.attrs['reference_point_geo'] != frame.reference_point_geo:

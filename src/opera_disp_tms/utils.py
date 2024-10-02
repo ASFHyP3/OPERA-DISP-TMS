@@ -74,7 +74,7 @@ def download_file(
     session.close()
 
 
-def round_to_nearest_day(dt: datetime) -> datetime:
+def round_to_day(dt: datetime) -> datetime:
     return (dt + timedelta(hours=12)).replace(hour=0, minute=0, second=0, microsecond=0)
 
 
@@ -93,7 +93,7 @@ def transform_point(x, y, source_wkt, target_wkt):
     target_srs.ImportFromWkt(target_wkt)
 
     transform = osr.CoordinateTransformation(source_srs, target_srs)
-    x_transformed, y_transformed, _ = transform.TransformPoint(y, x)
+    x_transformed, y_transformed, _ = transform.TransformPoint(x, y)
     return x_transformed, y_transformed
 
 
