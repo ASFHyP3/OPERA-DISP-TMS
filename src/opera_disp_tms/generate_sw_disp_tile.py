@@ -139,6 +139,7 @@ def create_sw_disp_tile(begin_date: datetime, end_date: datetime, metadata_path:
     frames = frames_from_metadata(metadata_path)
     frame_ids = [x.frame for x in frames]
     needed_granules = find_needed_granules(frame_ids, begin_date, end_date)
+    secondary_dates = {}
     for granule in needed_granules:
         granule = utils.open_opera_disp_granule(granule.s3_uri, 'short_wavelength_displacement')
         granule_frame = [x for x in frames if x.frame == granule.attrs['frame']][0]
@@ -146,10 +147,11 @@ def create_sw_disp_tile(begin_date: datetime, end_date: datetime, metadata_path:
         granule = granule.rio.reproject('EPSG:3857', transform=transfrom, shape=frame_map.shape)
         frame_locations = frame_map == granule.attrs['frame']
         sw_cumul_disp[frame_locations] = granule.data[frame_locations].astype(float)
+        secondary_date = datetime.strftime(granule.attrs['secondary_date'], DATE_FORMAT)
+        secondary_dates[f'FRAME_{granule_frame.frame}_SEC_TIME'] = secondary_date
 
     band.WriteArray(sw_cumul_disp)
     metadata = ds.GetMetadata()
-    secondary_dates = {f'FRAME_{x.frame}_SEC_TIME': x.reference_date.strftime(DATE_FORMAT) for x in frames}
     metadata.update(secondary_dates)
     ds.SetMetadata(metadata)
     ds.FlushCache()

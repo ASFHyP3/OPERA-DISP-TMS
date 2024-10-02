@@ -107,6 +107,9 @@ def open_opera_disp_granule(s3_uri: str, dataset=str):
     reference_date = datetime.strptime(s3_uri.split('/')[-1].split('_')[6], DATE_FORMAT)
     data.attrs['reference_date'] = reference_date
 
+    secondary_date = datetime.strptime(s3_uri.split('/')[-1].split('_')[7], DATE_FORMAT)
+    data.attrs['secondary_date'] = secondary_date
+
     frame = int(s3_uri.split('/')[-1].split('_')[4][1:])
     data.attrs['frame'] = frame
 
