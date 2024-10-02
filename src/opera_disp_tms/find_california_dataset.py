@@ -187,7 +187,6 @@ def find_test_data(desired_version: str = '0.4') -> Granule:
     disp_opts.maxResults = None
     cmr_keywords = [('options[readable_granule_name][pattern]', 'true')]
     granule_name_wildcard = [f'*_v{desired_version}_*']
-    granule_name_wildcard = ['*']
     results = asf.search(opts=disp_opts, cmr_keywords=cmr_keywords, granule_list=granule_name_wildcard)
     granules = [Granule.from_search_result(result) for result in results]
     return granules

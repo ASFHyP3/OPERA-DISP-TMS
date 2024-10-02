@@ -47,11 +47,13 @@ def create_product_name(parts: Iterable[str], orbit_pass: str, bbox: Iterable[in
 
 
 def reorder_frames(frame_list: Iterable[Frame], order_by: str = 'west_most') -> List[Frame]:
-    """Reorder the frames based on the relative orbit number
+    """Reorder a set of frames so that they overlap correctly when rasterized.
+    Frames within a relative orbit are stacked so that higher frame numbers are on top (so they are rasterized first).
+    Relative orbits sets are orderd by either frame number, or from west to east.
 
     Args:
         frame_list: The list of frames to reorder
-order_by: string that describes how to order the  frames (ex: 'west_most')
+        order_by: Strategy to use when ordering relative orbit sets (`frame_number`, or `west_most`)
 
     Returns:
         The reordered list of frames
@@ -299,9 +301,8 @@ def create_tile_for_bbox(bbox, ascending=True) -> Path:
     """Create the frame metadata tile for a specific bounding box
 
     Args:
-        bbox: The bounding box to create the frame for in the
-              (minx, miny, maxx, maxy) in EPSG:4326, integers only.
-        ascending: True or false flag if ascending
+        bbox: The bounding box to create the frame for in the (minx, miny, maxx, maxy) in EPSG:4326, integers only.
+        ascending: True if creating a tile for the ascending orbit pass, False for descending.
 
     Returns:
         The path to the frame metadata tile

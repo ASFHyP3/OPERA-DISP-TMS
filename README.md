@@ -14,10 +14,10 @@ For instructions on setting up your Earthdata login (and Earthdata login UAT) vi
 ### Temporary S3 credentials
 The `get_tmp_s3_creds` CLI command can be used to generate temporary S3 access credentials for a NASA Cumulus Thin Egress App (TEA):
 ```bash
-get_tmp_s3_creds --tea-url https://cumulus-test.asf.alaska.edu/s3credentials --creds-path ./creds.json
+get_tmp_s3_creds --tea-url https://cumulus-test.asf.alaska.edu/s3credentials --creds-path ~/LOCAL_OPERA-DISP-TMS_INSTALL_PATH/src/opera_disp_tms/credentials.json
 ```
 Where `--tea-url` is the TEA S3 endpoint you want to generate credentials for, and `--creds-path` is the path to save the credentials to.
-When called with no arguments (`get_tmp_s3_creds`) the CLI commands defaults to the ASF Cumulus UAT's TEA, and to the credentials path `~/LOCAL_OPERA-DISP-TMS_INSTALL_PATH/src/opera_disp_tms/credentials.json`.
+When called with no arguments (`get_tmp_s3_creds`) the CLI commands defaults to the ASF Cumulus UAT's TEA, and to the credentials path `~/LOCAL_OPERA-DISP-TMS_INSTALL_PATH/src/opera_disp_tms/credentials.json`. Tools within this package expect the credentials to be stored at `~/LOCAL_OPERA-DISP-TMS_INSTALL_PATH/src/opera_disp_tms/credentials.json`, so if you're manually generating your credentials make sure to save them in this location.
 
 **These temporary credentials expire every hour and will need to be regenerated accordingly.**
 
