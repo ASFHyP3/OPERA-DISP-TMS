@@ -1,8 +1,15 @@
+from collections import namedtuple
 from datetime import datetime
+from unittest import mock
 
+import numpy as np
+import pytest
+import rioxarray  # noqa
+import xarray as xr
 from osgeo import gdal
 
-from opera_disp_tms.generate_sw_disp_tile import frames_from_metadata
+from opera_disp_tms import generate_sw_disp_tile as sw
+from opera_disp_tms import utils
 
 
 def test_frames_from_metadata(tmp_path):
@@ -21,7 +28,7 @@ def test_frames_from_metadata(tmp_path):
         }
     )
     ds = None
-    frames = frames_from_metadata(tmp_tif)
+    frames = sw.frames_from_metadata(tmp_tif)
     assert len(frames) == 2
     assert frames[0].frame == 1
     assert frames[0].reference_date == datetime(2021, 1, 1, 0, 0, 0)
@@ -31,3 +38,46 @@ def test_frames_from_metadata(tmp_path):
     assert frames[1].reference_date == datetime(2021, 1, 2, 0, 0, 0)
     assert frames[1].reference_point_array == (3, 4)
     assert frames[1].reference_point_geo == (3.0, 4.0)
+
+
+def test_find_needed_granules():
+    GranuleStub = namedtuple('GranuleStub', ['frame', 'secondary_date'])
+    granules = [
+        GranuleStub(frame=1, secondary_date=datetime(2021, 1, 1)),
+        GranuleStub(frame=1, secondary_date=datetime(2021, 1, 2)),
+        GranuleStub(frame=2, secondary_date=datetime(2021, 1, 1)),
+        GranuleStub(frame=2, secondary_date=datetime(2021, 1, 2)),
+    ]
+    with mock.patch('opera_disp_tms.generate_sw_disp_tile.find_california_dataset', return_value=granules):
+        needed_granules = sw.find_needed_granules([1], datetime(2021, 1, 1), datetime(2021, 1, 2))
+
+    assert len(needed_granules) == 1
+    assert needed_granules[0] == granules[1]
+
+    with mock.patch('opera_disp_tms.generate_sw_disp_tile.find_california_dataset', return_value=granules):
+        needed_granules = sw.find_needed_granules([1, 2], datetime(2021, 1, 1), datetime(2021, 1, 2))
+
+    assert len(needed_granules) == 2
+    assert needed_granules[0] == granules[1]
+    assert needed_granules[1] == granules[3]
+
+
+def test_update_spatiotemporal_reference():
+    data = [[3, 2], [1, 0]]
+    tmp_array = xr.DataArray(data, coords={'y': [1.0, 2.0], 'x': [1.0, 2.0]})
+    tmp_array.attrs['frame'] = 1
+    tmp_array.attrs['reference_date'] = datetime(2021, 1, 1)
+    new_y, new_x = utils.transform_point(2, 2, utils.wkt_from_epsg(26910), utils.wkt_from_epsg(4326))
+    tmp_array.attrs['reference_point_geo'] = (new_x, new_y)
+    tmp_array.rio.write_crs(utils.wkt_from_epsg(26910), inplace=True)
+
+    ref_y, ref_x = utils.transform_point(1, 1, utils.wkt_from_epsg(26910), utils.wkt_from_epsg(4326))
+    frame = sw.Frame(1, datetime(2021, 1, 1), (0, 0), (ref_x, ref_y))
+
+    updated_array = sw.update_spatiotemporal_reference(tmp_array, frame)
+    assert np.all(updated_array.data == np.array([[0, -1], [-2, -3]]))
+    assert updated_array.attrs['reference_point_geo'] == frame.reference_point_geo
+
+    tmp_array.attrs['reference_date'] = datetime(2021, 1, 2)
+    with pytest.raises(NotImplementedError):
+        updated_array = sw.update_spatiotemporal_reference(tmp_array, frame)

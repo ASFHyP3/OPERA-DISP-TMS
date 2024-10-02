@@ -3,6 +3,7 @@ import warnings
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import Iterable
 
 import numpy as np
 import xarray as xr
@@ -10,7 +11,7 @@ from osgeo import gdal
 from rasterio.transform import Affine
 
 from opera_disp_tms import utils
-from opera_disp_tms.find_california_dataset import find_california_dataset
+from opera_disp_tms.find_california_dataset import Granule, find_california_dataset
 
 
 gdal.UseExceptions()
@@ -21,13 +22,23 @@ DATE_FORMAT = '%Y%m%dT%H%M%SZ'
 
 @dataclass
 class Frame:
+    """Dataclass for frame metadata"""
+
     frame: int
     reference_date: datetime
     reference_point_array: tuple  # column, row
     reference_point_geo: tuple  # lon, lat
 
 
-def frames_from_metadata(metadata_path):
+def frames_from_metadata(metadata_path: Path) -> list[Frame]:
+    """Extract frame metadata from a metadata GeoTiff file
+
+    Args:
+        metadata_path (Path): Path to the metadata GeoTiff file
+
+    Returns:
+        List of frame metadata
+    """
     info_dict = gdal.Info(str(metadata_path), options=['-json'])
     frame_metadata = info_dict['metadata']['']
     frame_ids = [int(x) for x in frame_metadata['OPERA_FRAMES'].split(', ')]
@@ -46,7 +57,17 @@ def frames_from_metadata(metadata_path):
     return frames
 
 
-def find_needed_granules(frame_ids, begin_date, end_date):
+def find_needed_granules(frame_ids: Iterable[int], begin_date: datetime, end_date: datetime) -> Iterable[Granule]:
+    """Find the granules needed to generate a short wavelength displacement tile
+
+    Args:
+        frame_ids: The frame ids to generate the tile for
+        begin_date: The beginning of the date range to generate the tile for
+        end_date: The end of the date range to generate the tile for
+
+    Returns:
+        A list of granules needed to generate the tile
+    """
     cali_dataset = find_california_dataset()
     needed_granules = []
     for frame_id in frame_ids:
@@ -61,6 +82,15 @@ def find_needed_granules(frame_ids, begin_date, end_date):
 
 
 def update_spatiotemporal_reference(in_granule: xr.DataArray, frame: Frame) -> xr.DataArray:
+    """Update the spatiotemporal reference information of a granule to match the frame metadata
+
+    Args:
+        in_granule: The granule to update
+        frame: The frame metadata to update the granule to
+
+    Returns:
+        The updated granule
+    """
     if in_granule.attrs['frame'] != frame.frame:
         raise ValueError('Granule frame does not match frame metadata')
 
