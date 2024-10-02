@@ -20,7 +20,7 @@ gdal.UseExceptions()
 
 def create_product_name(parts: Iterable[str], orbit_pass: str, bbox: Iterable[int]) -> str:
     """Create a product name for a frame metadata tile
-    Should be in the format: metadata_ascendign_N02E001_N04E003
+    Should be in the format: metadata_ascending_N02E001_N04E003
 
     Args:
         parts: The parts of the product name
@@ -43,10 +43,13 @@ def create_product_name(parts: Iterable[str], orbit_pass: str, bbox: Iterable[in
 
 
 def reorder_frames(frame_list: Iterable[Frame], order_by: str = 'west_most') -> List[Frame]:
-    """Reorder the frames based on the relative orbit number
+    """Reorder a set of frames so that they overlap correctly when rasterized.
+    Frames within a relative orbit are stacked so that higher frame numbers are on top (so they are rasterized first).
+    Relative orbits sets are orderd by either frame number, or from west to east.
 
     Args:
         frame_list: The list of frames to reorder
+        order_by: Strategy to use when ordering relative orbit sets (`frame_number`, or `west_most`)
 
     Returns:
         The reordered list of frames
@@ -237,7 +240,7 @@ def read_reference_info(h5_fobj: h5py.File) -> Tuple:
     return ref_point_array, ref_point_geo, epsg
 
 
-def add_metadata_to_tile(tile_path: Path, ascending=True) -> None:
+def add_metadata_to_tile(tile_path: Path) -> None:
     """Add metadata to the frame metadata tile
 
     Args:
@@ -286,17 +289,16 @@ def update_frame_geometry(frame: Frame, buffer_size: int = -3500) -> Frame:
 
     utm2latlon = pyproj.Transformer.from_crs(crs_utm, crs_latlon, always_xy=True).transform
     geom_latlon = transform(utm2latlon, geom_shrunk)
-
-    return frame
     frame.geom = geom_latlon
+    return frame
 
 
 def create_tile_for_bbox(bbox, ascending=True) -> Path:
     """Create the frame metadata tile for a specific bounding box
 
     Args:
-        bbox: The bounding box to create the frame for in the
-              (minx, miny, maxx, maxy) in EPSG:4326, integers only.
+        bbox: The bounding box to create the frame for in the (minx, miny, maxx, maxy) in EPSG:4326, integers only.
+        ascending: True if creating a tile for the ascending orbit pass, False for descending.
 
     Returns:
         The path to the frame metadata tile
@@ -315,7 +317,7 @@ def create_tile_for_bbox(bbox, ascending=True) -> Path:
 
 
 def main():
-    """CLI entrpypoint
+    """CLI entrypoint
     Example: generate_frame_tile -125 41 -124 42 --ascending
     """
     parser = argparse.ArgumentParser(description='Create a frame metadata tile for a given bounding box')

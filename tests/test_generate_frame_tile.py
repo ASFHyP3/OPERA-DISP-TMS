@@ -1,12 +1,14 @@
 """Test functions in generate_frame_tile.py"""
+
 from collections import namedtuple
 
 import numpy as np
 import pytest
 from osgeo import gdal
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, box
 
 from opera_disp_tms import generate_frame_tile
+from opera_disp_tms.frames import Frame
 
 
 gdal.UseExceptions()
@@ -66,3 +68,32 @@ def test_create_empty_tile_frame(tmp_path):
     assert info['wgs84Extent']
     lat_lon_bounds = Polygon(info['wgs84Extent']['coordinates'][0]).bounds
     assert np.isclose(lat_lon_bounds, [1, 1, 2, 2], rtol=1e-4).all()
+
+
+def test_burn_frame(tmp_path):
+    frame1 = Frame(9999, 1, 1, 'ASCENDING', 1, 1, box(1, 1, 2, 1.5))
+
+    test_tif = tmp_path / 'test.tif'
+    generate_frame_tile.create_empty_frame_tile([1, 1, 2, 2], test_tif)
+
+    generate_frame_tile.burn_frame(frame1, test_tif)
+
+    ds = gdal.Open(str(test_tif))
+    band = ds.GetRasterBand(1)
+    data = band.ReadAsArray()
+    ds = None
+
+    golden = np.zeros(data.shape)
+    golden[int(data.shape[0] / 2) :, :] = 9999
+    assert np.all(data == golden)
+
+    frame2 = Frame(10000, 1, 1, 'ASCENDING', 1, 1, box(1, 1, 1.5, 2))
+    generate_frame_tile.burn_frame(frame2, test_tif)
+
+    ds = gdal.Open(str(test_tif))
+    band = ds.GetRasterBand(1)
+    data = band.ReadAsArray()
+    ds = None
+
+    golden[:, : int(data.shape[0] / 2) - 1] = 10000
+    assert np.all(data == golden)

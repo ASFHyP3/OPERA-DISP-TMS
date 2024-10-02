@@ -62,7 +62,7 @@ def get_tmp_access_keys(
     """
     resp = requests.get(tea_url)
     resp.raise_for_status()
-    creds_path.write_bytes(resp.content)
+    Path(creds_path).write_bytes(resp.content)
     return resp.json()
 
 
@@ -79,7 +79,7 @@ def get_credentials(
     Returns:
         dictionary of credentials
     """
-    if not creds_path.exists():
+    if not Path(creds_path).exists():
         credentials = get_tmp_access_keys(tea_url=tea_url, creds_path=creds_path)
         return credentials
 

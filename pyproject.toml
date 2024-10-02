@@ -24,7 +24,6 @@ dependencies = [
     "gdal",
     "boto3",
     "asf_search",
-    # "sqlite3", Not sure why including this breaks installs
     "shapely",
     "pyproj",
     "h5py",
