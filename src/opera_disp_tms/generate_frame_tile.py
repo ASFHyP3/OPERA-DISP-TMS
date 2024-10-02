@@ -24,7 +24,7 @@ def check_bbox_all_int(bbox: Iterable[int]):
 
 def create_product_name(parts: Iterable[str], orbit_pass: str, bbox: Iterable[int]) -> str:
     """Create a product name for a frame metadata tile
-    Should be in the format: metadata_ascendign_N02E001_N04E003
+    Should be in the format: metadata_ascending_N02E001_N04E003
 
     Args:
         parts: The parts of the product name
@@ -51,6 +51,7 @@ def reorder_frames(frame_list: Iterable[Frame], order_by: str = 'west_most') -> 
 
     Args:
         frame_list: The list of frames to reorder
+order_by: string that describes how to order the  frames (ex: 'west_most')
 
     Returns:
         The reordered list of frames
@@ -241,7 +242,7 @@ def read_reference_info(h5_fobj: h5py.File) -> Tuple:
     return ref_point_array, ref_point_geo, epsg
 
 
-def add_metadata_to_tile(tile_path: Path, ascending=True) -> None:
+def add_metadata_to_tile(tile_path: Path) -> None:
     """Add metadata to the frame metadata tile
 
     Args:
@@ -300,6 +301,7 @@ def create_tile_for_bbox(bbox, ascending=True) -> Path:
     Args:
         bbox: The bounding box to create the frame for in the
               (minx, miny, maxx, maxy) in EPSG:4326, integers only.
+        ascending: True or false flag if ascending
 
     Returns:
         The path to the frame metadata tile
@@ -318,7 +320,7 @@ def create_tile_for_bbox(bbox, ascending=True) -> Path:
 
 
 def main():
-    """CLI entrpypoint
+    """CLI entrypoint
     Example: generate_frame_tile -125 41 -124 42 --ascending
     """
     parser = argparse.ArgumentParser(description='Create a frame metadata tile for a given bounding box')
