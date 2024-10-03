@@ -70,11 +70,11 @@ def test_update_spatiotemporal_reference():
     tmp_array = xr.DataArray(data, coords={'y': [1.0, 2.0], 'x': [1.0, 2.0]})
     tmp_array.attrs['frame'] = 1
     tmp_array.attrs['reference_date'] = datetime(2021, 1, 1)
-    new_y, new_x = utils.transform_point(2, 2, utils.wkt_from_epsg(26910), utils.wkt_from_epsg(4326))
+    new_x, new_y = utils.transform_point(2, 2, utils.wkt_from_epsg(26910), utils.wkt_from_epsg(4326))
     tmp_array.attrs['reference_point_geo'] = (new_x, new_y)
     tmp_array.rio.write_crs(utils.wkt_from_epsg(26910), inplace=True)
 
-    ref_y, ref_x = utils.transform_point(1, 1, utils.wkt_from_epsg(26910), utils.wkt_from_epsg(4326))
+    ref_x, ref_y = utils.transform_point(1, 1, utils.wkt_from_epsg(26910), utils.wkt_from_epsg(4326))
     frame = sw.Frame(1, datetime(2021, 1, 1), (0, 0), (ref_x, ref_y))
 
     updated_array = sw.update_spatiotemporal_reference(tmp_array, frame)

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Iterable, Union
+from typing import Iterable, Tuple, Union
 
 import numpy as np
 import requests
@@ -85,7 +85,7 @@ def wkt_from_epsg(epsg_code):
     return wkt
 
 
-def transform_point(x, y, source_wkt, target_wkt):
+def transform_point(x: float, y: float, source_wkt: str, target_wkt: str) -> Tuple[float]:
     source_srs = osr.SpatialReference()
     source_srs.ImportFromWkt(source_wkt)
 
@@ -93,7 +93,8 @@ def transform_point(x, y, source_wkt, target_wkt):
     target_srs.ImportFromWkt(target_wkt)
 
     transform = osr.CoordinateTransformation(source_srs, target_srs)
-    x_transformed, y_transformed, _ = transform.TransformPoint(x, y)
+    # For some reason, the order of x and y is reversed in the function call
+    y_transformed, x_transformed, z_transformed = transform.TransformPoint(y, x)
     return x_transformed, y_transformed
 
 

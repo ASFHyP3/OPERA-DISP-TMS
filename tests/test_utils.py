@@ -13,9 +13,11 @@ def test_round_to_day():
 def test_transform_point():
     wkt_4326 = ut.wkt_from_epsg(4326)
     wkt_3857 = ut.wkt_from_epsg(3857)
-    assert ut.transform_point(0, 0, wkt_4326, wkt_3857) == (0, 0)
+    test_point = (-110, 45)
+
+    transformed1 = ut.transform_point(*test_point, wkt_4326, wkt_4326)
+    assert np.isclose(test_point, transformed1).all()
     
-    bilbo = (45, -120)
-    there = ut.transform_point(*bilbo, wkt_4326, wkt_3857)
-    and_back_agian = ut.transform_point(*there, wkt_3857, wkt_4326)
-    assert np.isclose(bilbo, and_back_agian).all()
+    transformed2 = ut.transform_point(*test_point, wkt_4326, wkt_3857)
+    test_point_recreated = ut.transform_point(*transformed2, wkt_3857, wkt_4326)
+    assert np.isclose(test_point, test_point_recreated).all()
