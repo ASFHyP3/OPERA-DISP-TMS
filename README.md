@@ -22,19 +22,26 @@ When called with no arguments (`get_tmp_s3_creds`) the CLI commands defaults to 
 **These temporary credentials expire every hour and will need to be regenerated accordingly.**
 
 ## Usage
-### Create a frame metadata tile
-These tiles serve as the foundation for the creation of all other Tile Map Server datasets. More details on the structure of these datasets can be found in the [Design.md](https://github.com/ASFHyP3/OPERA-DISP-TMS/blob/develop/Design.md) document.
-
 > [!WARNING]
 > Products in ASF's Cumulus UAT environment are not publicly accessible. To run this workflow using data hosted in ASF's Cumulus UAT environment you first need to generate temporary S3 access credentials while on the NASA or ASF DAAC VPN, then copy the created credentials to an AWS us-west-2 compute environment at the location `~/LOCAL_OPERA-DISP-TMS_INSTALL_PATH/src/opera_disp_tms/credentials.json`. See [Create temp S3 credentials](#temporary-s3-credentials) for more details.
 
+### Create a frame metadata tile
+These tiles serve as the foundation for the creation of all other Tile Map Server datasets. More details on the structure of these datasets can be found in the [Design.md](https://github.com/ASFHyP3/OPERA-DISP-TMS/blob/develop/Design.md) document.
+
 The `generate_frame_tile` CLI command can be used to generate a frame metadata tile:
 ```bash
-generate_frame_tile -122 37 -121 38 --ascending
+generate_frame_tile -125 41 -124 42 --ascending
 ```
-Where `-122 37 -121 38` is a desired bounding box in **integer** `minx, miny, max, maxy` longitude/latitude values, and `--ascending` specifies which orbit direction you want to generate a frame metadata tile for (`--ascending` for ascending, omit for descending).
+Where `-125 41 -124 42` is a desired bounding box in **integer** `minx, miny, max, maxy` longitude/latitude values, and `--ascending` specifies which orbit direction you want to generate a frame metadata tile for (`--ascending` for ascending, omit for descending).
 
 For TMS generation ASF will be using 1x1 degree tiles.
+
+### Create a Short Wavelength Cumulative Displacement tile
+The `generate_sw_disp_tile` CLI command can be used to generate a frame metadata tile:
+```bash
+generate_sw_disp_tile METADATA_ASCENDING_N41W125_N42W124.tif --begin-date 20170901 --end-date 20171231
+```
+Where `METADATA_ASCENDING_N41W125_N42W124.tif` is the path to the frame metadata tile you want to generate a Short Wavelength Cumulative Displacement tile for, and `--begin-date` and `--end-date` specify the date range you want to generate the Short Wavelength Cumulative Displacement tile for.
 
 ## Developer Setup
 1. Ensure that conda is installed on your system (we recommend using [mambaforge](https://github.com/conda-forge/miniforge#mambaforge) to reduce setup times).
