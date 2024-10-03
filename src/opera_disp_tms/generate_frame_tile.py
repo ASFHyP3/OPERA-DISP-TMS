@@ -1,4 +1,5 @@
 import argparse
+import warnings
 from pathlib import Path
 from typing import Iterable, List, Tuple
 
@@ -258,14 +259,18 @@ def add_metadata_to_tile(tile_path: Path) -> None:
     cal_data = find_california_dataset()
     frame_metadata = {}
     for frame in frames:
-        first_granule = min([x for x in cal_data if x.frame == frame], key=lambda x: x.reference_date)
+        relevant_granules = [x for x in cal_data if x.frame == frame]
+        if len(relevant_granules) == 0:
+            first_granule = min(relevant_granules, key=lambda x: x.reference_date)
 
-        ref_point_array, ref_point_geo, epsg = get_granule_reference_info_s3(first_granule.s3_uri)
-        frame_metadata[f'FRAME_{frame}_REF_POINT_ARRAY'] = ', '.join([str(x) for x in ref_point_array])
-        frame_metadata[f'FRAME_{frame}_REF_POINT_GEO'] = ', '.join([str(x) for x in ref_point_geo])
-        frame_metadata[f'FRAME_{frame}_EPSG'] = str(epsg)
+            ref_point_array, ref_point_geo, epsg = get_granule_reference_info_s3(first_granule.s3_uri)
+            frame_metadata[f'FRAME_{frame}_REF_POINT_ARRAY'] = ', '.join([str(x) for x in ref_point_array])
+            frame_metadata[f'FRAME_{frame}_REF_POINT_GEO'] = ', '.join([str(x) for x in ref_point_geo])
+            frame_metadata[f'FRAME_{frame}_EPSG'] = str(epsg)
 
-        frame_metadata[f'FRAME_{frame}_REF_TIME'] = first_granule.reference_date.strftime('%Y%m%dT%H%M%SZ')
+            frame_metadata[f'FRAME_{frame}_REF_TIME'] = first_granule.reference_date.strftime('%Y%m%dT%H%M%SZ')
+        else:
+            warnings.warn(f'No granules found for frame {frame}, metadata will be missing for this frame.')
 
     tile_ds.SetMetadata({'OPERA_FRAMES': ', '.join([str(frame) for frame in frames]), **frame_metadata})
 
