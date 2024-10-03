@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Iterable
 
 import numpy as np
-import s3fs
 import xarray as xr
 from osgeo import gdal
 from rasterio.transform import Affine
@@ -14,7 +13,6 @@ from rasterio.transform import Affine
 from opera_disp_tms import utils
 from opera_disp_tms.find_california_dataset import Granule, find_california_dataset
 from opera_disp_tms.s3_xarray import open_opera_disp_granule
-from opera_disp_tms.tmp_s3_access import get_credentials
 from opera_disp_tms.utils import DATE_FORMAT
 
 
@@ -163,17 +161,14 @@ def create_product_name(metadata_name: str, begin_date: datetime, end_date: date
     return name
 
 
-def create_sw_disp_tile(
-    metadata_path: Path, begin_date: datetime, end_date: datetime, use_profile: bool = False
-) -> Path:
+def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: datetime) -> Path:
     """Create a short wavelength cumulative displacement tile
 
     Args:
         metadata_path: Path to the metadata GeoTiff file
         begin_date: The beginning of the date range to generate the tile for
         end_date: The end of the date range to generate the tile for
-        use_profile: Use existing AWS profile credentials for data access
-    
+
     Returns:
         Path to the generated tile
     """
@@ -181,14 +176,6 @@ def create_sw_disp_tile(
         raise FileNotFoundError(f'{metadata_path} does not exist')
     if begin_date > end_date:
         raise ValueError('Begin date must be before end date')
-
-    if use_profile:
-        s3_fs = s3fs.S3FileSystem()
-    else:
-        creds = get_credentials()
-        s3_fs = s3fs.S3FileSystem(
-            key=creds['accessKeyId'], secret=creds['secretAccessKey'], token=creds['sessionToken']
-        )
 
     product_name = create_product_name(metadata_path.name, begin_date, end_date)
     product_path = metadata_path.parent / product_name
@@ -206,7 +193,7 @@ def create_sw_disp_tile(
     needed_granules = find_needed_granules(frame_ids, begin_date, end_date)
     secondary_dates = {}
     for granule in needed_granules:
-        granule = open_opera_disp_granule(granule.s3_uri, s3_fs, 'short_wavelength_displacement')
+        granule = open_opera_disp_granule(granule.s3_uri, 'short_wavelength_displacement')
         granule_frame = [x for x in frames if x.frame == granule.attrs['frame']][0]
         granule = update_spatiotemporal_reference(granule, granule_frame)
         granule = granule.rio.reproject('EPSG:3857', transform=transfrom, shape=frame_map.shape)
@@ -233,9 +220,6 @@ def main():
     parser.add_argument('metadata_path', type=str, help='Path to the metadata GeoTiff file')
     parser.add_argument('--begin-date', type=str, help='Start of date range to generate tile for in format: %Y%m%d')
     parser.add_argument('--end-date', type=str, help='End of date range to generate tile for in format: %Y%m%d')
-    parser.add_argument(
-        '--use-profile', action='store_true', help='Use existing AWS profile credentials for data access'
-    )
 
     args = parser.parse_args()
     args.metadata_path = Path(args.metadata_path)

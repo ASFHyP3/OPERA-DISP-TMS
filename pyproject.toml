@@ -31,6 +31,7 @@ dependencies = [
     "h5netcdf",
     "rioxarray",
     "xarray",
+    "cachetools",
 ]
 dynamic = ["version", "readme"]
 

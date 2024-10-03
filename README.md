@@ -3,7 +3,19 @@
 Package for [OPERA DISP](https://www.jpl.nasa.gov/go/opera/products/disp-product-suite/) Tile Map Server (TMS) creation.
 
 ## Installation
-See [Develop Setup](#developer-setup)
+1. Ensure that conda is installed on your system (we recommend using [mambaforge](https://github.com/conda-forge/miniforge#mambaforge) to reduce setup times).
+2. Download a local version of the `OPERA-DISP-TMS` repository (`git clone https://github.com/ASFHyP3/opera-disp-tms.git`)
+3. In the base directory for this project call `mamba env create -f environment.yml` to create your Python environment, then activate it (`mamba activate opera-disp-tms`)
+4. Finally, install a development version of the package (`python -m pip install -e .`)
+
+To run all commands in sequence use:
+```bash
+git clone https://github.com/ASFHyP3/opera-disp-tms.git 
+cd OPERA-DISP-TMS
+mamba env create -f environment.yml
+mamba activate opera-disp-tms
+python -m pip install -e .
+```
 
 ## Credentials
 ### Earthdata
@@ -11,19 +23,20 @@ This repository assumes that you have credentials for `urs.earthdata.nasa.gov` (
 
 For instructions on setting up your Earthdata login (and Earthdata login UAT) via a `.netrc` file, check out this [guide](https://harmony.earthdata.nasa.gov/docs#getting-started).
 
-### Temporary S3 credentials
+### Temporary AWS credentials
 The `get_tmp_s3_creds` CLI command can be used to generate temporary S3 access credentials for a NASA Cumulus Thin Egress App (TEA):
 ```bash
-get_tmp_s3_creds --tea-url https://cumulus-test.asf.alaska.edu/s3credentials --creds-path ~/LOCAL_OPERA-DISP-TMS_INSTALL_PATH/src/opera_disp_tms/credentials.json
+get_tmp_s3_creds --endpoint https://cumulus-test.asf.alaska.edu/s3credentials
 ```
-Where `--tea-url` is the TEA S3 endpoint you want to generate credentials for, and `--creds-path` is the path to save the credentials to.
-When called with no arguments (`get_tmp_s3_creds`) the CLI commands defaults to the ASF Cumulus UAT's TEA, and to the credentials path `~/LOCAL_OPERA-DISP-TMS_INSTALL_PATH/src/opera_disp_tms/credentials.json`. Tools within this package expect the credentials to be stored at `~/LOCAL_OPERA-DISP-TMS_INSTALL_PATH/src/opera_disp_tms/credentials.json`, so if you're manually generating your credentials make sure to save them in this location.
+Where `--endpoint` is the TEA S3 endpoint you want to generate credentials for. When called with no arguments (`get_tmp_s3_creds`) the CLI commands defaults to the ASF Cumulus UAT's TEA endpoint.
+
+This CLI command will print three bash `export` commands to the terminal. Run these commands to configure your new temporary AWS credentials
 
 **These temporary credentials expire every hour and will need to be regenerated accordingly.**
 
 ## Usage
 > [!WARNING]
-> Products in ASF's Cumulus UAT environment are not publicly accessible. To run this workflow using data hosted in ASF's Cumulus UAT environment you first need to generate temporary S3 access credentials while on the NASA or ASF DAAC VPN, then copy the created credentials to an AWS us-west-2 compute environment at the location `~/LOCAL_OPERA-DISP-TMS_INSTALL_PATH/src/opera_disp_tms/credentials.json`. See [Create temp S3 credentials](#temporary-s3-credentials) for more details.
+> Products in ASF's Cumulus UAT environment are not publicly accessible. To run this workflow using data hosted in ASF's Cumulus UAT environment you first need to generate temporary S3 access credentials while on the NASA or ASF DAAC VPN, then `export` the created credentials to an AWS us-west-2 compute environment. See [Temporary AWS Credentials](#temporary-aws-credentials) for more details.
 
 ### Create a frame metadata tile
 These tiles serve as the foundation for the creation of all other Tile Map Server datasets. More details on the structure of these datasets can be found in the [Design.md](https://github.com/ASFHyP3/OPERA-DISP-TMS/blob/develop/Design.md) document.
@@ -43,20 +56,6 @@ generate_sw_disp_tile METADATA_ASCENDING_N41W125_N42W124.tif --begin-date 201709
 ```
 Where `METADATA_ASCENDING_N41W125_N42W124.tif` is the path to the frame metadata tile you want to generate a Short Wavelength Cumulative Displacement tile for, and `--begin-date` and `--end-date` specify the date range you want to generate the Short Wavelength Cumulative Displacement tile for.
 
-## Developer Setup
-1. Ensure that conda is installed on your system (we recommend using [mambaforge](https://github.com/conda-forge/miniforge#mambaforge) to reduce setup times).
-2. Download a local version of the `OPERA-DISP-TMS` repository (`git clone https://github.com/ASFHyP3/opera-disp-tms.git`)
-3. In the base directory for this project call `mamba env create -f environment.yml` to create your Python environment, then activate it (`mamba activate opera-disp-tms`)
-4. Finally, install a development version of the package (`python -m pip install -e .`)
-
-To run all commands in sequence use:
-```bash
-git clone https://github.com/ASFHyP3/opera-disp-tms.git 
-cd OPERA-DISP-TMS
-mamba env create -f environment.yml
-mamba activate opera-disp-tms
-python -m pip install -e .
-```
 ## License
 The OPERA-DISP-TMS package is licensed under the Apache License, Version 2 license. See the LICENSE file for more details.
 

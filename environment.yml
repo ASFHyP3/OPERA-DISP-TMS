@@ -27,3 +27,4 @@ dependencies:
   - xarray
   - rioxarray
   - s3fs
+  - cachetools
