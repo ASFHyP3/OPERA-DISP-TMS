@@ -56,6 +56,25 @@ generate_sw_disp_tile METADATA_ASCENDING_N41W125_N42W124.tif --begin-date 201709
 ```
 Where `METADATA_ASCENDING_N41W125_N42W124.tif` is the path to the frame metadata tile you want to generate a Short Wavelength Cumulative Displacement tile for, and `--begin-date` and `--end-date` specify the date range you want to generate the Short Wavelength Cumulative Displacement tile for.
 
+### Create a Tile Map
+The `create_tile_map` CLI command generates a directory with small .png tiles from a list of rasters in a common projection, following the OSGeo Tile Map Service Specification, using gdal2tiles: https://gdal.org/en/latest/programs/gdal2tiles.html
+
+To create a tile map from a set of displacement GeoTIFFs:
+```bash
+create_tile_map tiles/ \
+  SW_CUMUL_DISP_20170901_20171231_ASCENDING_N41W125_N42W122.tif \
+  SW_CUMUL_DISP_20170901_20171231_ASCENDING_N41W125_N42W123.tif \
+  SW_CUMUL_DISP_20170901_20171231_ASCENDING_N41W125_N42W124.tif
+```
+
+A simple web page with a viewer based on OpenLayers is included to visualize the map in a browser, e.g. `tiles/openlayers.html`.
+
+The output directory can be copied to a public AWS S3 bucket (or any other web server) to access the map tiles over the internet:
+```
+aws s3 cp tiles/ s3://myBucket/tiles/ --recursive
+```
+The online map can then be reviewed in a browser, e.g. https://myBucket.s3.amazonaws.com/tiles/openlayers.html
+
 ## License
 The OPERA-DISP-TMS package is licensed under the Apache License, Version 2 license. See the LICENSE file for more details.
 
