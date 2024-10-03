@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Iterable
 
 import numpy as np
+import s3fs
 import xarray as xr
 from osgeo import gdal
 from rasterio.transform import Affine
@@ -13,6 +14,7 @@ from rasterio.transform import Affine
 from opera_disp_tms import utils
 from opera_disp_tms.find_california_dataset import Granule, find_california_dataset
 from opera_disp_tms.s3_xarray import open_opera_disp_granule
+from opera_disp_tms.tmp_s3_access import get_credentials
 from opera_disp_tms.utils import DATE_FORMAT
 
 
@@ -150,6 +152,9 @@ def create_sw_disp_tile(begin_date: datetime, end_date: datetime, metadata_path:
     if begin_date > end_date:
         raise ValueError('Begin date must be before end date')
 
+    creds = get_credentials()
+    s3_fs = s3fs.S3FileSystem(key=creds['accessKeyId'], secret=creds['secretAccessKey'], token=creds['sessionToken'])
+
     product_path = metadata_path.parent / metadata_path.name.replace('METADATA', 'SW_CUMUL_DISP')
 
     frame_map = utils.get_raster_array(metadata_path)
@@ -165,7 +170,7 @@ def create_sw_disp_tile(begin_date: datetime, end_date: datetime, metadata_path:
     needed_granules = find_needed_granules(frame_ids, begin_date, end_date)
     secondary_dates = {}
     for granule in needed_granules:
-        granule = open_opera_disp_granule(granule.s3_uri, 'short_wavelength_displacement')
+        granule = open_opera_disp_granule(granule.s3_uri, s3_fs, 'short_wavelength_displacement')
         granule_frame = [x for x in frames if x.frame == granule.attrs['frame']][0]
         granule = update_spatiotemporal_reference(granule, granule_frame)
         granule = granule.rio.reproject('EPSG:3857', transform=transfrom, shape=frame_map.shape)

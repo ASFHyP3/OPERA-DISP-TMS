@@ -1,10 +1,8 @@
 from datetime import datetime
 
 import rioxarray  # noqa
-import s3fs
 import xarray as xr
 
-from opera_disp_tms.tmp_s3_access import get_credentials
 from opera_disp_tms.utils import DATE_FORMAT
 
 
@@ -21,11 +19,9 @@ IO_PARAMS = {
         }
     },
 }
-CREDS = get_credentials()
-S3_FS = s3fs.S3FileSystem(key=CREDS['accessKeyId'], secret=CREDS['secretAccessKey'], token=CREDS['sessionToken'])
 
 
-def open_s3_xarray_dataset(s3_uri: str, group: str = '/') -> xr.Dataset:
+def open_s3_xarray_dataset(s3_uri: str, s3_fs, group: str = '/') -> xr.Dataset:
     """Open an xarray hdf5/netcdf4 dataset from S3
 
     Args:
@@ -33,12 +29,12 @@ def open_s3_xarray_dataset(s3_uri: str, group: str = '/') -> xr.Dataset:
         group: Group within the dataset to open
     """
     ds = xr.open_dataset(
-        S3_FS.open(s3_uri, **IO_PARAMS['fsspec_params']), group=group, engine='h5netcdf', **IO_PARAMS['h5py_params']
+        s3_fs.open(s3_uri, **IO_PARAMS['fsspec_params']), group=group, engine='h5netcdf', **IO_PARAMS['h5py_params']
     )
     return ds
 
 
-def open_opera_disp_granule(s3_uri: str, data_var=str) -> xr.DataArray:
+def open_opera_disp_granule(s3_uri: str, s3_fs, data_var=str) -> xr.DataArray:
     """Open an OPERA DISP granule from S3 and set important attributes
 
     Args:
@@ -48,9 +44,9 @@ def open_opera_disp_granule(s3_uri: str, data_var=str) -> xr.DataArray:
     Returns:
         DataArray of the granule
     """
-    ds = open_s3_xarray_dataset(s3_uri)
+    ds = open_s3_xarray_dataset(s3_uri, s3_fs)
     data = ds[data_var]
-    ds_metadata = open_s3_xarray_dataset(s3_uri, group='/corrections')
+    ds_metadata = open_s3_xarray_dataset(s3_uri, s3_fs, group='/corrections')
 
     row = int(ds_metadata['reference_point'].attrs['rows'])
     col = int(ds_metadata['reference_point'].attrs['cols'])
