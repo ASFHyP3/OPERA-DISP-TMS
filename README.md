@@ -36,6 +36,25 @@ Where `-122 37 -121 38` is a desired bounding box in **integer** `minx, miny, ma
 
 For TMS generation ASF will be using 1x1 degree tiles.
 
+### Create a Tile Map
+The `create_tile_map` CLI command generates a directory with small .png tiles from a list of rasters in a common projection, following the OSGeo Tile Map Service Specification, using gdal2tiles: https://gdal.org/en/latest/programs/gdal2tiles.html
+
+To create a tile map from a set of displacement GeoTIFFs:
+```bash
+python create_tile_map tiles/ \
+  SW_CUMUL_DISP_20170901_20171231_ASCENDING_N41W125_N42W122.tif \
+  SW_CUMUL_DISP_20170901_20171231_ASCENDING_N41W125_N42W123.tif \
+  SW_CUMUL_DISP_20170901_20171231_ASCENDING_N41W125_N42W124.tif
+```
+
+Simple web pages with viewers based on Google Maps, OpenLayers and Leaflet are included to visualize the map in a browser, e.g. `tiles/openlayers.html`.
+
+The output directory can be copied to AWS S3 (or any other web server) to access the map tiles over the internet:
+```
+aws s3 cp tiles/ s3://myBucket/tiles/ --recursive
+```
+The online map can then be reviewed in a browser, e.g. https://myBucket.s3.amazonaws.com/tiles/openlayers.html
+
 ## Developer Setup
 1. Ensure that conda is installed on your system (we recommend using [mambaforge](https://github.com/conda-forge/miniforge#mambaforge) to reduce setup times).
 2. Download a local version of the `OPERA-DISP-TMS` repository (`git clone https://github.com/ASFHyP3/opera-disp-tms.git`)

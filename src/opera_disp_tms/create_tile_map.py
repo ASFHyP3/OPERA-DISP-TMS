@@ -10,6 +10,13 @@ gdal.UseExceptions()
 
 
 def create_tile_map(output_folder: str, input_rasters: list[str]):
+    """Generate a directory with small .png tiles from a list of rasters in a common projection, following the OSGeo
+    Tile Map Service Specification, using gdal2tiles: https://gdal.org/en/latest/programs/gdal2tiles.html
+
+    Args:
+        output_folder: Path of the output directory to create
+        input_rasters: List of gdal-compatible raster paths to mosaic
+    """
     with tempfile.NamedTemporaryFile() as mosaic_vrt, tempfile.NamedTemporaryFile() as byte_vrt:
         # mosaic input rasters
         gdal.BuildVRT(mosaic_vrt.name, input_rasters)
@@ -36,9 +43,13 @@ def create_tile_map(output_folder: str, input_rasters: list[str]):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('output_folder', type=str)
-    parser.add_argument('input_rasters', type=str, nargs='+')
+    parser = argparse.ArgumentParser(
+        description='Generate a directory with small .png tiles from a list of rasters in a common projection, '
+                    'following the OSGeo Tile Map Service Specification, using gdal2tiles: '
+                    'https://gdal.org/en/latest/programs/gdal2tiles.html'
+    )
+    parser.add_argument('output_folder', type=str, help='Path of the output directory to create')
+    parser.add_argument('input_rasters', type=str, nargs='+', help='List of gdal-compatible raster paths to mosaic')
     args = parser.parse_args()
 
     create_tile_map(args.output_folder, args.input_rasters)
