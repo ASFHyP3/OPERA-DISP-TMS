@@ -261,6 +261,8 @@ def add_metadata_to_tile(tile_path: Path) -> None:
     for frame in frames:
         relevant_granules = [x for x in cal_data if x.frame == frame]
         if len(relevant_granules) == 0:
+            warnings.warn(f'No granules found for frame {frame}, metadata will be missing for this frame.')
+        else:
             first_granule = min(relevant_granules, key=lambda x: x.reference_date)
 
             ref_point_array, ref_point_geo, epsg = get_granule_reference_info_s3(first_granule.s3_uri)
@@ -269,8 +271,6 @@ def add_metadata_to_tile(tile_path: Path) -> None:
             frame_metadata[f'FRAME_{frame}_EPSG'] = str(epsg)
 
             frame_metadata[f'FRAME_{frame}_REF_TIME'] = first_granule.reference_date.strftime('%Y%m%dT%H%M%SZ')
-        else:
-            warnings.warn(f'No granules found for frame {frame}, metadata will be missing for this frame.')
 
     tile_ds.SetMetadata({'OPERA_FRAMES': ', '.join([str(frame) for frame in frames]), **frame_metadata})
 
