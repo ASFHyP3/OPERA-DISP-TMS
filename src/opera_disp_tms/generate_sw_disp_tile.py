@@ -226,7 +226,7 @@ def main():
     args.begin_date = datetime.strptime(args.begin_date, '%Y%m%d')
     args.end_date = datetime.strptime(args.end_date, '%Y%m%d')
 
-    create_sw_disp_tile(args.metadata_path, args.begin_date, args.end_date, args.use_profile)
+    create_sw_disp_tile(args.metadata_path, args.begin_date, args.end_date)
 
 
 if __name__ == '__main__':
