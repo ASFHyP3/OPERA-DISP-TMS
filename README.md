@@ -41,7 +41,7 @@ The `create_tile_map` CLI command generates a directory with small .png tiles fr
 
 To create a tile map from a set of displacement GeoTIFFs:
 ```bash
-python create_tile_map tiles/ \
+create_tile_map tiles/ \
   SW_CUMUL_DISP_20170901_20171231_ASCENDING_N41W125_N42W122.tif \
   SW_CUMUL_DISP_20170901_20171231_ASCENDING_N41W125_N42W123.tif \
   SW_CUMUL_DISP_20170901_20171231_ASCENDING_N41W125_N42W124.tif
