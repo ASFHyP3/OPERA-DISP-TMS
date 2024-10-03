@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import numpy as np
+import pytest
 
 import opera_disp_tms.utils as ut
 
@@ -17,7 +18,14 @@ def test_transform_point():
 
     transformed1 = ut.transform_point(*test_point, wkt_4326, wkt_4326)
     assert np.isclose(test_point, transformed1).all()
-    
+
     transformed2 = ut.transform_point(*test_point, wkt_4326, wkt_3857)
     test_point_recreated = ut.transform_point(*transformed2, wkt_3857, wkt_4326)
     assert np.isclose(test_point, test_point_recreated).all()
+
+
+def test_check_bbox_all_int():
+    with pytest.raises(ValueError):
+        ut.check_bbox_all_int([1, 2.0, 3])
+
+    ut.check_bbox_all_int([1, 2, 3])
