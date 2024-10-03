@@ -99,3 +99,11 @@ def test_create_blank_copy_tile(tmp_path):
     assert np.isnan(ds.GetRasterBand(1).GetNoDataValue())
     assert np.isnan(ds.GetRasterBand(1).ReadAsArray()).all()
     ds = None
+
+
+def test_create_product_name():
+    metadata_name = 'METADATA_ASCENDING_N40W125_N41W124.tif'
+    begin_date = datetime(2021, 1, 1)
+    end_date = datetime(2021, 1, 2)
+    product_name = sw.create_product_name(metadata_name, begin_date, end_date)
+    assert product_name == 'SW_CUMUL_DISP_20210101_20210102_ASCENDING_N40W125_N41W124.tif'

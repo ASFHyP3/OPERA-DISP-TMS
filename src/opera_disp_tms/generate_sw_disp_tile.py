@@ -146,7 +146,24 @@ def create_blank_copy_tile(input_path: Path, output_path: Path) -> None:
     out_ds = None
 
 
-def create_sw_disp_tile(begin_date: datetime, end_date: datetime, metadata_path: Path):
+def create_product_name(metadata_name: str, begin_date: datetime, end_date: datetime) -> str:
+    """Create a product name for a short wavelength cumulative displacement tile
+    Takes the form: SW_CUMUL_DISP_YYYYMMDD_YYYYMMDD_ORBIT_BBOX.tif
+
+    Args:
+        metadata_name: The name of the metadata file
+        begin_date: The beginning of the date range to generate the tile for
+        end_date: The end of the date range to generate the tile for
+    """
+    parts = metadata_name.split('_')[1:]
+    date_fmt = '%Y%m%d'
+    begin_date = datetime.strftime(begin_date, date_fmt)
+    end_date = datetime.strftime(end_date, date_fmt)
+    name = '_'.join(['SW_CUMUL_DISP', begin_date, end_date, *parts])
+    return name
+
+
+def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: datetime) -> None:
     if not metadata_path.exists():
         raise FileNotFoundError(f'{metadata_path} does not exist')
     if begin_date > end_date:
@@ -155,7 +172,8 @@ def create_sw_disp_tile(begin_date: datetime, end_date: datetime, metadata_path:
     creds = get_credentials()
     s3_fs = s3fs.S3FileSystem(key=creds['accessKeyId'], secret=creds['secretAccessKey'], token=creds['sessionToken'])
 
-    product_path = metadata_path.parent / metadata_path.name.replace('METADATA', 'SW_CUMUL_DISP')
+    product_name = create_product_name(metadata_path.name, begin_date, end_date)
+    product_path = metadata_path.parent / product_name
 
     frame_map = utils.get_raster_array(metadata_path)
 
@@ -190,20 +208,19 @@ def create_sw_disp_tile(begin_date: datetime, end_date: datetime, metadata_path:
 def main():
     """CLI entrpypoint
     Example:
-    generate_sw_disp_tile METADATA_ASCENDING_N41W125_N42W124.tif \
-        --begin-date 20170901T000000Z --end-date 20171231T000000Z
+    generate_sw_disp_tile METADATA_ASCENDING_N41W125_N42W124.tif --begin-date 20170901 --end-date 20171231
     """
     parser = argparse.ArgumentParser(description='Create a short wavelength cumulative displacement tile')
     parser.add_argument('metadata_path', type=str, help='Path to the metadata GeoTiff file')
-    parser.add_argument('--begin-date', type=str, help='Beginning of date range to generate tile for in format: %Y%m%d')
+    parser.add_argument('--begin-date', type=str, help='Start of date range to generate tile for in format: %Y%m%d')
     parser.add_argument('--end-date', type=str, help='End of date range to generate tile for in format: %Y%m%d')
 
     args = parser.parse_args()
     args.metadata_path = Path(args.metadata_path)
-    args.begin_date = datetime.strptime(args.begin_date, DATE_FORMAT)
-    args.end_date = datetime.strptime(args.end_date, DATE_FORMAT)
+    args.begin_date = datetime.strptime(args.begin_date, '%Y%m%d')
+    args.end_date = datetime.strptime(args.end_date, '%Y%m%d')
 
-    create_sw_disp_tile(args.begin_date, args.end_date, args.metadata_path)
+    create_sw_disp_tile(args.metadata_path, args.begin_date, args.end_date)
 
 
 if __name__ == '__main__':
