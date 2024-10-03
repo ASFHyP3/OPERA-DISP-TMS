@@ -42,7 +42,7 @@ def create_tile_map(output_folder: str, input_rasters: list[str]):
         subprocess.run(command)
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(
         description='Generate a directory with small .png tiles from a list of rasters in a common projection, '
                     'following the OSGeo Tile Map Service Specification, using gdal2tiles: '
@@ -53,3 +53,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     create_tile_map(args.output_folder, args.input_rasters)
+
+
+if __name__ == '__main__':
+    main()
