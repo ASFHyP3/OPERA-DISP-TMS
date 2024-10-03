@@ -33,9 +33,10 @@ def create_tile_map(output_folder: str, input_rasters: list[str]):
         # create tile map
         command = [
             'gdal2tiles',
-            # '--xyz', # FIXME https://github.com/OSGeo/gdal/issues/10356
+            '--xyz',
             '--zoom=2-11',
             f'--processes={multiprocessing.cpu_count()}',
+            '--webviewer=openlayers',
             byte_vrt.name,
             output_folder,
         ]

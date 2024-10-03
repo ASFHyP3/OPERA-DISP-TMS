@@ -47,7 +47,7 @@ python create_tile_map tiles/ \
   SW_CUMUL_DISP_20170901_20171231_ASCENDING_N41W125_N42W124.tif
 ```
 
-Simple web pages with viewers based on Google Maps, OpenLayers and Leaflet are included to visualize the map in a browser, e.g. `tiles/openlayers.html`.
+A simple web page with a viewer based on OpenLayers is included to visualize the map in a browser, e.g. `tiles/openlayers.html`.
 
 The output directory can be copied to AWS S3 (or any other web server) to access the map tiles over the internet:
 ```
