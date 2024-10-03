@@ -26,6 +26,12 @@ S3_FS = s3fs.S3FileSystem(key=CREDS['accessKeyId'], secret=CREDS['secretAccessKe
 
 
 def open_s3_xarray_dataset(s3_uri: str, group: str = '/') -> xr.Dataset:
+    """Open an xarray hdf5/netcdf4 dataset from S3
+
+    Args:
+        s3_uri: URI of the dataset on S3
+        group: Group within the dataset to open
+    """
     ds = xr.open_dataset(
         S3_FS.open(s3_uri, **IO_PARAMS['fsspec_params']), group=group, engine='h5netcdf', **IO_PARAMS['h5py_params']
     )

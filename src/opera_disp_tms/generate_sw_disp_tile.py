@@ -12,12 +12,11 @@ from rasterio.transform import Affine
 
 from opera_disp_tms import utils
 from opera_disp_tms.find_california_dataset import Granule, find_california_dataset
+from opera_disp_tms.s3_xarray import open_opera_disp_granule
+from opera_disp_tms.utils import DATE_FORMAT
 
 
 gdal.UseExceptions()
-
-
-DATE_FORMAT = '%Y%m%dT%H%M%SZ'
 
 
 @dataclass
@@ -166,7 +165,7 @@ def create_sw_disp_tile(begin_date: datetime, end_date: datetime, metadata_path:
     needed_granules = find_needed_granules(frame_ids, begin_date, end_date)
     secondary_dates = {}
     for granule in needed_granules:
-        granule = utils.open_opera_disp_granule(granule.s3_uri, 'short_wavelength_displacement')
+        granule = open_opera_disp_granule(granule.s3_uri, 'short_wavelength_displacement')
         granule_frame = [x for x in frames if x.frame == granule.attrs['frame']][0]
         granule = update_spatiotemporal_reference(granule, granule_frame)
         granule = granule.rio.reproject('EPSG:3857', transform=transfrom, shape=frame_map.shape)

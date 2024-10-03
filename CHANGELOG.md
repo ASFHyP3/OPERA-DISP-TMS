@@ -13,4 +13,5 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * Utility for identifying California test dataset
 * Utility for generating metadata tile images
 * Utility for generating temporary S3 credentials for [NASA Thin Egress Apps](https://nasa.github.io/cumulus/docs/deployment/thin_egress_app/)
+* Utility for generating short wavelength displacement tiles
 
