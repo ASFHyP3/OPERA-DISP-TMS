@@ -4,31 +4,13 @@ from typing import Iterable, Tuple, Union
 
 import numpy as np
 import requests
-import rioxarray  # noqa
-import s3fs
-import xarray as xr
 from osgeo import gdal, osr
-
-from opera_disp_tms.tmp_s3_access import get_credentials
 
 
 gdal.UseExceptions()
 
 
 DATE_FORMAT = '%Y%m%dT%H%M%SZ'
-IO_PARAMS = {
-    'fsspec_params': {
-        # "skip_instance_cache": True
-        'cache_type': 'blockcache',  # or "first" with enough space
-        'block_size': 8 * 1024 * 1024,  # could be bigger
-    },
-    'h5py_params': {
-        'driver_kwds': {  # only recent versions of xarray and h5netcdf allow this correctly
-            'page_buf_size': 32 * 1024 * 1024,  # this one only works in repacked files
-            'rdcc_nbytes': 8 * 1024 * 1024,  # this one is to read the chunks
-        }
-    },
-}
 
 
 def get_raster_array(raster_path: Path, band: int = 1) -> np.ndarray:
@@ -75,10 +57,26 @@ def download_file(
 
 
 def round_to_day(dt: datetime) -> datetime:
+    """Round a datetime to the nearest day
+
+    Args:
+        dt: Datetime to round
+
+    Returns:
+        The rounded datetime
+    """
     return (dt + timedelta(hours=12)).replace(hour=0, minute=0, second=0, microsecond=0)
 
 
-def wkt_from_epsg(epsg_code):
+def wkt_from_epsg(epsg_code: int) -> str:
+    """Get the WKT from an EPSG code
+
+    Args:
+        epsg_code: EPSG code to get the WKT for
+
+    Returns:
+        WKT for the EPSG code
+    """
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(epsg_code)
     wkt = srs.ExportToWkt()
@@ -86,6 +84,18 @@ def wkt_from_epsg(epsg_code):
 
 
 def transform_point(x: float, y: float, source_wkt: str, target_wkt: str) -> Tuple[float]:
+    """Transform a point from one coordinate system to another
+
+    Args:
+        x: x coordinate in the source coordinate system
+        y: y coordinate in the source coordinate system
+        source_wkt: WKT of the source coordinate system
+        target_wkt: WKT of the target coordinate system
+
+    Returns:
+        x_transformed: x coordinate in the target coordinate system
+        y_transformed: y coordinate in the target coordinate system
+    """
     source_srs = osr.SpatialReference()
     source_srs.ImportFromWkt(source_wkt)
 
@@ -98,42 +108,11 @@ def transform_point(x: float, y: float, source_wkt: str, target_wkt: str) -> Tup
     return x_transformed, y_transformed
 
 
-def check_bbox_all_int(bbox: Iterable[int]):
+def check_bbox_all_int(bbox: Iterable[int]) -> None:
+    """Check that all elements of a bounding box are integers
+
+    Args:
+        bbox: Bounding box to check
+    """
     if not all(isinstance(i, int) for i in bbox):
         raise ValueError('Bounding box must be integers')
-
-
-def open_opera_disp_granule(s3_uri: str, dataset=str):
-    creds = get_credentials()
-    s3_fs = s3fs.S3FileSystem(key=creds['accessKeyId'], secret=creds['secretAccessKey'], token=creds['sessionToken'])
-    ds = xr.open_dataset(
-        s3_fs.open(s3_uri, **IO_PARAMS['fsspec_params']),
-        engine='h5netcdf',
-        **IO_PARAMS['h5py_params'],
-    )
-    data = ds[dataset]
-    ds_metadata = xr.open_dataset(
-        s3_fs.open(s3_uri, **IO_PARAMS['fsspec_params']),
-        group='/corrections',
-        engine='h5netcdf',
-        **IO_PARAMS['h5py_params'],
-    )
-    row = int(ds_metadata['reference_point'].attrs['rows'])
-    col = int(ds_metadata['reference_point'].attrs['cols'])
-    data.attrs['reference_point_array'] = (row, col)
-
-    longitude = float(ds_metadata['reference_point'].attrs['longitudes'])
-    latitude = float(ds_metadata['reference_point'].attrs['latitudes'])
-    data.attrs['reference_point_geo'] = (longitude, latitude)
-
-    reference_date = datetime.strptime(s3_uri.split('/')[-1].split('_')[6], DATE_FORMAT)
-    data.attrs['reference_date'] = reference_date
-
-    secondary_date = datetime.strptime(s3_uri.split('/')[-1].split('_')[7], DATE_FORMAT)
-    data.attrs['secondary_date'] = secondary_date
-
-    frame = int(s3_uri.split('/')[-1].split('_')[4][1:])
-    data.attrs['frame'] = frame
-
-    data.rio.write_crs(ds['spatial_ref'].attrs['crs_wkt'], inplace=True)
-    return data
