@@ -37,7 +37,7 @@ Where `-125 41 -124 42` is a desired bounding box in **integer** `minx, miny, ma
 For TMS generation ASF will be using 1x1 degree tiles.
 
 ### Create a Short Wavelength Cumulative Displacement tile
-The `generate_sw_disp_tile` CLI command can be used to generate a frame metadata tile:
+The `generate_sw_disp_tile` CLI command can be used to generate a cumulative displacement geotiff:
 ```bash
 generate_sw_disp_tile METADATA_ASCENDING_N41W125_N42W124.tif --begin-date 20170901 --end-date 20171231
 ```
