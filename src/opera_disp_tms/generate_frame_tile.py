@@ -201,7 +201,7 @@ def add_metadata_to_tile(tile_path: Path) -> None:
         else:
             first_granule = min(relevant_granules, key=lambda x: x.reference_date)
             granule_info = get_opera_disp_granule_metadata(first_granule.s3_uri)
-            ref_point_array, ref_point_geo, epsg, reference_date, _, _ = *granule_info
+            ref_point_array, ref_point_geo, epsg, reference_date, _, _ = granule_info
 
             frame_metadata[f'FRAME_{frame}_REF_POINT_ARRAY'] = ', '.join([str(x) for x in ref_point_array])
             frame_metadata[f'FRAME_{frame}_REF_POINT_GEO'] = ', '.join([str(x) for x in ref_point_geo])
