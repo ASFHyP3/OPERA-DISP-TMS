@@ -18,7 +18,7 @@ def test_transform_point():
 
     transformed1 = ut.transform_point(*test_point, wkt_4326, wkt_4326)
     assert np.isclose(test_point, transformed1).all()
-    
+
     transformed2 = ut.transform_point(*test_point, wkt_4326, wkt_3857)
     test_point_recreated = ut.transform_point(*transformed2, wkt_3857, wkt_4326)
     assert np.isclose(test_point, test_point_recreated).all()
