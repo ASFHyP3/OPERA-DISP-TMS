@@ -5,6 +5,7 @@ from typing import Iterable, Tuple, Union
 import numpy as np
 import requests
 from osgeo import gdal, osr
+from pyproj import Transformer
 
 
 gdal.UseExceptions()
@@ -96,15 +97,8 @@ def transform_point(x: float, y: float, source_wkt: str, target_wkt: str) -> Tup
         x_transformed: x coordinate in the target coordinate system
         y_transformed: y coordinate in the target coordinate system
     """
-    source_srs = osr.SpatialReference()
-    source_srs.ImportFromWkt(source_wkt)
-
-    target_srs = osr.SpatialReference()
-    target_srs.ImportFromWkt(target_wkt)
-
-    transform = osr.CoordinateTransformation(source_srs, target_srs)
-    # For some reason, the order of x and y is reversed in the function call
-    y_transformed, x_transformed, z_transformed = transform.TransformPoint(y, x)
+    transformer = Transformer.from_crs(source_wkt, target_wkt, always_xy=True)
+    x_transformed, y_transformed = transformer.transform(x, y)
     return x_transformed, y_transformed
 
 
