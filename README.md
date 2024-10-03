@@ -49,7 +49,7 @@ python create_tile_map tiles/ \
 
 A simple web page with a viewer based on OpenLayers is included to visualize the map in a browser, e.g. `tiles/openlayers.html`.
 
-The output directory can be copied to AWS S3 (or any other web server) to access the map tiles over the internet:
+The output directory can be copied to a public AWS S3 bucket (or any other web server) to access the map tiles over the internet:
 ```
 aws s3 cp tiles/ s3://myBucket/tiles/ --recursive
 ```
