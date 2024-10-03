@@ -163,14 +163,32 @@ def create_product_name(metadata_name: str, begin_date: datetime, end_date: date
     return name
 
 
-def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: datetime) -> None:
+def create_sw_disp_tile(
+    metadata_path: Path, begin_date: datetime, end_date: datetime, use_profile: bool = False
+) -> Path:
+    """Create a short wavelength cumulative displacement tile
+
+    Args:
+        metadata_path: Path to the metadata GeoTiff file
+        begin_date: The beginning of the date range to generate the tile for
+        end_date: The end of the date range to generate the tile for
+        use_profile: Use existing AWS profile credentials for data access
+    
+    Returns:
+        Path to the generated tile
+    """
     if not metadata_path.exists():
         raise FileNotFoundError(f'{metadata_path} does not exist')
     if begin_date > end_date:
         raise ValueError('Begin date must be before end date')
 
-    creds = get_credentials()
-    s3_fs = s3fs.S3FileSystem(key=creds['accessKeyId'], secret=creds['secretAccessKey'], token=creds['sessionToken'])
+    if use_profile:
+        s3_fs = s3fs.S3FileSystem()
+    else:
+        creds = get_credentials()
+        s3_fs = s3fs.S3FileSystem(
+            key=creds['accessKeyId'], secret=creds['secretAccessKey'], token=creds['sessionToken']
+        )
 
     product_name = create_product_name(metadata_path.name, begin_date, end_date)
     product_path = metadata_path.parent / product_name
@@ -203,6 +221,7 @@ def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: dat
     ds.SetMetadata(metadata)
     ds.FlushCache()
     ds = None
+    return product_path
 
 
 def main():
@@ -214,13 +233,16 @@ def main():
     parser.add_argument('metadata_path', type=str, help='Path to the metadata GeoTiff file')
     parser.add_argument('--begin-date', type=str, help='Start of date range to generate tile for in format: %Y%m%d')
     parser.add_argument('--end-date', type=str, help='End of date range to generate tile for in format: %Y%m%d')
+    parser.add_argument(
+        '--use-profile', action='store_true', help='Use existing AWS profile credentials for data access'
+    )
 
     args = parser.parse_args()
     args.metadata_path = Path(args.metadata_path)
     args.begin_date = datetime.strptime(args.begin_date, '%Y%m%d')
     args.end_date = datetime.strptime(args.end_date, '%Y%m%d')
 
-    create_sw_disp_tile(args.metadata_path, args.begin_date, args.end_date)
+    create_sw_disp_tile(args.metadata_path, args.begin_date, args.end_date, args.use_profile)
 
 
 if __name__ == '__main__':
