@@ -238,10 +238,10 @@ def add_frames_to_tile(frames: Iterable[Frame], tile_path: Path) -> None:
     for frame in frames:
         relevant_granules = [x for x in cal_data if x.frame == frame.frame_id]
         if len(relevant_granules) == 0:
-            warnings.warn(f'No granules found for frame {frame}, this frame will not be added to the tile.')
+            warnings.warn(f'No granules found for frame {frame.frame_id}, this frame will not be added to the tile.')
         else:
             first_granule = min(relevant_granules, key=lambda x: x.reference_date)
-            frame_metadata[frame.frame_id] = create_granule_metadata_dict(first_granule)
+            frame_metadata[str(frame.frame_id)] = create_granule_metadata_dict(first_granule)
             burn_frame(frame, tile_path)
 
     tile_ds = gdal.Open(str(tile_path), gdal.GA_Update)
@@ -249,9 +249,10 @@ def add_frames_to_tile(frames: Iterable[Frame], tile_path: Path) -> None:
     band = tile_ds.GetRasterBand(1)
     array = band.ReadAsArray()
     included_frames = np.unique(array)
+    included_frames = included_frames[included_frames != 0] # Account for 0 nodata value
 
-    metadata_dict = {'OPERA_FRAMES': ', '.join([str(frame) for frame in included_frames])}
-    [metadata_dict.update(frame_metadata[x]) for x in included_frames]
+    metadata_dict = {'OPERA_FRAMES': ', '.join([str(x) for x in included_frames])}
+    [metadata_dict.update(frame_metadata[str(x)]) for x in included_frames]
     tile_ds.SetMetadata(metadata_dict)
     tile_ds.FlushCache()
     tile_ds = None
