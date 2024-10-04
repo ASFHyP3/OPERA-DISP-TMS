@@ -238,20 +238,22 @@ def update_frame_geometry(frame: Frame, buffer_size: int = -3500) -> Frame:
     return frame
 
 
-def create_tile_for_bbox(bbox, ascending=True) -> Path:
+def create_tile_for_bbox(bbox: Iterable[int], direction: str) -> Path:
     """Create the frame metadata tile for a specific bounding box
 
     Args:
         bbox: The bounding box to create the frame for in the (minx, miny, maxx, maxy) in EPSG:4326, integers only.
-        ascending: True if creating a tile for the ascending orbit pass, False for descending.
+        direction: The direction of the orbit pass ('ascending' or 'descending')
 
     Returns:
         The path to the frame metadata tile
     """
     check_bbox_all_int(bbox)
-    orbit_pass = 'ASCENDING' if ascending else 'DESCENDING'
-    out_path = Path(create_product_name(['metadata'], orbit_pass, bbox) + '.tif')
-    relevant_frames = intersect(bbox=bbox, orbit_pass=orbit_pass, is_north_america=True, is_land=True)
+    direction = direction.upper()
+    if direction not in ['ASCENDING', 'DESCENDING']:
+        raise ValueError('Direction must be either "ASCENDING" or "DESCENDING"')
+    out_path = Path(create_product_name(['metadata'], direction, bbox) + '.tif')
+    relevant_frames = intersect(bbox=bbox, orbit_pass=direction, is_north_america=True, is_land=True)
     updated_frames = [update_frame_geometry(x) for x in relevant_frames]
     ordered_frames = reorder_frames(updated_frames)
     create_empty_frame_tile(bbox, out_path)
@@ -267,9 +269,11 @@ def main():
     """
     parser = argparse.ArgumentParser(description='Create a frame metadata tile for a given bounding box')
     parser.add_argument('bbox', type=int, nargs=4, help='Bounding box in the form of min_lon min_lat max_lon max_lat')
-    parser.add_argument('--ascending', action='store_true', help='Use ascending orbit pass')
+    parser.add_argument(
+        '--direction', type=str, choices=['ascending', 'descending'], help='Direction of the orbit pass'
+    )
     args = parser.parse_args()
-    create_tile_for_bbox(args.bbox, ascending=args.ascending)
+    create_tile_for_bbox(args.bbox, direction=args.direction)
 
 
 if __name__ == '__main__':
