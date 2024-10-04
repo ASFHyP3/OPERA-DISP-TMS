@@ -18,16 +18,17 @@ def create_tile_map(output_folder: str, input_rasters: list[str]):
         input_rasters: List of gdal-compatible raster paths to mosaic
     """
     with tempfile.NamedTemporaryFile() as mosaic_vrt, tempfile.NamedTemporaryFile() as byte_vrt:
-        # mosaic input rasters
-        gdal.BuildVRT(mosaic_vrt.name, input_rasters)
+        # mosaic the input rasters
+        gdal.BuildVRT(mosaic_vrt.name, input_rasters, resampleAlg='nearest')
 
-        # scale mosaic from Float to Byte
+        # scale the mosaic from Float to Byte
         gdal.Translate(
             destName=byte_vrt.name,
             srcDS=mosaic_vrt.name,
             format='VRT',
             outputType=gdalconst.GDT_Byte,
             scaleParams=[[]],
+            resampleAlg='nearest',
         )
 
         # create tile map
@@ -37,6 +38,7 @@ def create_tile_map(output_folder: str, input_rasters: list[str]):
             '--zoom=2-11',
             f'--processes={multiprocessing.cpu_count()}',
             '--webviewer=openlayers',
+            '--resampling=near',
             byte_vrt.name,
             output_folder,
         ]
