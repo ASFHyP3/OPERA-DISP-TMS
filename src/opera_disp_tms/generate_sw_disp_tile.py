@@ -77,7 +77,6 @@ def find_needed_granules(frame_ids: Iterable[int], begin_date: datetime, end_dat
         else:
             granule = max(granules, key=lambda x: x.secondary_date)
             needed_granules.append(granule)
-            print(f'Granule {granule.scene_name} selected for frame {frame_id}.')
     return needed_granules
 
 
@@ -106,7 +105,7 @@ def update_spatiotemporal_reference(in_granule: xr.DataArray, frame: Frame) -> x
         )
         ref_value = in_granule.sel(x=ref_x, y=ref_y, method='nearest').data.item()
         if np.isnan(ref_value):
-            raise ValueError(f'Granule {in_granule.scene_name} does not contain reference point {ref_x}, {ref_y}.')
+            raise ValueError(f'Granule does not contain reference point {ref_x:.2f}, {ref_y:.2f}.')
         in_granule -= ref_value
         in_granule.attrs['reference_point_array'] = frame.reference_point_array
         in_granule.attrs['reference_point_geo'] = frame.reference_point_geo
@@ -197,6 +196,7 @@ def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: dat
     needed_granules = find_needed_granules(frame_ids, begin_date, end_date)
     secondary_dates = {}
     for granule in needed_granules:
+        print(f'Granule {granule.scene_name} selected for frame {granule.frame}.')
         granule = open_opera_disp_granule(granule.s3_uri, 'short_wavelength_displacement')
         granule_frame = [x for x in frames if x.frame == granule.attrs['frame']][0]
         granule = update_spatiotemporal_reference(granule, granule_frame)
