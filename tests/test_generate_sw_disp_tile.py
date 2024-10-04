@@ -33,14 +33,14 @@ def test_frames_from_metadata(tmp_path):
     create_tif(tmp_tif, metadata)
     frames = sw.frames_from_metadata(tmp_tif)
     assert len(frames) == 2
-    assert frames[0].frame_id == 1
-    assert frames[0].reference_date == datetime(2021, 1, 1, 0, 0, 0)
-    assert frames[0].reference_point_array == (1, 2)
-    assert frames[0].reference_point_geo == (1.0, 2.0)
-    assert frames[1].frame_id == 2
-    assert frames[1].reference_date == datetime(2021, 1, 2, 0, 0, 0)
-    assert frames[1].reference_point_array == (3, 4)
-    assert frames[1].reference_point_geo == (3.0, 4.0)
+    assert frames[1].frame_id == 1
+    assert frames[1].reference_date == datetime(2021, 1, 1, 0, 0, 0)
+    assert frames[1].reference_point_array == (1, 2)
+    assert frames[1].reference_point_geo == (1.0, 2.0)
+    assert frames[2].frame_id == 2
+    assert frames[2].reference_date == datetime(2021, 1, 2, 0, 0, 0)
+    assert frames[2].reference_point_array == (3, 4)
+    assert frames[2].reference_point_geo == (3.0, 4.0)
 
 
 def test_find_needed_granules():
@@ -84,21 +84,6 @@ def test_update_spatiotemporal_reference():
     tmp_array.attrs['reference_date'] = datetime(2021, 1, 2)
     with pytest.raises(NotImplementedError):
         updated_array = sw.update_spatiotemporal_reference(tmp_array, frame)
-
-
-def test_create_blank_copy_tile(tmp_path):
-    input_tif = tmp_path / 'input.tif'
-    output_tif = tmp_path / 'output.tif'
-    metadata = {'FOO': 'BAR', 'BAZ': 'QUX'}
-    create_tif(input_tif, metadata)
-    sw.create_blank_copy_tile(input_tif, output_tif)
-    ds = gdal.Open(str(output_tif))
-    out_metadata = ds.GetMetadata()
-    assert out_metadata['FOO'] == 'BAR'
-    assert out_metadata['BAZ'] == 'QUX'
-    assert np.isnan(ds.GetRasterBand(1).GetNoDataValue())
-    assert np.isnan(ds.GetRasterBand(1).ReadAsArray()).all()
-    ds = None
 
 
 def test_create_product_name():

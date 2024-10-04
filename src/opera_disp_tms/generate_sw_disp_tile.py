@@ -3,7 +3,7 @@ import warnings
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Tuple
 
 import numpy as np
 import xarray as xr
@@ -38,10 +38,10 @@ def frames_from_metadata(metadata_path: Path) -> list[FrameMeta]:
     Returns:
         List of frame metadata
     """
-    info_dict = gdal.Info(str(metadata_path), options=['-json'])
+    info_dict = gdal.Info(str(metadata_path), format='json')
     frame_metadata = info_dict['metadata']['']
     frame_ids = [int(x) for x in frame_metadata['OPERA_FRAMES'].split(', ')]
-    frames = []
+    frames = {}
     for frame_id in frame_ids:
         ref_date = datetime.strptime(frame_metadata[f'FRAME_{frame_id}_REF_TIME'], DATE_FORMAT)
 
@@ -52,7 +52,7 @@ def frames_from_metadata(metadata_path: Path) -> list[FrameMeta]:
         ref_point_geo = tuple([float(x) for x in ref_point_geo.split(', ')])
 
         frame = FrameMeta(frame_id, ref_date, ref_point_array, ref_point_geo)
-        frames.append(frame)
+        frames[frame_id] = frame
     return frames
 
 
@@ -122,39 +122,6 @@ def update_spatiotemporal_reference(
     return in_granule
 
 
-def create_blank_copy_tile(input_path: Path, output_path: Path) -> None:
-    """Create a blank copy of a GeoTiff file
-
-    Args:
-        input_path: Path to the input GeoTiff file
-        output_path: Path to the output GeoTiff file
-    """
-    ds = gdal.Open(str(input_path))
-    metadata = ds.GetMetadata()
-    transform = ds.GetGeoTransform()
-    projection = ds.GetProjection()
-    x_size = ds.RasterXSize
-    y_size = ds.RasterYSize
-    band = ds.GetRasterBand(1)
-    data = band.ReadAsArray().astype(float)
-    data[:] = np.nan
-    ds = None
-
-    driver = gdal.GetDriverByName('GTiff')
-    opts = ['TILED=YES', 'COMPRESS=LZW', 'NUM_THREADS=ALL_CPUS']
-    out_ds = driver.Create(str(output_path), x_size, y_size, 1, gdal.GDT_Float32, options=opts)
-
-    out_band = out_ds.GetRasterBand(1)
-    out_band.SetNoDataValue(np.nan)
-    out_band.WriteArray(data)
-    out_ds.SetGeoTransform(transform)
-    out_ds.SetProjection(projection)
-    out_ds.SetMetadata(metadata)
-
-    out_band.FlushCache()
-    out_ds = None
-
-
 def create_product_name(metadata_name: str, begin_date: datetime, end_date: datetime) -> str:
     """Create a product name for a short wavelength cumulative displacement tile
     Takes the form: SW_CUMUL_DISP_YYYYMMDD_YYYYMMDD_ORBIT_BBOX.tif
@@ -170,6 +137,32 @@ def create_product_name(metadata_name: str, begin_date: datetime, end_date: date
     end_date = datetime.strftime(end_date, date_fmt)
     name = '_'.join(['SW_CUMUL_DISP', begin_date, end_date, *parts])
     return name
+
+
+def add_granule_data_to_array(
+    granule: Granule, frame: FrameMeta, frame_map: np.ndarray, geotransform: Affine, sw_cumul_disp: np.ndarray
+) -> Tuple[np.ndarray, datetime]:
+    """Add granule data to the short wavelength cumulative displacement array
+
+    Args:
+        granule: The granule to add
+        frame: The frame metadata
+        frame_map: The frame map array
+        geotransform: The geotransform of the frame map (Rasterio style)
+        sw_cumul_disp: The short wavelength cumulative displacement array
+
+    Returns:
+        The updated short wavelength cumulative displacement array and the secondary date of the granule
+    """
+    granule_dataarray = open_opera_disp_granule(granule.s3_uri, 'short_wavelength_displacement')
+    granule_dataarray = update_spatiotemporal_reference(granule_dataarray, frame, update_ref_point=False)
+    granule_dataarray = granule_dataarray.rio.reproject('EPSG:3857', transform=geotransform, shape=frame_map.shape)
+
+    frame_locations = frame_map == granule_dataarray.attrs['frame_id']
+    sw_cumul_disp[frame_locations] = granule_dataarray.data[frame_locations].astype(float)
+
+    secondary_date = datetime.strftime(granule_dataarray.attrs['secondary_date'], DATE_FORMAT)
+    return sw_cumul_disp, secondary_date
 
 
 def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: datetime) -> Path:
@@ -191,32 +184,29 @@ def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: dat
         raise ValueError('Begin date must be before end date')
 
     product_name = create_product_name(metadata_path.name, begin_date, end_date)
-    product_path = metadata_path.parent / product_name
+    product_path = Path.cwd() / product_name
     print(f'Generating tile {product_name}')
 
-    frame_map = utils.get_raster_array(metadata_path)
-
-    create_blank_copy_tile(metadata_path, product_path)
-    ds = gdal.Open(str(product_path), gdal.GA_Update)
-    band = ds.GetRasterBand(1)
-    sw_cumul_disp = band.ReadAsArray()
-
-    transform = Affine.from_gdal(*gdal.Open(str(metadata_path)).GetGeoTransform())
     frames = frames_from_metadata(metadata_path)
-    frame_ids = [x.frame_id for x in frames]
-    needed_granules = find_needed_granules(frame_ids, begin_date, end_date)
+    needed_granules = find_needed_granules(list(frames.keys()), begin_date, end_date)
+
+    frame_map, geotransform = utils.get_raster_as_numpy(metadata_path)
+    geotransform = Affine.from_gdal(*geotransform)
+
+    sw_cumul_disp = np.full(frame_map.shape, np.nan, dtype=float)
     secondary_dates = {}
     for granule in needed_granules:
         print(f'Granule {granule.scene_name} selected for frame {granule.frame_id}.')
-        granule = open_opera_disp_granule(granule.s3_uri, 'short_wavelength_displacement')
-        granule_frame = [x for x in frames if x.frame_id == granule.attrs['frame_id']][0]
-        granule = update_spatiotemporal_reference(granule, granule_frame, update_ref_point=False)
-        granule = granule.rio.reproject('EPSG:3857', transform=transform, shape=frame_map.shape)
-        frame_locations = frame_map == granule.attrs['frame_id']
-        sw_cumul_disp[frame_locations] = granule.data[frame_locations].astype(float)
-        secondary_date = datetime.strftime(granule.attrs['secondary_date'], DATE_FORMAT)
-        secondary_dates[f'FRAME_{granule_frame.frame_id}_SEC_TIME'] = secondary_date
+        frame = frames[granule.frame_id]
+        sw_cumul_disp, secondary_date = add_granule_data_to_array(
+            granule, frame, frame_map, geotransform, sw_cumul_disp
+        )
+        secondary_dates[f'FRAME_{frame.frame_id}_SEC_TIME'] = secondary_date
 
+    gdal.Translate(str(product_path), str(metadata_path), outputType=gdal.GDT_Float32, format='GTiff')
+    ds = gdal.Open(str(product_path), gdal.GA_Update)
+    band = ds.GetRasterBand(1)
+    band.SetNoDataValue(np.nan)
     band.WriteArray(sw_cumul_disp)
     metadata = ds.GetMetadata()
     metadata.update(secondary_dates)

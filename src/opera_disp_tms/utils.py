@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Iterable, Tuple, Union
 
-import numpy as np
 import requests
 from osgeo import gdal, osr
 from pyproj import Transformer
@@ -14,21 +13,20 @@ gdal.UseExceptions()
 DATE_FORMAT = '%Y%m%dT%H%M%SZ'
 
 
-def get_raster_array(raster_path: Path, band: int = 1) -> np.ndarray:
-    """Read a raster band as a numpy array
+def get_raster_as_numpy(raster_path: Path, band: int = 1) -> Tuple:
+    """Get data, geotransform, and shape of a raseter
 
     Args:
         raster_path: Path to the raster file
-        band: Band to read
 
     Returns:
-        Numpy array of the raster band
+        raster's numpy array and geostransform
     """
-    ds = gdal.Open(str(raster_path))
-    band = ds.GetRasterBand(band)
-    frame_map = band.ReadAsArray()
-    ds = None
-    return frame_map
+    raster = gdal.Open(str(raster_path))
+    band = raster.GetRasterBand(band)
+    data = band.ReadAsArray()
+    geostransform = raster.GetGeoTransform()
+    return data, geostransform
 
 
 def download_file(
