@@ -57,12 +57,14 @@ def frames_from_metadata(metadata_path: Path) -> list[Frame]:
 
 
 def find_needed_granules(frame_ids: Iterable[int], begin_date: datetime, end_date: datetime) -> Iterable[Granule]:
-    """Find the granules needed to generate a short wavelength displacement tile
+    """Find the granules needed to generate a short wavelength displacement tile.
+    For each `frame_id` the most recent granule whose secondary date is between
+    `begin_date` and `end_date` is selected.
 
     Args:
         frame_ids: The frame ids to generate the tile for
-        begin_date: The beginning of the date range to generate the tile for
-        end_date: The end of the date range to generate the tile for
+        begin_date: Start of secondary date search range to generate tile for
+        end_date: End of secondary date search range to generate tile for
 
     Returns:
         A list of granules needed to generate the tile
@@ -159,8 +161,8 @@ def create_product_name(metadata_name: str, begin_date: datetime, end_date: date
 
     Args:
         metadata_name: The name of the metadata file
-        begin_date: The beginning of the date range to generate the tile for
-        end_date: The end of the date range to generate the tile for
+        begin_date: Start of secondary date search range to generate tile for
+        end_date: End of secondary date search range to generate tile for
     """
     parts = metadata_name.split('_')[1:]
     date_fmt = '%Y%m%d'
@@ -171,12 +173,14 @@ def create_product_name(metadata_name: str, begin_date: datetime, end_date: date
 
 
 def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: datetime) -> Path:
-    """Create a short wavelength cumulative displacement tile
+    """Create a short wavelength cumulative displacement tile.
+    Tile is generated using a set of granules whose secondary date are between `begin_date` and
+    `end_date`. For each frame, the most recent granule is selected for the tile.
 
     Args:
         metadata_path: Path to the metadata GeoTiff file
-        begin_date: The beginning of the date range to generate the tile for
-        end_date: The end of the date range to generate the tile for
+        begin_date: Start of secondary date search range to generate tile for
+        end_date: End of secondary date search range to generate tile for
 
     Returns:
         Path to the generated tile
@@ -197,7 +201,7 @@ def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: dat
     band = ds.GetRasterBand(1)
     sw_cumul_disp = band.ReadAsArray()
 
-    transfrom = Affine.from_gdal(*gdal.Open(str(metadata_path)).GetGeoTransform())
+    transform = Affine.from_gdal(*gdal.Open(str(metadata_path)).GetGeoTransform())
     frames = frames_from_metadata(metadata_path)
     frame_ids = [x.frame for x in frames]
     needed_granules = find_needed_granules(frame_ids, begin_date, end_date)
@@ -207,7 +211,7 @@ def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: dat
         granule = open_opera_disp_granule(granule.s3_uri, 'short_wavelength_displacement')
         granule_frame = [x for x in frames if x.frame == granule.attrs['frame']][0]
         granule = update_spatiotemporal_reference(granule, granule_frame, update_ref_point=False)
-        granule = granule.rio.reproject('EPSG:3857', transform=transfrom, shape=frame_map.shape)
+        granule = granule.rio.reproject('EPSG:3857', transform=transform, shape=frame_map.shape)
         frame_locations = frame_map == granule.attrs['frame']
         sw_cumul_disp[frame_locations] = granule.data[frame_locations].astype(float)
         secondary_date = datetime.strftime(granule.attrs['secondary_date'], DATE_FORMAT)
@@ -226,12 +230,16 @@ def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: dat
 def main():
     """CLI entrpypoint
     Example:
-    generate_sw_disp_tile METADATA_ASCENDING_N41W125_N42W124.tif --begin-date 20170901 --end-date 20171231
+    generate_sw_disp_tile METADATA_ASCENDING_N41W125_N42W124.tif 20170901 20171231
     """
     parser = argparse.ArgumentParser(description='Create a short wavelength cumulative displacement tile')
-    parser.add_argument('metadata_path', type=str, help='Path to the metadata GeoTiff file')
-    parser.add_argument('begin_date', type=str, help='Start of date range to generate tile for in format: %Y%m%d')
-    parser.add_argument('end_date', type=str, help='End of date range to generate tile for in format: %Y%m%d')
+    parser.add_argument('metadata_path', type=str, help='Path to the metadata tile')
+    parser.add_argument(
+        'begin_date', type=str, help='Start of secondary date search range to generate tile for in format: %Y%m%d'
+    )
+    parser.add_argument(
+        'end_date', type=str, help='End of secondary date search range to generate tile for in format: %Y%m%d'
+    )
 
     args = parser.parse_args()
     args.metadata_path = Path(args.metadata_path)
