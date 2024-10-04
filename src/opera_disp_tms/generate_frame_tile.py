@@ -19,7 +19,7 @@ gdal.UseExceptions()
 
 def create_product_name(parts: Iterable[str], orbit_pass: str, bbox: Iterable[int]) -> str:
     """Create a product name for a frame metadata tile
-    Should be in the format: metadata_ascending_N02E001_N04E003
+    Should be in the format: metadata_ascending_N02E001 where N02E001 is the upper left corner
 
     Args:
         parts: The parts of the product name
@@ -37,7 +37,7 @@ def create_product_name(parts: Iterable[str], orbit_pass: str, bbox: Iterable[in
     def lon_string(lon):
         return ('E' if lon >= 0 else 'W') + f'{abs(lon):03}'
 
-    bbox_str = f'{lat_string(bbox[1])}{lon_string(bbox[0])}_{lat_string(bbox[3])}{lon_string(bbox[2])}'
+    bbox_str = f'{lon_string(bbox[0])}{lat_string(bbox[3])}'
     return '_'.join([*parts, orbit_pass, bbox_str]).upper()
 
 

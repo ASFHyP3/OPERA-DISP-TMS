@@ -103,10 +103,23 @@ def transform_point(x: float, y: float, source_wkt: str, target_wkt: str) -> Tup
 
 
 def check_bbox_all_int(bbox: Iterable[int]) -> None:
-    """Check that all elements of a bounding box are integers
+    """Check that bounding box:
+    - Has four elements
+    - All elements are integers
+    - Minx is less than maxx
+    - Miny is less than maxy
 
     Args:
         bbox: Bounding box to check
     """
+    if len(bbox) != 4:
+        raise ValueError('Bounding box must have 4 elements')
+
     if not all(isinstance(i, int) for i in bbox):
         raise ValueError('Bounding box must be integers')
+
+    if bbox[0] > bbox[2]:
+        raise ValueError('Bounding box minx is greater than maxx')
+
+    if bbox[1] > bbox[3]:
+        raise ValueError('Bounding box miny is greater than maxy')

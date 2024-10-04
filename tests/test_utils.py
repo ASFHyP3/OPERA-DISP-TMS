@@ -25,7 +25,16 @@ def test_transform_point():
 
 
 def test_check_bbox_all_int():
-    with pytest.raises(ValueError):
-        ut.check_bbox_all_int([1, 2.0, 3])
+    with pytest.raises(ValueError, match='Bounding box must have 4 elements'):
+        ut.check_bbox_all_int([1, 2, 3])
 
-    ut.check_bbox_all_int([1, 2, 3])
+    with pytest.raises(ValueError, match='Bounding box must be integers'):
+        ut.check_bbox_all_int([1, 2.0, 3, 4])
+
+    with pytest.raises(ValueError, match='Bounding box minx is greater than maxx'):
+        ut.check_bbox_all_int([2, 2, 1, 4])
+
+    with pytest.raises(ValueError, match='Bounding box miny is greater than maxy'):
+        ut.check_bbox_all_int([1, 4, 3, 2])
+
+    ut.check_bbox_all_int([1, 2, 3, 4])
