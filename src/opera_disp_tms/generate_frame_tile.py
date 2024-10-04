@@ -235,7 +235,7 @@ def add_frames_to_tile(frames: Iterable[Frame], tile_path: Path) -> None:
     cal_data = find_california_dataset()
     frame_metadata = {}
     for frame in frames:
-        relevant_granules = [x for x in cal_data if x.frame == frame.frame_id]
+        relevant_granules = [x for x in cal_data if x.frame_id == frame.frame_id]
         if len(relevant_granules) == 0:
             warnings.warn(f'No granules found for frame {frame.frame_id}, this frame will not be added to the tile.')
         else:
