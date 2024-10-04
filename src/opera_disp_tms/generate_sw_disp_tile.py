@@ -124,18 +124,18 @@ def update_spatiotemporal_reference(
 
 def create_product_name(metadata_name: str, begin_date: datetime, end_date: datetime) -> str:
     """Create a product name for a short wavelength cumulative displacement tile
-    Takes the form: SW_CUMUL_DISP_YYYYMMDD_YYYYMMDD_ORBIT_BBOX.tif
+    Takes the form: SW_CUMUL_DISP_YYYYMMDD_YYYYMMDD_DIRECTION_TILECOORDS.tif
 
     Args:
         metadata_name: The name of the metadata file
         begin_date: Start of secondary date search range to generate tile for
         end_date: End of secondary date search range to generate tile for
     """
-    parts = metadata_name.split('_')[1:]
+    _, flight_direction, tile_coordinates = metadata_name.split('_')
     date_fmt = '%Y%m%d'
     begin_date = datetime.strftime(begin_date, date_fmt)
     end_date = datetime.strftime(end_date, date_fmt)
-    name = '_'.join(['SW_CUMUL_DISP', begin_date, end_date, *parts])
+    name = '_'.join(['SW_CUMUL_DISP', begin_date, end_date, flight_direction, tile_coordinates])
     return name
 
 
