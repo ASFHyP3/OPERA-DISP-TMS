@@ -92,7 +92,7 @@ CAL_FRAMES = sorted(ASC_FRAMES + DES_FRAMES)
 @dataclass
 class Granule:
     scene_name: str
-    frame: int
+    frame_id: int
     orbit_pass: str
     url: str
     s3_uri: str
@@ -111,10 +111,10 @@ class Granule:
             A Granule object created from the search result.
         """
         scene_name = search_product.properties['sceneName']
-        frame = int(scene_name.split('_')[4][1:])
-        if frame in ASC_FRAMES:
+        frame_id = int(scene_name.split('_')[4][1:])
+        if frame_id in ASC_FRAMES:
             orbit_pass = 'ASCENDING'
-        elif frame in DES_FRAMES:
+        elif frame_id in DES_FRAMES:
             orbit_pass = 'DESCENDING'
         else:
             orbit_pass = 'UNKNOWN'
@@ -127,7 +127,7 @@ class Granule:
         creation_date = datetime.strptime(scene_name.split('_')[-1], DATE_FORMAT)
         return cls(
             scene_name=scene_name,
-            frame=frame,
+            frame=frame_id,
             orbit_pass=orbit_pass,
             url=url,
             s3_uri=s3_uri,
@@ -161,7 +161,7 @@ class Granule:
     def to_tuple(self):
         return (
             self.scene_name,
-            self.frame,
+            self.frame_id,
             self.orbit_pass,
             self.url,
             self.s3_uri,
@@ -207,7 +207,7 @@ def filter_restults_to_california_dataset(granules: Iterable[Granule]) -> List[G
         secondary_within_data_date_range = DATA_START <= granule.secondary_date <= DATA_END
         within_data_date_range = reference_within_data_date_range and secondary_within_data_date_range
         within_processing_date_range = PROCESSING_START <= granule.creation_date <= PROCESSING_END
-        desired_frame = granule.frame in CAL_FRAMES
+        desired_frame = granule.frame_id in CAL_FRAMES
 
         if within_data_date_range and within_processing_date_range and desired_frame:
             desired_granules.append(granule)

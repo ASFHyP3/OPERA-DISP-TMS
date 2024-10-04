@@ -20,16 +20,16 @@ gdal.UseExceptions()
 
 
 @dataclass
-class Frame:
+class FrameMeta:
     """Dataclass for frame metadata"""
 
-    frame: int
+    frame_id: int
     reference_date: datetime
     reference_point_array: tuple  # column, row
     reference_point_geo: tuple  # lon, lat
 
 
-def frames_from_metadata(metadata_path: Path) -> list[Frame]:
+def frames_from_metadata(metadata_path: Path) -> list[FrameMeta]:
     """Extract frame metadata from a metadata GeoTiff file
 
     Args:
@@ -51,7 +51,7 @@ def frames_from_metadata(metadata_path: Path) -> list[Frame]:
         ref_point_geo = frame_metadata[f'FRAME_{frame_id}_REF_POINT_GEO']
         ref_point_geo = tuple([float(x) for x in ref_point_geo.split(', ')])
 
-        frame = Frame(frame_id, ref_date, ref_point_array, ref_point_geo)
+        frame = FrameMeta(frame_id, ref_date, ref_point_array, ref_point_geo)
         frames.append(frame)
     return frames
 
@@ -83,7 +83,7 @@ def find_needed_granules(frame_ids: Iterable[int], begin_date: datetime, end_dat
 
 
 def update_spatiotemporal_reference(
-    in_granule: xr.DataArray, frame: Frame, update_ref_date: bool = True, update_ref_point: bool = True
+    in_granule: xr.DataArray, frame: FrameMeta, update_ref_date: bool = True, update_ref_point: bool = True
 ) -> xr.DataArray:
     """Update the spatiotemporal reference information of a granule to match the frame metadata
 
@@ -96,7 +96,7 @@ def update_spatiotemporal_reference(
     Returns:
         The updated granule
     """
-    if in_granule.attrs['frame'] != frame.frame:
+    if in_granule.attrs['frame'] != frame.frame_id:
         raise ValueError('Granule frame does not match frame metadata')
 
     same_ref_date = utils.round_to_day(in_granule.attrs['reference_date']) == utils.round_to_day(frame.reference_date)
@@ -203,19 +203,19 @@ def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: dat
 
     transform = Affine.from_gdal(*gdal.Open(str(metadata_path)).GetGeoTransform())
     frames = frames_from_metadata(metadata_path)
-    frame_ids = [x.frame for x in frames]
+    frame_ids = [x.frame_id for x in frames]
     needed_granules = find_needed_granules(frame_ids, begin_date, end_date)
     secondary_dates = {}
     for granule in needed_granules:
-        print(f'Granule {granule.scene_name} selected for frame {granule.frame}.')
+        print(f'Granule {granule.scene_name} selected for frame {granule.frame_id}.')
         granule = open_opera_disp_granule(granule.s3_uri, 'short_wavelength_displacement')
-        granule_frame = [x for x in frames if x.frame == granule.attrs['frame']][0]
+        granule_frame = [x for x in frames if x.frame_id == granule.attrs['frame']][0]
         granule = update_spatiotemporal_reference(granule, granule_frame, update_ref_point=False)
         granule = granule.rio.reproject('EPSG:3857', transform=transform, shape=frame_map.shape)
         frame_locations = frame_map == granule.attrs['frame']
         sw_cumul_disp[frame_locations] = granule.data[frame_locations].astype(float)
         secondary_date = datetime.strftime(granule.attrs['secondary_date'], DATE_FORMAT)
-        secondary_dates[f'FRAME_{granule_frame.frame}_SEC_TIME'] = secondary_date
+        secondary_dates[f'FRAME_{granule_frame.frame_id}_SEC_TIME'] = secondary_date
 
     band.WriteArray(sw_cumul_disp)
     metadata = ds.GetMetadata()

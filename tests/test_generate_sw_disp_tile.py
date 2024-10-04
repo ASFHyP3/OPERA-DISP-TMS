@@ -33,11 +33,11 @@ def test_frames_from_metadata(tmp_path):
     create_tif(tmp_tif, metadata)
     frames = sw.frames_from_metadata(tmp_tif)
     assert len(frames) == 2
-    assert frames[0].frame == 1
+    assert frames[0].frame_id == 1
     assert frames[0].reference_date == datetime(2021, 1, 1, 0, 0, 0)
     assert frames[0].reference_point_array == (1, 2)
     assert frames[0].reference_point_geo == (1.0, 2.0)
-    assert frames[1].frame == 2
+    assert frames[1].frame_id == 2
     assert frames[1].reference_date == datetime(2021, 1, 2, 0, 0, 0)
     assert frames[1].reference_point_array == (3, 4)
     assert frames[1].reference_point_geo == (3.0, 4.0)
@@ -75,7 +75,7 @@ def test_update_spatiotemporal_reference():
     tmp_array.rio.write_crs(utils.wkt_from_epsg(26910), inplace=True)
 
     ref_x, ref_y = utils.transform_point(1, 1, utils.wkt_from_epsg(26910), utils.wkt_from_epsg(4326))
-    frame = sw.Frame(1, datetime(2021, 1, 1), (0, 0), (ref_x, ref_y))
+    frame = sw.FrameMeta(1, datetime(2021, 1, 1), (0, 0), (ref_x, ref_y))
 
     updated_array = sw.update_spatiotemporal_reference(tmp_array, frame)
     assert np.all(updated_array.data == np.array([[0, -1], [-2, -3]]))

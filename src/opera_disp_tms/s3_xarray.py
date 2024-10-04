@@ -45,7 +45,7 @@ def get_opera_disp_granule_metadata(s3_uri) -> Tuple:
         s3_uri: URI of the granule on S3
 
     Returns:
-        Tuple of reference point array, reference point geo, reference date, secondary date, frame, and EPSG
+        Tuple of reference point array, reference point geo, reference date, secondary date, frame_id, and EPSG
     """
     ds_metadata = open_s3_xarray_dataset(s3_uri, group='/corrections')
 
@@ -63,9 +63,9 @@ def get_opera_disp_granule_metadata(s3_uri) -> Tuple:
 
     reference_date = datetime.strptime(s3_uri.split('/')[-1].split('_')[6], DATE_FORMAT)
     secondary_date = datetime.strptime(s3_uri.split('/')[-1].split('_')[7], DATE_FORMAT)
-    frame = int(s3_uri.split('/')[-1].split('_')[4][1:])
+    frame_id = int(s3_uri.split('/')[-1].split('_')[4][1:])
 
-    return ref_point_array, ref_point_geo, epsg, reference_date, secondary_date, frame
+    return ref_point_array, ref_point_geo, epsg, reference_date, secondary_date, frame_id
 
 
 def open_opera_disp_granule(s3_uri: str, data_var=str) -> xr.DataArray:
@@ -82,10 +82,12 @@ def open_opera_disp_granule(s3_uri: str, data_var=str) -> xr.DataArray:
     data = ds[data_var]
     data.rio.write_crs(ds['spatial_ref'].attrs['crs_wkt'], inplace=True)
 
-    ref_point_array, ref_point_geo, _, reference_date, secondary_date, frame = get_opera_disp_granule_metadata(s3_uri)
+    ref_point_array, ref_point_geo, _, reference_date, secondary_date, frame_id = get_opera_disp_granule_metadata(
+        s3_uri
+    )
     data.attrs['reference_point_array'] = ref_point_array
     data.attrs['reference_point_geo'] = ref_point_geo
     data.attrs['reference_date'] = reference_date
     data.attrs['secondary_date'] = secondary_date
-    data.attrs['frame'] = frame
+    data.attrs['frame_id'] = frame_id
     return data
