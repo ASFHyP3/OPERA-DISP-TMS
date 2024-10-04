@@ -218,8 +218,8 @@ def main():
     """
     parser = argparse.ArgumentParser(description='Create a short wavelength cumulative displacement tile')
     parser.add_argument('metadata_path', type=str, help='Path to the metadata GeoTiff file')
-    parser.add_argument('--begin-date', type=str, help='Start of date range to generate tile for in format: %Y%m%d')
-    parser.add_argument('--end-date', type=str, help='End of date range to generate tile for in format: %Y%m%d')
+    parser.add_argument('begin_date', type=str, help='Start of date range to generate tile for in format: %Y%m%d')
+    parser.add_argument('end_date', type=str, help='End of date range to generate tile for in format: %Y%m%d')
 
     args = parser.parse_args()
     args.metadata_path = Path(args.metadata_path)
