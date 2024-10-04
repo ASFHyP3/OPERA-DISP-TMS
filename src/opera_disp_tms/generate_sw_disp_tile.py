@@ -77,6 +77,7 @@ def find_needed_granules(frame_ids: Iterable[int], begin_date: datetime, end_dat
         else:
             granule = max(granules, key=lambda x: x.secondary_date)
             needed_granules.append(granule)
+            print(f'Granule {granule.scene_name} selected for frame {frame_id}.')
     return needed_granules
 
 
@@ -179,6 +180,7 @@ def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: dat
 
     product_name = create_product_name(metadata_path.name, begin_date, end_date)
     product_path = metadata_path.parent / product_name
+    print(f'Generating tile {product_name}')
 
     frame_map = utils.get_raster_array(metadata_path)
 
@@ -208,6 +210,7 @@ def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: dat
     ds.SetMetadata(metadata)
     ds.FlushCache()
     ds = None
+    print('Done!')
     return product_path
 
 
