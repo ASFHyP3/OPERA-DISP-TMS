@@ -29,7 +29,7 @@ class FrameMeta:
     reference_point_geo: tuple  # lon, lat
 
 
-def extract_frame_metadata(frame_metadata: dict, frame_id: int) -> FrameMeta:
+def extract_frame_metadata(frame_metadata: dict[str, str], frame_id: int) -> FrameMeta:
     """Extract frame metadata from a frame metadata dictionary
 
     Args:
@@ -50,7 +50,7 @@ def extract_frame_metadata(frame_metadata: dict, frame_id: int) -> FrameMeta:
     return FrameMeta(frame_id, ref_date, ref_point_array, ref_point_geo)
 
 
-def frames_from_metadata(metadata_path: Path) -> dict:
+def frames_from_metadata(metadata_path: Path) -> dict[int, FrameMeta]:
     """Extract frame metadata from a metadata GeoTiff file
 
     Args:
