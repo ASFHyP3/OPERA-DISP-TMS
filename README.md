@@ -43,18 +43,18 @@ These tiles serve as the foundation for the creation of all other Tile Map Serve
 
 The `generate_frame_tile` CLI command can be used to generate a frame metadata tile:
 ```bash
-generate_frame_tile -125 41 -124 42 --ascending
+generate_frame_tile -125 41 -124 42 --direction ascending
 ```
-Where `-125 41 -124 42` is a desired bounding box in **integer** `minx, miny, max, maxy` longitude/latitude values, and `--ascending` specifies which orbit direction you want to generate a frame metadata tile for (`--ascending` for ascending, omit for descending).
+Where `-125 41 -124 42` is a desired bounding box in **integer** `minx, miny, max, maxy` longitude/latitude values, and `--direction` specifies which orbit direction you want to generate a frame metadata tile for (`ascending` or `descending`).
 
 For TMS generation ASF will be using 1x1 degree tiles.
 
 ### Create a Short Wavelength Cumulative Displacement tile
 The `generate_sw_disp_tile` CLI command can be used to generate a cumulative displacement geotiff:
 ```bash
-generate_sw_disp_tile METADATA_ASCENDING_N41W125_N42W124.tif --begin-date 20170901 --end-date 20171231
+generate_sw_disp_tile METADATA_ASCENDING_W125N42.tif --begin-date 20170901 --end-date 20171231
 ```
-Where `METADATA_ASCENDING_N41W125_N42W124.tif` is the path to the frame metadata tile you want to generate a Short Wavelength Cumulative Displacement tile for, and `--begin-date` and `--end-date` specify the date range you want to generate the Short Wavelength Cumulative Displacement tile for.
+Where `METADATA_ASCENDING_W125N42.tif` is the path to the frame metadata tile you want to generate a Short Wavelength Cumulative Displacement tile for, and `--begin-date` and `--end-date` specify the date range you want to generate the Short Wavelength Cumulative Displacement tile for.
 
 ### Create a Tile Map
 The `create_tile_map` CLI command generates a directory with small .png tiles from a list of rasters in a common projection, following the OSGeo Tile Map Service Specification, using gdal2tiles: https://gdal.org/en/latest/programs/gdal2tiles.html
@@ -62,9 +62,9 @@ The `create_tile_map` CLI command generates a directory with small .png tiles fr
 To create a tile map from a set of displacement GeoTIFFs:
 ```bash
 create_tile_map tiles/ \
-  SW_CUMUL_DISP_20170901_20171231_ASCENDING_N41W125_N42W122.tif \
-  SW_CUMUL_DISP_20170901_20171231_ASCENDING_N41W125_N42W123.tif \
-  SW_CUMUL_DISP_20170901_20171231_ASCENDING_N41W125_N42W124.tif
+  SW_CUMUL_DISP_20170901_20171231_ASCENDING_W125N42.tif \
+  SW_CUMUL_DISP_20170901_20171231_ASCENDING_W125N42.tif \
+  SW_CUMUL_DISP_20170901_20171231_ASCENDING_W125N42.tif
 ```
 
 A simple web page with a viewer based on OpenLayers is included to visualize the map in a browser, e.g. `tiles/openlayers.html`.
