@@ -137,7 +137,7 @@ def create_empty_frame_tile(bbox: Iterable[int], out_path: Path, resolution: int
     ds.SetProjection(mercator.ExportToWkt())
     band = ds.GetRasterBand(1)
     band.WriteArray(np.zeros((y_size, x_size), dtype=np.uint16))
-    ds.setNoDataValue(0)
+    band.SetNoDataValue(0)
 
     band.FlushCache()
     ds = None
