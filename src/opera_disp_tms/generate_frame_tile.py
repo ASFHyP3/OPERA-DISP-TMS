@@ -143,7 +143,7 @@ def create_empty_frame_tile(bbox: Iterable[int], out_path: Path, resolution: int
     ds = None
 
 
-def burn_frame(frame: Frame, tile_path: Path) -> None
+def burn_frame(frame: Frame, tile_path: Path) -> None:
     """Burn the frame id into the frame metadata tile within the frame geometry
 
     Args:
@@ -283,13 +283,11 @@ def create_tile_for_bbox(bbox: Iterable[int], direction: str) -> Path:
 
 def main():
     """CLI entrypoint
-    Example: generate_frame_tile -125 41 -124 42 --ascending
+    Example: generate_frame_tile -125 41 -124 42 --direction ascending
     """
     parser = argparse.ArgumentParser(description='Create a frame metadata tile for a given bounding box')
     parser.add_argument('bbox', type=int, nargs=4, help='Bounding box in the form of min_lon min_lat max_lon max_lat')
-    parser.add_argument(
-        '--direction', type=str, choices=['ascending', 'descending'], help='Direction of the orbit pass'
-    )
+    parser.add_argument('direction', type=str, choices=['ascending', 'descending'], help='Direction of the orbit pass')
     args = parser.parse_args()
     create_tile_for_bbox(args.bbox, direction=args.direction)
 
