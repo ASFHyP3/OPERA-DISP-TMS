@@ -216,13 +216,12 @@ def create_granule_metadata_dict(granule: Granule) -> dict:
         The granule metadata dictionary
     """
     granule_info = get_opera_disp_granule_metadata(granule.s3_uri)
-    ref_point_array, ref_point_geo, epsg, reference_date, frame, _ = granule_info
+    ref_point_array, ref_point_geo, epsg, reference_date, secondary_date, frame = granule_info
     frame_metadata = {}
     frame_metadata[f'FRAME_{frame}_REF_POINT_ARRAY'] = ', '.join([str(x) for x in ref_point_array])
     frame_metadata[f'FRAME_{frame}_REF_POINT_GEO'] = ', '.join([str(x) for x in ref_point_geo])
     frame_metadata[f'FRAME_{frame}_EPSG'] = str(epsg)
     frame_metadata[f'FRAME_{frame}_REF_TIME'] = granule.reference_date.strftime('%Y%m%dT%H%M%SZ')
-    frame_metadata[f'FRAME_{frame}_REF_DATE'] = granule.reference_date.strftime('%Y-%m-%d')
     return frame_metadata
 
 
@@ -283,7 +282,7 @@ def create_tile_for_bbox(bbox: Iterable[int], direction: str) -> Path:
 
 def main():
     """CLI entrypoint
-    Example: generate_frame_tile -125 41 -124 42 --direction ascending
+    Example: generate_frame_tile -125 41 -124 42 ascending
     """
     parser = argparse.ArgumentParser(description='Create a frame metadata tile for a given bounding box')
     parser.add_argument('bbox', type=int, nargs=4, help='Bounding box in the form of min_lon min_lat max_lon max_lat')
