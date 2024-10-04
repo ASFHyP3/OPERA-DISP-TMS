@@ -19,6 +19,24 @@ def create_tif(save_path, metadata):
     ds = None
 
 
+def test_extract_frame_metadata():
+    metadata = {
+        'OPERA_FRAMES': '1, 2',
+        'FRAME_1_REF_TIME': '20210101T000000Z',
+        'FRAME_1_REF_POINT_ARRAY': '1, 2',
+        'FRAME_1_REF_POINT_GEO': '1.0, 2.0',
+        'FRAME_2_REF_TIME': '20210102T000000Z',
+        'FRAME_2_REF_POINT_ARRAY': '3, 4',
+        'FRAME_2_REF_POINT_GEO': '3.0, 4.0',
+    }
+
+    expected = sw.FrameMeta(1, datetime(2021, 1, 1), (1, 2), (1.0, 2.0))
+    assert sw.extract_frame_metadata(metadata, 1) == expected
+
+    expected = sw.FrameMeta(2, datetime(2021, 1, 2), (3, 4), (3.0, 4.0))
+    assert sw.extract_frame_metadata(metadata, 2) == expected
+
+
 def test_frames_from_metadata(tmp_path):
     tmp_tif = tmp_path / 'test.tif'
     metadata = {

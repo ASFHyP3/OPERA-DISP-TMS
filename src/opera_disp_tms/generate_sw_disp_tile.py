@@ -29,30 +29,40 @@ class FrameMeta:
     reference_point_geo: tuple  # lon, lat
 
 
-def frames_from_metadata(metadata_path: Path) -> list[FrameMeta]:
+def extract_frame_metadata(frame_metadata: dict, frame_id: int) -> FrameMeta:
+    """Extract frame metadata from a frame metadata dictionary
+
+    Args:
+        frame_metadata: A dictionary of attributes for multiple frames
+        frame_id: the ID of the desired frame
+
+    Returns:
+        A FrameMeta object for the desired frame
+    """
+    ref_date = datetime.strptime(frame_metadata[f'FRAME_{frame_id}_REF_TIME'], DATE_FORMAT)
+
+    ref_point_array = frame_metadata[f'FRAME_{frame_id}_REF_POINT_ARRAY'].split(', ')
+    ref_point_array = tuple(int(x) for x in ref_point_array)
+
+    ref_point_geo = frame_metadata[f'FRAME_{frame_id}_REF_POINT_GEO'].split(', ')
+    ref_point_geo = tuple(float(x) for x in ref_point_geo)
+
+    return FrameMeta(frame_id, ref_date, ref_point_array, ref_point_geo)
+
+
+def frames_from_metadata(metadata_path: Path) -> dict:
     """Extract frame metadata from a metadata GeoTiff file
 
     Args:
         metadata_path (Path): Path to the metadata GeoTiff file
 
     Returns:
-        List of frame metadata
+        Dictionary of frame metadata indexed by frame id
     """
     info_dict = gdal.Info(str(metadata_path), format='json')
     frame_metadata = info_dict['metadata']['']
     frame_ids = [int(x) for x in frame_metadata['OPERA_FRAMES'].split(', ')]
-    frames = {}
-    for frame_id in frame_ids:
-        ref_date = datetime.strptime(frame_metadata[f'FRAME_{frame_id}_REF_TIME'], DATE_FORMAT)
-
-        ref_point_array = frame_metadata[f'FRAME_{frame_id}_REF_POINT_ARRAY']
-        ref_point_array = tuple([int(x) for x in ref_point_array.split(', ')])
-
-        ref_point_geo = frame_metadata[f'FRAME_{frame_id}_REF_POINT_GEO']
-        ref_point_geo = tuple([float(x) for x in ref_point_geo.split(', ')])
-
-        frame = FrameMeta(frame_id, ref_date, ref_point_array, ref_point_geo)
-        frames[frame_id] = frame
+    frames = {frame_id: extract_frame_metadata(frame_metadata, frame_id) for frame_id in frame_ids}
     return frames
 
 
