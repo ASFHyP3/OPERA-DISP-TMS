@@ -209,10 +209,10 @@ def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: dat
     for granule in needed_granules:
         print(f'Granule {granule.scene_name} selected for frame {granule.frame_id}.')
         granule = open_opera_disp_granule(granule.s3_uri, 'short_wavelength_displacement')
-        granule_frame = [x for x in frames if x.frame_id == granule.attrs['frame']][0]
+        granule_frame = [x for x in frames if x.frame_id == granule.attrs['frame_id']][0]
         granule = update_spatiotemporal_reference(granule, granule_frame, update_ref_point=False)
         granule = granule.rio.reproject('EPSG:3857', transform=transform, shape=frame_map.shape)
-        frame_locations = frame_map == granule.attrs['frame']
+        frame_locations = frame_map == granule.attrs['frame_id']
         sw_cumul_disp[frame_locations] = granule.data[frame_locations].astype(float)
         secondary_date = datetime.strftime(granule.attrs['secondary_date'], DATE_FORMAT)
         secondary_dates[f'FRAME_{granule_frame.frame_id}_SEC_TIME'] = secondary_date
