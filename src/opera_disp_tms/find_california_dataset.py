@@ -127,7 +127,7 @@ class Granule:
         creation_date = datetime.strptime(scene_name.split('_')[-1], DATE_FORMAT)
         return cls(
             scene_name=scene_name,
-            frame=frame_id,
+            frame_id=frame_id,
             orbit_pass=orbit_pass,
             url=url,
             s3_uri=s3_uri,
@@ -149,7 +149,7 @@ class Granule:
         name, frame, orbit_pass, url, s3_uri, reference_date, secondary_date, creation_date = tup
         return cls(
             scene_name=name,
-            frame=int(frame),
+            frame_id=int(frame),
             orbit_pass=orbit_pass,
             url=url,
             s3_uri=s3_uri,

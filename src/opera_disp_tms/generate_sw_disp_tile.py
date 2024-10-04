@@ -72,7 +72,7 @@ def find_needed_granules(frame_ids: Iterable[int], begin_date: datetime, end_dat
     cali_dataset = find_california_dataset()
     needed_granules = []
     for frame_id in frame_ids:
-        granules = [x for x in cali_dataset if x.frame == frame_id]
+        granules = [x for x in cali_dataset if x.frame_id == frame_id]
         granules = [x for x in granules if begin_date <= x.secondary_date <= end_date]
         if not granules:
             warnings.warn(f'No granules found for frame {frame_id} between {begin_date} and {end_date}.')
@@ -96,7 +96,7 @@ def update_spatiotemporal_reference(
     Returns:
         The updated granule
     """
-    if in_granule.attrs['frame'] != frame.frame_id:
+    if in_granule.attrs['frame_id'] != frame.frame_id:
         raise ValueError('Granule frame does not match frame metadata')
 
     same_ref_date = utils.round_to_day(in_granule.attrs['reference_date']) == utils.round_to_day(frame.reference_date)

@@ -44,12 +44,12 @@ def test_frames_from_metadata(tmp_path):
 
 
 def test_find_needed_granules():
-    GranuleStub = namedtuple('GranuleStub', ['frame', 'secondary_date'])
+    GranuleStub = namedtuple('GranuleStub', ['frame_id', 'secondary_date'])
     granules = [
-        GranuleStub(frame=1, secondary_date=datetime(2021, 1, 1)),
-        GranuleStub(frame=1, secondary_date=datetime(2021, 1, 2)),
-        GranuleStub(frame=2, secondary_date=datetime(2021, 1, 1)),
-        GranuleStub(frame=2, secondary_date=datetime(2021, 1, 2)),
+        GranuleStub(frame_id=1, secondary_date=datetime(2021, 1, 1)),
+        GranuleStub(frame_id=1, secondary_date=datetime(2021, 1, 2)),
+        GranuleStub(frame_id=2, secondary_date=datetime(2021, 1, 1)),
+        GranuleStub(frame_id=2, secondary_date=datetime(2021, 1, 2)),
     ]
     with mock.patch('opera_disp_tms.generate_sw_disp_tile.find_california_dataset', return_value=granules):
         needed_granules = sw.find_needed_granules([1], datetime(2021, 1, 1), datetime(2021, 1, 2))
@@ -68,7 +68,7 @@ def test_find_needed_granules():
 def test_update_spatiotemporal_reference():
     data = [[3, 2], [1, 0]]
     tmp_array = xr.DataArray(data, coords={'y': [1.0, 2.0], 'x': [1.0, 2.0]})
-    tmp_array.attrs['frame'] = 1
+    tmp_array.attrs['frame_id'] = 1
     tmp_array.attrs['reference_date'] = datetime(2021, 1, 1)
     new_x, new_y = utils.transform_point(2, 2, utils.wkt_from_epsg(26910), utils.wkt_from_epsg(4326))
     tmp_array.attrs['reference_point_geo'] = (new_x, new_y)
