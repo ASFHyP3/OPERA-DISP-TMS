@@ -105,6 +105,8 @@ def update_spatiotemporal_reference(in_granule: xr.DataArray, frame: Frame) -> x
             in_granule['spatial_ref'].attrs['crs_wkt'],
         )
         ref_value = in_granule.sel(x=ref_x, y=ref_y, method='nearest').data.item()
+        if np.isnan(ref_value):
+            raise ValueError(f'Granule {in_granule.scene_name} does not contain reference point {ref_x}, {ref_y}.')
         in_granule -= ref_value
         in_granule.attrs['reference_point_array'] = frame.reference_point_array
         in_granule.attrs['reference_point_geo'] = frame.reference_point_geo
