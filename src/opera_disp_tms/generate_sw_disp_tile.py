@@ -80,12 +80,16 @@ def find_needed_granules(frame_ids: Iterable[int], begin_date: datetime, end_dat
     return needed_granules
 
 
-def update_spatiotemporal_reference(in_granule: xr.DataArray, frame: Frame) -> xr.DataArray:
+def update_spatiotemporal_reference(
+    in_granule: xr.DataArray, frame: Frame, update_ref_date: bool = True, update_ref_point: bool = True
+) -> xr.DataArray:
     """Update the spatiotemporal reference information of a granule to match the frame metadata
 
     Args:
         in_granule: The granule to update
         frame: The frame metadata to update the granule to
+        update_ref_date: Whether to update the reference date
+        update_ref_point: Whether to update the reference point
 
     Returns:
         The updated granule
@@ -93,10 +97,13 @@ def update_spatiotemporal_reference(in_granule: xr.DataArray, frame: Frame) -> x
     if in_granule.attrs['frame'] != frame.frame:
         raise ValueError('Granule frame does not match frame metadata')
 
-    if utils.round_to_day(in_granule.attrs['reference_date']) != utils.round_to_day(frame.reference_date):
+    same_ref_date = utils.round_to_day(in_granule.attrs['reference_date']) == utils.round_to_day(frame.reference_date)
+    if not same_ref_date and update_ref_date:
         raise NotImplementedError('Granule reference date does not match frame metadata, this is not yet supported.')
 
-    if in_granule.attrs['reference_point_geo'] != frame.reference_point_geo:
+    same_ref_point = np.isclose(in_granule.attrs['reference_point_geo'], frame.reference_point_geo).all()
+    if not same_ref_point and update_ref_point:
+        # FIXME transform_point may not be working correctly
         ref_x, ref_y = utils.transform_point(
             frame.reference_point_geo[0],
             frame.reference_point_geo[1],
@@ -199,7 +206,7 @@ def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: dat
         print(f'Granule {granule.scene_name} selected for frame {granule.frame}.')
         granule = open_opera_disp_granule(granule.s3_uri, 'short_wavelength_displacement')
         granule_frame = [x for x in frames if x.frame == granule.attrs['frame']][0]
-        granule = update_spatiotemporal_reference(granule, granule_frame)
+        granule = update_spatiotemporal_reference(granule, granule_frame, update_ref_point=False)
         granule = granule.rio.reproject('EPSG:3857', transform=transfrom, shape=frame_map.shape)
         frame_locations = frame_map == granule.attrs['frame']
         sw_cumul_disp[frame_locations] = granule.data[frame_locations].astype(float)
