@@ -41,12 +41,12 @@ def create_product_name(parts: Iterable[str], orbit_pass: str, bbox: Iterable[in
     return '_'.join([*parts, orbit_pass, bbox_str]).upper()
 
 
-def update_frame_geometry(frame: Frame, buffer_size: int = -3500) -> Frame:
+def buffer_frame_geometry(frame: Frame, buffer_size_in_meters: int = -3500) -> Frame:
     """Apply a buffer to the geometry of a frame to better align it with OPERA DISP granules
 
     Args:
         frame: The frame to update
-        buffer_size: The buffer size to apply to the geometry
+        buffer_size_in_meters: The buffer size in meters to apply to the geometry
 
     Returns:
         The updated frame
@@ -57,7 +57,7 @@ def update_frame_geometry(frame: Frame, buffer_size: int = -3500) -> Frame:
     latlon2utm = pyproj.Transformer.from_crs(crs_latlon, crs_utm, always_xy=True).transform
     geom_utm = transform(latlon2utm, frame.geom)
 
-    geom_shrunk = geom_utm.buffer(buffer_size, join_style='mitre')
+    geom_shrunk = geom_utm.buffer(buffer_size_in_meters, join_style='mitre')
 
     utm2latlon = pyproj.Transformer.from_crs(crs_utm, crs_latlon, always_xy=True).transform
     geom_latlon = transform(utm2latlon, geom_shrunk)
@@ -274,7 +274,7 @@ def create_tile_for_bbox(bbox: Iterable[int], direction: str) -> Path:
         raise ValueError('Direction must be either "ASCENDING" or "DESCENDING"')
     out_path = Path(create_product_name(['metadata'], direction, bbox) + '.tif')
     relevant_frames = intersect(bbox=bbox, orbit_pass=direction, is_north_america=True, is_land=True)
-    updated_frames = [update_frame_geometry(x) for x in relevant_frames]
+    updated_frames = [buffer_frame_geometry(x) for x in relevant_frames]
     ordered_frames = reorder_frames(updated_frames)
     create_empty_frame_tile(bbox, out_path)
     add_frames_to_tile(ordered_frames, out_path)
