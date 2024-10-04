@@ -1,7 +1,7 @@
 import argparse
 import warnings
 from pathlib import Path
-from typing import Dict, Iterable, List
+from typing import Iterable, List
 
 import numpy as np
 import pyproj
@@ -143,7 +143,7 @@ def create_empty_frame_tile(bbox: Iterable[int], out_path: Path, resolution: int
     ds = None
 
 
-def burn_frame(frame: Frame, tile_path: Path):
+def burn_frame(frame: Frame, tile_path: Path) -> None
     """Burn the frame id into the frame metadata tile within the frame geometry
 
     Args:
@@ -206,7 +206,7 @@ def burn_frame(frame: Frame, tile_path: Path):
     tmp_tiff.unlink()
 
 
-def create_granule_metadata_dict(granule: Granule) -> Dict:
+def create_granule_metadata_dict(granule: Granule) -> dict:
     """Create a dictionary of metadata for a granule to add to the frame metadata tile
 
     Args:

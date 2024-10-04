@@ -1,5 +1,4 @@
 import argparse
-from typing import Dict
 
 import cachetools.func
 import requests
@@ -9,7 +8,7 @@ import requests
 # For instance, 50 minutes so that credentials are refreshed at least 10 minutes
 # before they're set to expire.
 @cachetools.func.ttl_cache(ttl=60 * 50)
-def get_temporary_aws_credentials(endpoint: str = 'https://cumulus-test.asf.alaska.edu/s3credentials') -> Dict:
+def get_temporary_aws_credentials(endpoint: str = 'https://cumulus-test.asf.alaska.edu/s3credentials') -> dict:
     """Gets temporary AWS S3 access credentials from the cache or requests new credentials if credentials are expired.
 
     Args:
