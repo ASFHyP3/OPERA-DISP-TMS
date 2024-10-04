@@ -102,7 +102,7 @@ def transform_point(x: float, y: float, source_wkt: str, target_wkt: str) -> Tup
     return x_transformed, y_transformed
 
 
-def check_bbox_all_int(bbox: Iterable[int]) -> None:
+def validate_bbox(bbox: Iterable[int]) -> None:
     """Check that bounding box:
     - Has four elements
     - All elements are integers

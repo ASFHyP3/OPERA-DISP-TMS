@@ -24,17 +24,17 @@ def test_transform_point():
     assert np.isclose(test_point, test_point_recreated).all()
 
 
-def test_check_bbox_all_int():
+def test_validate_bbox():
     with pytest.raises(ValueError, match='Bounding box must have 4 elements'):
-        ut.check_bbox_all_int([1, 2, 3])
+        ut.validate_bbox([1, 2, 3])
 
     with pytest.raises(ValueError, match='Bounding box must be integers'):
-        ut.check_bbox_all_int([1, 2.0, 3, 4])
+        ut.validate_bbox([1, 2.0, 3, 4])
 
     with pytest.raises(ValueError, match='Bounding box minx is greater than maxx'):
-        ut.check_bbox_all_int([2, 2, 1, 4])
+        ut.validate_bbox([2, 2, 1, 4])
 
     with pytest.raises(ValueError, match='Bounding box miny is greater than maxy'):
-        ut.check_bbox_all_int([1, 4, 3, 2])
+        ut.validate_bbox([1, 4, 3, 2])
 
-    ut.check_bbox_all_int([1, 2, 3, 4])
+    ut.validate_bbox([1, 2, 3, 4])

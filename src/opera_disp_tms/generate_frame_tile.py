@@ -11,7 +11,7 @@ from shapely.ops import transform
 from opera_disp_tms.find_california_dataset import Granule, find_california_dataset
 from opera_disp_tms.frames import Frame, intersect
 from opera_disp_tms.s3_xarray import get_opera_disp_granule_metadata
-from opera_disp_tms.utils import check_bbox_all_int
+from opera_disp_tms.utils import validate_bbox
 
 
 gdal.UseExceptions()
@@ -29,7 +29,7 @@ def create_product_name(parts: Iterable[str], orbit_pass: str, bbox: Iterable[in
     Returns:
         The product name
     """
-    check_bbox_all_int(bbox)
+    validate_bbox(bbox)
 
     def lat_string(lat):
         return ('N' if lat >= 0 else 'S') + f'{abs(lat):02}'
@@ -112,7 +112,7 @@ def create_empty_frame_tile(bbox: Iterable[int], out_path: Path, resolution: int
     Returns:
         The path to the empty frame metadata tile
     """
-    check_bbox_all_int(bbox)
+    validate_bbox(bbox)
     min_lon, min_lat, max_lon, max_lat = bbox
 
     wgs84 = osr.SpatialReference()
@@ -268,7 +268,7 @@ def create_tile_for_bbox(bbox: Iterable[int], direction: str) -> Path:
     Returns:
         The path to the frame metadata tile
     """
-    check_bbox_all_int(bbox)
+    validate_bbox(bbox)
     direction = direction.upper()
     if direction not in ['ASCENDING', 'DESCENDING']:
         raise ValueError('Direction must be either "ASCENDING" or "DESCENDING"')
