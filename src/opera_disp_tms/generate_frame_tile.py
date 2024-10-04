@@ -249,7 +249,7 @@ def add_frames_to_tile(frames: Iterable[Frame], tile_path: Path) -> None:
     band = tile_ds.GetRasterBand(1)
     array = band.ReadAsArray()
     included_frames = np.unique(array)
-    included_frames = included_frames[included_frames != 0] # Account for 0 nodata value
+    included_frames = included_frames[included_frames != 0]  # Account for 0 nodata value
 
     metadata_dict = {'OPERA_FRAMES': ', '.join([str(x) for x in included_frames])}
     [metadata_dict.update(frame_metadata[str(x)]) for x in included_frames]
