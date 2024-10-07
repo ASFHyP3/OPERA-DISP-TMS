@@ -1,31 +1,25 @@
 import argparse
 import warnings
 from pathlib import Path
-from typing import Iterable, List, Tuple
+from typing import Iterable, List
 
-import h5py
 import numpy as np
 import pyproj
-import s3fs
 from osgeo import gdal, ogr, osr
 from shapely.ops import transform
 
-from opera_disp_tms.find_california_dataset import find_california_dataset
+from opera_disp_tms.find_california_dataset import Granule, find_california_dataset
 from opera_disp_tms.frames import Frame, intersect
-from opera_disp_tms.tmp_s3_access import get_credentials
+from opera_disp_tms.s3_xarray import get_opera_disp_granule_metadata
+from opera_disp_tms.utils import validate_bbox
 
 
 gdal.UseExceptions()
 
 
-def check_bbox_all_int(bbox: Iterable[int]):
-    if not all(isinstance(i, int) for i in bbox):
-        raise ValueError('Bounding box must be integers')
-
-
 def create_product_name(parts: Iterable[str], orbit_pass: str, bbox: Iterable[int]) -> str:
     """Create a product name for a frame metadata tile
-    Should be in the format: metadata_ascending_N02E001_N04E003
+    Should be in the format: metadata_ascending_N02E001 where N02E001 is the upper left corner
 
     Args:
         parts: The parts of the product name
@@ -35,7 +29,7 @@ def create_product_name(parts: Iterable[str], orbit_pass: str, bbox: Iterable[in
     Returns:
         The product name
     """
-    check_bbox_all_int(bbox)
+    validate_bbox(bbox)
 
     def lat_string(lat):
         return ('N' if lat >= 0 else 'S') + f'{abs(lat):02}'
@@ -43,8 +37,32 @@ def create_product_name(parts: Iterable[str], orbit_pass: str, bbox: Iterable[in
     def lon_string(lon):
         return ('E' if lon >= 0 else 'W') + f'{abs(lon):03}'
 
-    bbox_str = f'{lat_string(bbox[1])}{lon_string(bbox[0])}_{lat_string(bbox[3])}{lon_string(bbox[2])}'
+    bbox_str = f'{lon_string(bbox[0])}{lat_string(bbox[3])}'
     return '_'.join([*parts, orbit_pass, bbox_str]).upper()
+
+
+def buffer_frame_geometry(frame: Frame, buffer_size_in_meters: int = -3500) -> Frame:
+    """Apply a buffer to the geometry of a frame to better align it with OPERA DISP granules
+
+    Args:
+        frame: The frame to update
+        buffer_size_in_meters: The buffer size in meters to apply to the geometry
+
+    Returns:
+        The updated frame
+    """
+    crs_latlon = pyproj.CRS('EPSG:4326')
+    crs_utm = pyproj.CRS(f'EPSG:{frame.epsg}')
+
+    latlon2utm = pyproj.Transformer.from_crs(crs_latlon, crs_utm, always_xy=True).transform
+    geom_utm = transform(latlon2utm, frame.geom)
+
+    geom_shrunk = geom_utm.buffer(buffer_size_in_meters, join_style='mitre')
+
+    utm2latlon = pyproj.Transformer.from_crs(crs_utm, crs_latlon, always_xy=True).transform
+    geom_latlon = transform(utm2latlon, geom_shrunk)
+    frame.geom = geom_latlon
+    return frame
 
 
 def reorder_frames(frame_list: Iterable[Frame], order_by: str = 'west_most') -> List[Frame]:
@@ -94,7 +112,7 @@ def create_empty_frame_tile(bbox: Iterable[int], out_path: Path, resolution: int
     Returns:
         The path to the empty frame metadata tile
     """
-    check_bbox_all_int(bbox)
+    validate_bbox(bbox)
     min_lon, min_lat, max_lon, max_lat = bbox
 
     wgs84 = osr.SpatialReference()
@@ -113,18 +131,19 @@ def create_empty_frame_tile(bbox: Iterable[int], out_path: Path, resolution: int
 
     driver = gdal.GetDriverByName('GTiff')
     opts = ['TILED=YES', 'COMPRESS=LZW', 'NUM_THREADS=ALL_CPUS']
-    raster = driver.Create(out_path, x_size, y_size, 1, gdal.GDT_UInt16, options=opts)
+    ds = driver.Create(out_path, x_size, y_size, 1, gdal.GDT_UInt16, options=opts)
 
-    raster.SetGeoTransform((min_x, resolution, 0, max_y, 0, -resolution))
-    raster.SetProjection(mercator.ExportToWkt())
-    band = raster.GetRasterBand(1)
+    ds.SetGeoTransform((min_x, resolution, 0, max_y, 0, -resolution))
+    ds.SetProjection(mercator.ExportToWkt())
+    band = ds.GetRasterBand(1)
     band.WriteArray(np.zeros((y_size, x_size), dtype=np.uint16))
+    band.SetNoDataValue(0)
 
     band.FlushCache()
-    raster = None
+    ds = None
 
 
-def burn_frame(frame: Frame, tile_path: Path):
+def burn_frame(frame: Frame, tile_path: Path) -> None:
     """Burn the frame id into the frame metadata tile within the frame geometry
 
     Args:
@@ -187,153 +206,89 @@ def burn_frame(frame: Frame, tile_path: Path):
     tmp_tiff.unlink()
 
 
-def get_granule_reference_info_s3(s3_granule_path: str) -> Tuple:
-    """Get the reference information for an OPERA DISP granule stored in S3
+def create_granule_metadata_dict(granule: Granule) -> dict:
+    """Create a dictionary of metadata for a granule to add to the frame metadata tile
 
     Args:
-        s3_granule_path: The S3 URI to the granule
+        granule: The granule to create the metadata dictionary for
 
     Returns:
-        A tuple containing the reference point in array coordinates, geographic coordinates, and EPSG code
+        The granule metadata dictionary
     """
-    io_params = {
-        's3fs_params': {
-            'default_cache_type': 'blockcache',
-            'default_block_size': 8 * 1024 * 1024,
-        },
-        'h5py_params': {
-            'driver_kwds': {
-                'page_buf_size': 32 * 1024 * 1024,
-                'rdcc_nbytes': 8 * 1024 * 1024,
-            }
-        },
-    }
-    creds = get_credentials()
-    fs = s3fs.S3FileSystem(
-        key=creds['accessKeyId'],
-        secret=creds['secretAccessKey'],
-        token=creds['sessionToken'],
-        **io_params['s3fs_params'],
-    )
-    with fs.open(s3_granule_path, 'rb') as f:
-        with h5py.File(f, 'r', **io_params['h5py_params']['driver_kwds']) as hdf:
-            ref_point_array, ref_point_geo, epsg = read_reference_info(hdf)
-    return ref_point_array, ref_point_geo, epsg
+    granule_info = get_opera_disp_granule_metadata(granule.s3_uri)
+    ref_point_array, ref_point_geo, epsg, reference_date, secondary_date, frame = granule_info
+    frame_metadata = {}
+    frame_metadata[f'FRAME_{frame}_REF_POINT_ARRAY'] = ', '.join([str(x) for x in ref_point_array])
+    frame_metadata[f'FRAME_{frame}_REF_POINT_GEO'] = ', '.join([str(x) for x in ref_point_geo])
+    frame_metadata[f'FRAME_{frame}_EPSG'] = str(epsg)
+    frame_metadata[f'FRAME_{frame}_REF_TIME'] = granule.reference_date.strftime('%Y%m%dT%H%M%SZ')
+    return frame_metadata
 
 
-def read_reference_info(h5_fobj: h5py.File) -> Tuple:
-    """Find the reference information for an OPERA DISP granule
+def add_frames_to_tile(frames: Iterable[Frame], tile_path: Path) -> None:
+    """Add frame information to a frame metadata tile
 
     Args:
-        h5_fobj: An open HDF5 file object for an OPERA DISP granule
-
-    Returns:
-        A tuple containing the reference point in array coordinates, geographic coordinates, and EPSG code
-    """
-    ref_point = h5_fobj['corrections']['reference_point'].attrs
-    ref_col = int(ref_point['cols'][0])
-    ref_row = int(ref_point['rows'][0])
-    ref_lat = float(ref_point['latitudes'][0])
-    ref_lon = float(ref_point['longitudes'][0])
-
-    srs = osr.SpatialReference()
-    srs.ImportFromWkt(h5_fobj['spatial_ref'].attrs['crs_wkt'])
-    epsg = int(srs.GetAuthorityCode(None))
-
-    ref_point_geo = (ref_lon, ref_lat)
-    ref_point_array = (ref_col, ref_row)
-    return ref_point_array, ref_point_geo, epsg
-
-
-def add_metadata_to_tile(tile_path: Path) -> None:
-    """Add metadata to the frame metadata tile
-
-    Args:
+        frames: The frames to add to the tile
         tile_path: The path to the frame metadata tile
     """
-    tile_ds = gdal.Open(str(tile_path), gdal.GA_Update)
-    band = tile_ds.GetRasterBand(1)
-    array = band.ReadAsArray()
-    frames = np.unique(array)
-
     cal_data = find_california_dataset()
     frame_metadata = {}
     for frame in frames:
-        relevant_granules = [x for x in cal_data if x.frame == frame]
+        relevant_granules = [x for x in cal_data if x.frame_id == frame.frame_id]
         if len(relevant_granules) == 0:
-            warnings.warn(f'No granules found for frame {frame}, metadata will be missing for this frame.')
+            warnings.warn(f'No granules found for frame {frame.frame_id}, this frame will not be added to the tile.')
         else:
             first_granule = min(relevant_granules, key=lambda x: x.reference_date)
+            frame_metadata[str(frame.frame_id)] = create_granule_metadata_dict(first_granule)
+            burn_frame(frame, tile_path)
 
-            ref_point_array, ref_point_geo, epsg = get_granule_reference_info_s3(first_granule.s3_uri)
-            frame_metadata[f'FRAME_{frame}_REF_POINT_ARRAY'] = ', '.join([str(x) for x in ref_point_array])
-            frame_metadata[f'FRAME_{frame}_REF_POINT_GEO'] = ', '.join([str(x) for x in ref_point_geo])
-            frame_metadata[f'FRAME_{frame}_EPSG'] = str(epsg)
+    tile_ds = gdal.Open(str(tile_path), gdal.GA_Update)
+    # Not all frames will be in the final array, so we need to find the included frames
+    band = tile_ds.GetRasterBand(1)
+    array = band.ReadAsArray()
+    included_frames = np.unique(array)
+    included_frames = included_frames[included_frames != 0]  # Account for 0 nodata value
 
-            frame_metadata[f'FRAME_{frame}_REF_TIME'] = first_granule.reference_date.strftime('%Y%m%dT%H%M%SZ')
-
-    tile_ds.SetMetadata({'OPERA_FRAMES': ', '.join([str(frame) for frame in frames]), **frame_metadata})
-
+    metadata_dict = {'OPERA_FRAMES': ', '.join([str(x) for x in included_frames])}
+    [metadata_dict.update(frame_metadata[str(x)]) for x in included_frames]
+    tile_ds.SetMetadata(metadata_dict)
     tile_ds.FlushCache()
     tile_ds = None
 
 
-def update_frame_geometry(frame: Frame, buffer_size: int = -3500) -> Frame:
-    """Apply a buffer to the geometry of a frame to better align it with OPERA DISP granules
-
-    Args:
-        frame: The frame to update
-        buffer_size: The buffer size to apply to the geometry
-
-    Returns:
-        The updated frame
-    """
-    crs_latlon = pyproj.CRS('EPSG:4326')
-    crs_utm = pyproj.CRS(f'EPSG:{frame.epsg}')
-
-    latlon2utm = pyproj.Transformer.from_crs(crs_latlon, crs_utm, always_xy=True).transform
-    geom_utm = transform(latlon2utm, frame.geom)
-
-    geom_shrunk = geom_utm.buffer(buffer_size, join_style='mitre')
-
-    utm2latlon = pyproj.Transformer.from_crs(crs_utm, crs_latlon, always_xy=True).transform
-    geom_latlon = transform(utm2latlon, geom_shrunk)
-    frame.geom = geom_latlon
-    return frame
-
-
-def create_tile_for_bbox(bbox, ascending=True) -> Path:
+def create_tile_for_bbox(bbox: Iterable[int], direction: str) -> Path:
     """Create the frame metadata tile for a specific bounding box
 
     Args:
         bbox: The bounding box to create the frame for in the (minx, miny, maxx, maxy) in EPSG:4326, integers only.
-        ascending: True if creating a tile for the ascending orbit pass, False for descending.
+        direction: The direction of the orbit pass ('ascending' or 'descending')
 
     Returns:
         The path to the frame metadata tile
     """
-    check_bbox_all_int(bbox)
-    orbit_pass = 'ASCENDING' if ascending else 'DESCENDING'
-    out_path = Path(create_product_name(['metadata'], orbit_pass, bbox) + '.tif')
-    relevant_frames = intersect(bbox=bbox, orbit_pass=orbit_pass, is_north_america=True, is_land=True)
-    updated_frames = [update_frame_geometry(x) for x in relevant_frames]
+    validate_bbox(bbox)
+    direction = direction.upper()
+    if direction not in ['ASCENDING', 'DESCENDING']:
+        raise ValueError('Direction must be either "ASCENDING" or "DESCENDING"')
+    out_path = Path(create_product_name(['metadata'], direction, bbox) + '.tif')
+    relevant_frames = intersect(bbox=bbox, orbit_pass=direction, is_north_america=True, is_land=True)
+    updated_frames = [buffer_frame_geometry(x) for x in relevant_frames]
     ordered_frames = reorder_frames(updated_frames)
     create_empty_frame_tile(bbox, out_path)
-    for frame in ordered_frames:
-        burn_frame(frame, out_path)
-    add_metadata_to_tile(out_path)
+    add_frames_to_tile(ordered_frames, out_path)
     return out_path
 
 
 def main():
     """CLI entrypoint
-    Example: generate_frame_tile -125 41 -124 42 --ascending
+    Example: generate_frame_tile -125 41 -124 42 ascending
     """
     parser = argparse.ArgumentParser(description='Create a frame metadata tile for a given bounding box')
     parser.add_argument('bbox', type=int, nargs=4, help='Bounding box in the form of min_lon min_lat max_lon max_lat')
-    parser.add_argument('--ascending', action='store_true', help='Use ascending orbit pass')
+    parser.add_argument('direction', type=str, choices=['ascending', 'descending'], help='Direction of the orbit pass')
     args = parser.parse_args()
-    create_tile_for_bbox(args.bbox, ascending=args.ascending)
+    create_tile_for_bbox(args.bbox, direction=args.direction)
 
 
 if __name__ == '__main__':

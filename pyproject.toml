@@ -28,6 +28,10 @@ dependencies = [
     "pyproj",
     "h5py",
     "s3fs",
+    "h5netcdf",
+    "rioxarray",
+    "xarray",
+    "cachetools",
 ]
 dynamic = ["version", "readme"]
 
@@ -48,6 +52,7 @@ Documentation = "https://github.com/ASFHyP3/opera-disp-tms/tree/develop?tab=read
 
 [project.scripts]
 generate_frame_tile = "opera_disp_tms.generate_frame_tile:main"
+generate_sw_disp_tile = "opera_disp_tms.generate_sw_disp_tile:main"
 get_tmp_s3_creds = "opera_disp_tms.tmp_s3_access:main"
 create_tile_map = "opera_disp_tms.create_tile_map:main"
 

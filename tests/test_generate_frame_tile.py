@@ -14,18 +14,12 @@ from opera_disp_tms.frames import Frame
 gdal.UseExceptions()
 
 
-def test_check_bbox_all_int():
-    with pytest.raises(ValueError):
-        generate_frame_tile.check_bbox_all_int([1, 2.0, 3])
-    generate_frame_tile.check_bbox_all_int([1, 2, 3])
-
-
 def test_create_product_name():
     name = generate_frame_tile.create_product_name(['ONE', 'TWO'], 'ASC', [1, 2, 3, 4])
-    assert name == 'ONE_TWO_ASC_N02E001_N04E003'
+    assert name == 'ONE_TWO_ASC_E001N04'
 
-    name = generate_frame_tile.create_product_name(['ONE', 'TWO'], 'ASC', [-1, -2, -3, -4])
-    assert name == 'ONE_TWO_ASC_S02W001_S04W003'
+    name = generate_frame_tile.create_product_name(['ONE', 'TWO'], 'ASC', [-4, -3, -2, -1])
+    assert name == 'ONE_TWO_ASC_W004S01'
 
 
 def test_reorder_frames():
