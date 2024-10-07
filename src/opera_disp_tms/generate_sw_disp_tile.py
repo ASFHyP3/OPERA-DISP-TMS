@@ -112,15 +112,21 @@ def update_spatiotemporal_reference(
     if not same_ref_date and update_ref_date:
         raise NotImplementedError('Granule reference date does not match frame metadata, this is not yet supported.')
 
-    same_ref_point = in_granule.attrs['reference_point_eastingnorthing'] == frame.reference_point_eastingnorthing
+    granule_ref_point = np.array(in_granule.attrs['reference_point_eastingnorthing'])
+    golden_ref_point = np.array(frame.reference_point_eastingnorthing)
+    # Reference points should be within a half pixel width (15 m)
+    same_ref_point = np.all(np.abs(granule_ref_point - golden_ref_point) <= 15)
     if not same_ref_point and update_ref_point:
         ref_x, ref_y = frame.reference_point_eastingnorthing
         ref_value = in_granule.sel(x=ref_x, y=ref_y, method='nearest').data.item()
         if np.isnan(ref_value):
             raise ValueError(f'Granule does not contain reference point {ref_x:.2f}, {ref_y:.2f}.')
+        print(f'Reference point updated to {ref_x}, {ref_y}.')
         in_granule -= ref_value
         in_granule.attrs['reference_point_colrow'] = frame.reference_point_colrow
         in_granule.attrs['reference_point_eastingnorthing'] = frame.reference_point_eastingnorthing
+    else:
+        print('Reference point is the same as the stack reference point, no updated needed.')
 
     return in_granule
 
