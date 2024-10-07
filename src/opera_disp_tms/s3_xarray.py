@@ -51,11 +51,11 @@ def get_opera_disp_granule_metadata(s3_uri) -> Tuple:
 
     row = int(ds_metadata['reference_point'].attrs['rows'])
     col = int(ds_metadata['reference_point'].attrs['cols'])
-    ref_point_array = (col, row)
+    ref_point_colrow = (col, row)
 
     easting = int(ds_metadata.y.values[row])
     northing = int(ds_metadata.x.values[col])
-    ref_point_geo = (easting, northing)
+    ref_point_eastingnorthing = (easting, northing)
 
     srs = osr.SpatialReference()
     srs.ImportFromWkt(ds_metadata['spatial_ref'].attrs['crs_wkt'])
@@ -65,7 +65,7 @@ def get_opera_disp_granule_metadata(s3_uri) -> Tuple:
     secondary_date = datetime.strptime(s3_uri.split('/')[-1].split('_')[7], DATE_FORMAT)
     frame_id = int(s3_uri.split('/')[-1].split('_')[4][1:])
 
-    return ref_point_array, ref_point_geo, epsg, reference_date, secondary_date, frame_id
+    return ref_point_colrow, ref_point_eastingnorthing, epsg, reference_date, secondary_date, frame_id
 
 
 def open_opera_disp_granule(s3_uri: str, data_var=str) -> xr.DataArray:
@@ -82,11 +82,11 @@ def open_opera_disp_granule(s3_uri: str, data_var=str) -> xr.DataArray:
     data = ds[data_var]
     data.rio.write_crs(ds['spatial_ref'].attrs['crs_wkt'], inplace=True)
 
-    ref_point_array, ref_point_geo, _, reference_date, secondary_date, frame_id = get_opera_disp_granule_metadata(
-        s3_uri
+    ref_point_colrow, ref_point_eastingnorthing, _, reference_date, secondary_date, frame_id = (
+        get_opera_disp_granule_metadata(s3_uri)
     )
-    data.attrs['reference_point_array'] = ref_point_array
-    data.attrs['reference_point_eastingnorthing'] = ref_point_geo
+    data.attrs['reference_point_colrow'] = ref_point_colrow
+    data.attrs['reference_point_eastingnorthing'] = ref_point_eastingnorthing
     data.attrs['reference_date'] = reference_date
     data.attrs['secondary_date'] = secondary_date
     data.attrs['frame_id'] = frame_id

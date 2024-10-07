@@ -25,8 +25,8 @@ class FrameMeta:
 
     frame_id: int
     reference_date: datetime
-    reference_point_array: tuple  # column, row
-    reference_point_geo: tuple  # easting, northing
+    reference_point_colrow: tuple  # column, row
+    reference_point_eastingnorthing: tuple  # easting, northing
 
 
 def extract_frame_metadata(frame_metadata: dict[str, str], frame_id: int) -> FrameMeta:
@@ -41,13 +41,13 @@ def extract_frame_metadata(frame_metadata: dict[str, str], frame_id: int) -> Fra
     """
     ref_date = datetime.strptime(frame_metadata[f'FRAME_{frame_id}_REF_TIME'], DATE_FORMAT)
 
-    ref_point_array = frame_metadata[f'FRAME_{frame_id}_REF_POINT_ARRAY'].split(', ')
-    ref_point_array = tuple(int(x) for x in ref_point_array)
+    ref_point_colrow = frame_metadata[f'FRAME_{frame_id}_REF_POINT_COLROW'].split(', ')
+    ref_point_colrow = tuple(int(x) for x in ref_point_colrow)
 
-    ref_point_geo = frame_metadata[f'FRAME_{frame_id}_REF_POINT_EASTINGNORTHING'].split(', ')
-    ref_point_geo = tuple(int(x) for x in ref_point_geo)
+    ref_point_eastingnorthing = frame_metadata[f'FRAME_{frame_id}_REF_POINT_EASTINGNORTHING'].split(', ')
+    ref_point_eastingnorthing = tuple(int(x) for x in ref_point_eastingnorthing)
 
-    return FrameMeta(frame_id, ref_date, ref_point_array, ref_point_geo)
+    return FrameMeta(frame_id, ref_date, ref_point_colrow, ref_point_eastingnorthing)
 
 
 def frames_from_metadata(metadata_path: Path) -> dict[int, FrameMeta]:
@@ -112,15 +112,15 @@ def update_spatiotemporal_reference(
     if not same_ref_date and update_ref_date:
         raise NotImplementedError('Granule reference date does not match frame metadata, this is not yet supported.')
 
-    same_ref_point = in_granule.attrs['reference_point_eastingnorthing'] == frame.reference_point_geo
+    same_ref_point = in_granule.attrs['reference_point_eastingnorthing'] == frame.reference_point_eastingnorthing
     if not same_ref_point and update_ref_point:
-        ref_x, ref_y = frame.reference_point_geo
+        ref_x, ref_y = frame.reference_point_eastingnorthing
         ref_value = in_granule.sel(x=ref_x, y=ref_y, method='nearest').data.item()
         if np.isnan(ref_value):
             raise ValueError(f'Granule does not contain reference point {ref_x:.2f}, {ref_y:.2f}.')
         in_granule -= ref_value
-        in_granule.attrs['reference_point_array'] = frame.reference_point_array
-        in_granule.attrs['reference_point_eastingnorthing'] = frame.reference_point_geo
+        in_granule.attrs['reference_point_colrow'] = frame.reference_point_colrow
+        in_granule.attrs['reference_point_eastingnorthing'] = frame.reference_point_eastingnorthing
 
     return in_granule
 
