@@ -6,14 +6,12 @@ from pathlib import Path
 from typing import Iterable, Tuple
 
 import numpy as np
-import xarray as xr
 from osgeo import gdal
 from rasterio.transform import Affine
 
-from opera_disp_tms import utils
 from opera_disp_tms.find_california_dataset import Granule, find_california_dataset
 from opera_disp_tms.s3_xarray import open_opera_disp_granule
-from opera_disp_tms.utils import DATE_FORMAT
+from opera_disp_tms.utils import DATE_FORMAT, get_raster_as_numpy, round_to_day
 
 
 gdal.UseExceptions()
@@ -91,46 +89,6 @@ def find_needed_granules(frame_ids: Iterable[int], begin_date: datetime, end_dat
     return needed_granules
 
 
-def update_spatiotemporal_reference(
-    in_granule: xr.DataArray, frame: FrameMeta, update_ref_date: bool = True, update_ref_point: bool = True
-) -> xr.DataArray:
-    """Update the spatiotemporal reference information of a granule to match the frame metadata
-
-    Args:
-        in_granule: The granule to update
-        frame: The frame metadata to update the granule to
-        update_ref_date: Whether to update the reference date
-        update_ref_point: Whether to update the reference point
-
-    Returns:
-        The updated granule
-    """
-    if in_granule.attrs['frame_id'] != frame.frame_id:
-        raise ValueError('Granule frame does not match frame metadata')
-
-    same_ref_date = utils.round_to_day(in_granule.attrs['reference_date']) == utils.round_to_day(frame.reference_date)
-    if not same_ref_date and update_ref_date:
-        raise NotImplementedError('Granule reference date does not match frame metadata, this is not yet supported.')
-
-    granule_ref_point = np.array(in_granule.attrs['reference_point_eastingnorthing'])
-    golden_ref_point = np.array(frame.reference_point_eastingnorthing)
-    # Reference points should be within a half pixel width (15 m)
-    same_ref_point = np.all(np.abs(granule_ref_point - golden_ref_point) <= 15)
-    if not same_ref_point and update_ref_point:
-        ref_x, ref_y = frame.reference_point_eastingnorthing
-        ref_value = in_granule.sel(x=ref_x, y=ref_y, method='nearest').data.item()
-        if np.isnan(ref_value):
-            raise ValueError(f'Granule does not contain reference point {ref_x:.2f}, {ref_y:.2f}.')
-        print(f'Reference point updated to {ref_x}, {ref_y}.')
-        in_granule -= ref_value
-        in_granule.attrs['reference_point_colrow'] = frame.reference_point_colrow
-        in_granule.attrs['reference_point_eastingnorthing'] = frame.reference_point_eastingnorthing
-    else:
-        print('Reference point is the same as the stack reference point, no updated needed.')
-
-    return in_granule
-
-
 def create_product_name(metadata_name: str, begin_date: datetime, end_date: datetime) -> str:
     """Create a product name for a short wavelength cumulative displacement tile
     Takes the form: SW_CUMUL_DISP_YYYYMMDD_YYYYMMDD_DIRECTION_TILECOORDS.tif
@@ -164,7 +122,11 @@ def add_granule_data_to_array(
         The updated short wavelength cumulative displacement array and the secondary date of the granule
     """
     granule_dataarray = open_opera_disp_granule(granule.s3_uri, 'short_wavelength_displacement')
-    granule_dataarray = update_spatiotemporal_reference(granule_dataarray, frame, update_ref_point=True)
+
+    same_ref_date = round_to_day(granule_dataarray.attrs['reference_date']) == round_to_day(frame.reference_date)
+    if not same_ref_date:
+        raise NotImplementedError('Granule reference date does not match metadata tile, this is not supported.')
+
     granule_dataarray = granule_dataarray.rio.reproject('EPSG:3857', transform=geotransform, shape=frame_map.shape)
 
     frame_locations = frame_map == granule_dataarray.attrs['frame_id']
@@ -199,7 +161,7 @@ def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: dat
     frames = frames_from_metadata(metadata_path)
     needed_granules = find_needed_granules(list(frames.keys()), begin_date, end_date)
 
-    frame_map, geotransform = utils.get_raster_as_numpy(metadata_path)
+    frame_map, geotransform = get_raster_as_numpy(metadata_path)
     geotransform = Affine.from_gdal(*geotransform)
 
     sw_cumul_disp = np.full(frame_map.shape, np.nan, dtype=float)

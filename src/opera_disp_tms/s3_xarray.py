@@ -53,8 +53,8 @@ def get_opera_disp_granule_metadata(s3_uri) -> Tuple:
     col = int(ds_metadata['reference_point'].attrs['cols'])
     ref_point_colrow = (col, row)
 
-    easting = int(ds_metadata.y.values[row])
-    northing = int(ds_metadata.x.values[col])
+    easting = int(ds_metadata.x.values[col])
+    northing = int(ds_metadata.y.values[row])
     ref_point_eastingnorthing = (easting, northing)
 
     srs = osr.SpatialReference()

@@ -2,14 +2,10 @@ from collections import namedtuple
 from datetime import datetime
 from unittest import mock
 
-import numpy as np
-import pytest
 import rioxarray  # noqa
-import xarray as xr
 from osgeo import gdal
 
 from opera_disp_tms import generate_sw_disp_tile as sw
-from opera_disp_tms import utils
 
 
 def create_tif(save_path, metadata):
@@ -81,27 +77,6 @@ def test_find_needed_granules():
     assert len(needed_granules) == 2
     assert needed_granules[0] == granules[1]
     assert needed_granules[1] == granules[3]
-
-
-def test_update_spatiotemporal_reference():
-    data = [[3, 2], [1, 0]]
-    tmp_array = xr.DataArray(data, coords={'y': [1, 2], 'x': [1, 2]})
-    tmp_array.attrs['frame_id'] = 1
-    tmp_array.attrs['reference_date'] = datetime(2021, 1, 1)
-    new_x, new_y = utils.transform_point(2, 2, utils.wkt_from_epsg(26910), utils.wkt_from_epsg(4326))
-    tmp_array.attrs['reference_point_eastingnorthing'] = (new_x, new_y)
-    tmp_array.rio.write_crs(utils.wkt_from_epsg(26910), inplace=True)
-
-    ref_x, ref_y = utils.transform_point(1, 1, utils.wkt_from_epsg(26910), utils.wkt_from_epsg(4326))
-    frame = sw.FrameMeta(1, datetime(2021, 1, 1), (0, 0), (ref_x, ref_y))
-
-    updated_array = sw.update_spatiotemporal_reference(tmp_array, frame)
-    assert np.all(updated_array.data == np.array([[0, -1], [-2, -3]]))
-    assert updated_array.attrs['reference_point_eastingnorthing'] == frame.reference_point_eastingnorthing
-
-    tmp_array.attrs['reference_date'] = datetime(2021, 1, 2)
-    with pytest.raises(NotImplementedError):
-        updated_array = sw.update_spatiotemporal_reference(tmp_array, frame)
 
 
 def test_create_product_name():
