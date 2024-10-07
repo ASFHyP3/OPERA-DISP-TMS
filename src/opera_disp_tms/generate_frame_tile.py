@@ -219,7 +219,7 @@ def create_granule_metadata_dict(granule: Granule) -> dict:
     ref_point_array, ref_point_geo, epsg, reference_date, secondary_date, frame = granule_info
     frame_metadata = {}
     frame_metadata[f'FRAME_{frame}_REF_POINT_ARRAY'] = ', '.join([str(x) for x in ref_point_array])
-    frame_metadata[f'FRAME_{frame}_REF_POINT_GEO'] = ', '.join([str(x) for x in ref_point_geo])
+    frame_metadata[f'FRAME_{frame}_REF_POINT_EASTINGNORTHING'] = ', '.join([str(x) for x in ref_point_geo])
     frame_metadata[f'FRAME_{frame}_EPSG'] = str(epsg)
     frame_metadata[f'FRAME_{frame}_REF_TIME'] = granule.reference_date.strftime('%Y%m%dT%H%M%SZ')
     return frame_metadata

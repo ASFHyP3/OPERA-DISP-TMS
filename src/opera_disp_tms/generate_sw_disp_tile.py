@@ -26,7 +26,7 @@ class FrameMeta:
     frame_id: int
     reference_date: datetime
     reference_point_array: tuple  # column, row
-    reference_point_geo: tuple  # lon, lat
+    reference_point_geo: tuple  # easting, northing
 
 
 def extract_frame_metadata(frame_metadata: dict[str, str], frame_id: int) -> FrameMeta:
@@ -44,8 +44,8 @@ def extract_frame_metadata(frame_metadata: dict[str, str], frame_id: int) -> Fra
     ref_point_array = frame_metadata[f'FRAME_{frame_id}_REF_POINT_ARRAY'].split(', ')
     ref_point_array = tuple(int(x) for x in ref_point_array)
 
-    ref_point_geo = frame_metadata[f'FRAME_{frame_id}_REF_POINT_GEO'].split(', ')
-    ref_point_geo = tuple(float(x) for x in ref_point_geo)
+    ref_point_geo = frame_metadata[f'FRAME_{frame_id}_REF_POINT_EASTINGNORTHING'].split(', ')
+    ref_point_geo = tuple(int(x) for x in ref_point_geo)
 
     return FrameMeta(frame_id, ref_date, ref_point_array, ref_point_geo)
 
@@ -112,21 +112,15 @@ def update_spatiotemporal_reference(
     if not same_ref_date and update_ref_date:
         raise NotImplementedError('Granule reference date does not match frame metadata, this is not yet supported.')
 
-    same_ref_point = np.isclose(in_granule.attrs['reference_point_geo'], frame.reference_point_geo).all()
+    same_ref_point = in_granule.attrs['reference_point_eastingnorthing'] == frame.reference_point_geo
     if not same_ref_point and update_ref_point:
-        # FIXME transform_point may not be working correctly
-        ref_x, ref_y = utils.transform_point(
-            frame.reference_point_geo[0],
-            frame.reference_point_geo[1],
-            utils.wkt_from_epsg(4326),
-            in_granule['spatial_ref'].attrs['crs_wkt'],
-        )
+        ref_x, ref_y = frame.reference_point_geo
         ref_value = in_granule.sel(x=ref_x, y=ref_y, method='nearest').data.item()
         if np.isnan(ref_value):
             raise ValueError(f'Granule does not contain reference point {ref_x:.2f}, {ref_y:.2f}.')
         in_granule -= ref_value
         in_granule.attrs['reference_point_array'] = frame.reference_point_array
-        in_granule.attrs['reference_point_geo'] = frame.reference_point_geo
+        in_granule.attrs['reference_point_eastingnorthing'] = frame.reference_point_geo
 
     return in_granule
 
@@ -164,7 +158,7 @@ def add_granule_data_to_array(
         The updated short wavelength cumulative displacement array and the secondary date of the granule
     """
     granule_dataarray = open_opera_disp_granule(granule.s3_uri, 'short_wavelength_displacement')
-    granule_dataarray = update_spatiotemporal_reference(granule_dataarray, frame, update_ref_point=False)
+    granule_dataarray = update_spatiotemporal_reference(granule_dataarray, frame, update_ref_point=True)
     granule_dataarray = granule_dataarray.rio.reproject('EPSG:3857', transform=geotransform, shape=frame_map.shape)
 
     frame_locations = frame_map == granule_dataarray.attrs['frame_id']

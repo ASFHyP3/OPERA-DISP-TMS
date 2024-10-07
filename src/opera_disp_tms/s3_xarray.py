@@ -53,9 +53,9 @@ def get_opera_disp_granule_metadata(s3_uri) -> Tuple:
     col = int(ds_metadata['reference_point'].attrs['cols'])
     ref_point_array = (col, row)
 
-    longitude = float(ds_metadata['reference_point'].attrs['longitudes'])
-    latitude = float(ds_metadata['reference_point'].attrs['latitudes'])
-    ref_point_geo = (longitude, latitude)
+    easting = int(ds_metadata.y.values[row])
+    northing = int(ds_metadata.x.values[col])
+    ref_point_geo = (easting, northing)
 
     srs = osr.SpatialReference()
     srs.ImportFromWkt(ds_metadata['spatial_ref'].attrs['crs_wkt'])
@@ -86,7 +86,7 @@ def open_opera_disp_granule(s3_uri: str, data_var=str) -> xr.DataArray:
         s3_uri
     )
     data.attrs['reference_point_array'] = ref_point_array
-    data.attrs['reference_point_geo'] = ref_point_geo
+    data.attrs['reference_point_eastingnorthing'] = ref_point_geo
     data.attrs['reference_date'] = reference_date
     data.attrs['secondary_date'] = secondary_date
     data.attrs['frame_id'] = frame_id
