@@ -171,7 +171,7 @@ class Granule:
         )
 
 
-def find_test_data(desired_version: str = '0.4') -> Granule:
+def find_test_data(desired_version: str = '0.4') -> list[Granule]:
     """Find all OPERA L3 DISP S1 PROVISIONAL granules created for a specific version.
 
     Args:
@@ -248,7 +248,7 @@ def read_granule_file(in_path: Path) -> List['Granule']:
     return granules
 
 
-def find_california_dataset() -> List[str]:
+def find_california_dataset() -> list[Granule]:
     """Find all OPERA L3 DISP S1 PROVISIONAL V0.4 granules created for California test dataset.
 
     Returns:

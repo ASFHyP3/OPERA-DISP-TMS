@@ -56,7 +56,7 @@ def frames_from_metadata(metadata_path: Path) -> list[FrameMeta]:
     return frames
 
 
-def find_needed_granules(frame_ids: Iterable[int], begin_date: datetime, end_date: datetime) -> Iterable[Granule]:
+def find_needed_granules(frame_ids: Iterable[int], begin_date: datetime, end_date: datetime) -> list[Granule]:
     """Find the granules needed to generate a short wavelength displacement tile.
     For each `frame_id` the most recent granule whose secondary date is between
     `begin_date` and `end_date` is selected.
@@ -72,8 +72,7 @@ def find_needed_granules(frame_ids: Iterable[int], begin_date: datetime, end_dat
     cali_dataset = find_california_dataset()
     needed_granules = []
     for frame_id in frame_ids:
-        granules = [x for x in cali_dataset if x.frame_id == frame_id]
-        granules = [x for x in granules if begin_date <= x.secondary_date <= end_date]
+        granules = [g for g in cali_dataset if g.frame_id == frame_id and begin_date <= g.secondary_date <= end_date]
         if not granules:
             warnings.warn(f'No granules found for frame {frame_id} between {begin_date} and {end_date}.')
         else:
