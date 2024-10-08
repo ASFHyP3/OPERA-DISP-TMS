@@ -49,12 +49,22 @@ Where `-125 41 -124 42` is a desired bounding box in **integer** `minx, miny, ma
 
 For TMS generation ASF will be using 1x1 degree tiles.
 
+The resulting products have the name format:
+`METADATA_{orbit direction}_{upper left corner in lon/lat}.tif`.
+For example:
+`METADATA_ASCENDING_W125N42.tif`
+
 ### Create a Short Wavelength Cumulative Displacement tile
 The `generate_sw_disp_tile` CLI command can be used to generate a cumulative displacement geotiff:
 ```bash
-generate_sw_disp_tile METADATA_ASCENDING_W125N42.tif --begin-date 20170901 --end-date 20171231
+generate_sw_disp_tile METADATA_ASCENDING_W125N42.tif 20170901 20171231
 ```
-Where `METADATA_ASCENDING_W125N42.tif` is the path to the frame metadata tile you want to generate a Short Wavelength Cumulative Displacement tile for, and `--begin-date` and `--end-date` specify the date range you want to generate the Short Wavelength Cumulative Displacement tile for.
+Where `METADATA_ASCENDING_W125N42.tif` is the path to the frame metadata tile you want to generate a Short Wavelength Cumulative Displacement tile for, and `20170901`/`20171231` specify the start/end of the secondary date search range to generate a tile for in format `%Y%m%d`.
+
+The resulting products have the name format:
+`SW_CUMUL_DISP_{start date search range}_{stop data search range}_{orbit direction}_{upper left corner in lon/lat}.tif`
+For example:
+`SW_CUMUL_DISP_20170901_20171231_ASCENDING_W125N42.tif`
 
 ### Create a Tile Map
 The `create_tile_map` CLI command generates a directory with small .png tiles from a list of rasters in a common projection, following the OSGeo Tile Map Service Specification, using gdal2tiles: https://gdal.org/en/latest/programs/gdal2tiles.html

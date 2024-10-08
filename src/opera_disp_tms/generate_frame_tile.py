@@ -225,14 +225,17 @@ def create_granule_metadata_dict(granule: Granule) -> dict:
     return frame_metadata
 
 
-def add_frames_to_tile(frames: Iterable[Frame], tile_path: Path) -> None:
+def create_metadata_tile(bbox: Iterable[int], frames: Iterable[Frame], tile_path: Path) -> None:
     """Add frame information to a frame metadata tile
 
     Args:
+        bbox: The bounding box to create the frame for in the (minx, miny, maxx, maxy) in EPSG:4326, integers only.
         frames: The frames to add to the tile
         tile_path: The path to the frame metadata tile
     """
+    validate_bbox(bbox)
     cal_data = find_california_dataset()
+    create_empty_frame_tile(bbox, tile_path)
     frame_metadata = {}
     for frame in frames:
         relevant_granules = [x for x in cal_data if x.frame_id == frame.frame_id]
@@ -242,6 +245,11 @@ def add_frames_to_tile(frames: Iterable[Frame], tile_path: Path) -> None:
             first_granule = min(relevant_granules, key=lambda x: x.reference_date)
             frame_metadata[str(frame.frame_id)] = create_granule_metadata_dict(first_granule)
             burn_frame(frame, tile_path)
+
+    if frame_metadata == {}:
+        warnings.warn('No granules are available for this tile. The tile will not be created.')
+        tile_path.unlink()
+        return
 
     tile_ds = gdal.Open(str(tile_path), gdal.GA_Update)
     # Not all frames will be in the final array, so we need to find the included frames
@@ -267,7 +275,6 @@ def create_tile_for_bbox(bbox: Iterable[int], direction: str) -> Path:
     Returns:
         The path to the frame metadata tile
     """
-    validate_bbox(bbox)
     direction = direction.upper()
     if direction not in ['ASCENDING', 'DESCENDING']:
         raise ValueError('Direction must be either "ASCENDING" or "DESCENDING"')
@@ -275,13 +282,12 @@ def create_tile_for_bbox(bbox: Iterable[int], direction: str) -> Path:
     relevant_frames = intersect(bbox=bbox, orbit_pass=direction, is_north_america=True, is_land=True)
     updated_frames = [buffer_frame_geometry(x) for x in relevant_frames]
     ordered_frames = reorder_frames(updated_frames)
-    create_empty_frame_tile(bbox, out_path)
-    add_frames_to_tile(ordered_frames, out_path)
+    create_metadata_tile(bbox, ordered_frames, out_path)
     return out_path
 
 
 def main():
-    """CLI entrypoint
+    """CLI entry point
     Example: generate_frame_tile -125 41 -124 42 ascending
     """
     parser = argparse.ArgumentParser(description='Create a frame metadata tile for a given bounding box')

@@ -23,7 +23,7 @@ def get_temporary_aws_credentials(endpoint: str = 'https://cumulus-test.asf.alas
 
 
 def main():
-    """CLI entrypoint for getting temporary S3 credentials
+    """CLI entry point for getting temporary S3 credentials
     Example: get_tmp_s3_creds --endpoint https://cumulus-test.asf.alaska.edu/s3credentials
     """
     parser = argparse.ArgumentParser(description='Get temporary S3 credentials')
