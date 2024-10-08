@@ -235,6 +235,7 @@ def create_metadata_tile(bbox: Iterable[int], frames: Iterable[Frame], tile_path
     """
     validate_bbox(bbox)
     cal_data = find_california_dataset()
+    create_empty_frame_tile(bbox, tile_path)
     frame_metadata = {}
     for frame in frames:
         relevant_granules = [x for x in cal_data if x.frame_id == frame.frame_id]
@@ -246,8 +247,9 @@ def create_metadata_tile(bbox: Iterable[int], frames: Iterable[Frame], tile_path
             burn_frame(frame, tile_path)
 
     if frame_metadata == {}:
-        warnings.warn('No granules are available for this tile. The tile will no be created.')
-    create_empty_frame_tile(bbox, tile_path)
+        warnings.warn('No granules are available for this tile. The tile will not be created.')
+        tile_path.unlink()
+        return
 
     tile_ds = gdal.Open(str(tile_path), gdal.GA_Update)
     # Not all frames will be in the final array, so we need to find the included frames
