@@ -227,7 +227,7 @@ def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: dat
 
 
 def main():
-    """CLI entrpypoint
+    """CLI entry point
     Example:
     generate_sw_disp_tile METADATA_ASCENDING_N41W125_N42W124.tif 20170901 20171231
     """
