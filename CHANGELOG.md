@@ -9,7 +9,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [0.1.1]
 ### Changed
 * Calculate true minimum/maximum data values in `create_tile_map` to avoid extreme displacement values being set to
-  NoData
+  NoData. Fixes [#8](https://github.com/ASFHyP3/OPERA-DISP-TMS/issues/8).
 
 ## [0.1.0]
 ### Added
