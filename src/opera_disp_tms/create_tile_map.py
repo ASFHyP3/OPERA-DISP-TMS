@@ -22,12 +22,13 @@ def create_tile_map(output_folder: str, input_rasters: list[str]):
         gdal.BuildVRT(mosaic_vrt.name, input_rasters, resampleAlg='nearest')
 
         # scale the mosaic from Float to Byte
+        stats = gdal.Info(mosaic_vrt.name, stats=True, format='json')['bands'][0]['metadata']['']
         gdal.Translate(
             destName=byte_vrt.name,
             srcDS=mosaic_vrt.name,
             format='VRT',
             outputType=gdalconst.GDT_Byte,
-            scaleParams=[[]],
+            scaleParams=[[stats['STATISTICS_MINIMUM'], stats['STATISTICS_MAXIMUM']]],
             resampleAlg='nearest',
         )
 
