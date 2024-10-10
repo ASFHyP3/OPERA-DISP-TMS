@@ -68,7 +68,7 @@ def get_opera_disp_granule_metadata(s3_uri) -> Tuple:
     return ref_point_array, ref_point_geo, epsg, reference_date, secondary_date, frame_id
 
 
-def open_opera_disp_granule(s3_uri: str, data_vars=Iterable[str]) -> xr.DataArray:
+def open_opera_disp_granule(s3_uri: str, data_vars=Iterable[str]) -> xr.Dataset:
     """Open an OPERA DISP granule from S3 and set important attributes
 
     Args:
@@ -76,7 +76,7 @@ def open_opera_disp_granule(s3_uri: str, data_vars=Iterable[str]) -> xr.DataArra
         data_var: Name of the data variable to open
 
     Returns:
-        DataArray of the granule
+        Dataset of the granule
     """
     ds = open_s3_xarray_dataset(s3_uri)
     data = ds[data_vars]
