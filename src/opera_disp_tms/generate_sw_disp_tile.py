@@ -163,7 +163,8 @@ def add_granule_data_to_array(
     Returns:
         The updated short wavelength cumulative displacement array and the secondary date of the granule
     """
-    granule_dataarray = open_opera_disp_granule(granule.s3_uri, 'short_wavelength_displacement')
+    datasets = ['short_wavelength_displacement', 'connected_component_labels']
+    granule_dataarray = open_opera_disp_granule(granule.s3_uri, datasets)
     granule_dataarray = update_spatiotemporal_reference(granule_dataarray, frame, update_ref_point=False)
     granule_dataarray = granule_dataarray.rio.reproject('EPSG:3857', transform=geotransform, shape=frame_map.shape)
 

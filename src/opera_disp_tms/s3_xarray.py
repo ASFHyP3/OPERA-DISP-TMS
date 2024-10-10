@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Tuple
+from typing import Iterable, Tuple
 
 import rioxarray  # noqa
 import s3fs
@@ -68,7 +68,7 @@ def get_opera_disp_granule_metadata(s3_uri) -> Tuple:
     return ref_point_array, ref_point_geo, epsg, reference_date, secondary_date, frame_id
 
 
-def open_opera_disp_granule(s3_uri: str, data_var=str) -> xr.DataArray:
+def open_opera_disp_granule(s3_uri: str, data_vars=Iterable[str]) -> xr.DataArray:
     """Open an OPERA DISP granule from S3 and set important attributes
 
     Args:
@@ -79,7 +79,7 @@ def open_opera_disp_granule(s3_uri: str, data_var=str) -> xr.DataArray:
         DataArray of the granule
     """
     ds = open_s3_xarray_dataset(s3_uri)
-    data = ds[data_var]
+    data = ds[data_vars]
     data.rio.write_crs(ds['spatial_ref'].attrs['crs_wkt'], inplace=True)
 
     ref_point_array, ref_point_geo, _, reference_date, secondary_date, frame_id = get_opera_disp_granule_metadata(
