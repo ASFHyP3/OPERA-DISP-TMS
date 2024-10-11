@@ -11,7 +11,7 @@ from rasterio.transform import Affine
 
 from opera_disp_tms.find_california_dataset import Granule, find_california_dataset
 from opera_disp_tms.s3_xarray import open_opera_disp_granule
-from opera_disp_tms.utils import DATE_FORMAT, get_raster_as_numpy, round_to_day
+from opera_disp_tms.utils import DATE_FORMAT, create_buffered_bbox, get_raster_as_numpy, round_to_day
 
 
 gdal.UseExceptions()
@@ -100,17 +100,6 @@ def create_product_name(metadata_name: str, begin_date: datetime, end_date: date
     end_date = datetime.strftime(end_date, date_fmt)
     name = '_'.join(['SW_CUMUL_DISP', begin_date, end_date, flight_direction, tile_coordinates])
     return name
-
-
-def create_buffered_bbox(geotransform: Iterable[int], shape: Iterable[int], buffer_size: float) -> Tuple[float]:
-    minx, xres, _, maxy, _, yres = geotransform
-    miny = maxy + (shape[0] * yres)
-    maxx = minx + (shape[1] * xres)
-    minx -= buffer_size
-    maxx += buffer_size
-    miny -= buffer_size
-    maxy += buffer_size
-    return minx, miny, maxx, maxy
 
 
 def add_granule_data_to_array(
