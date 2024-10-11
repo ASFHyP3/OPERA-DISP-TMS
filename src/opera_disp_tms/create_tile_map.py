@@ -9,9 +9,10 @@ from osgeo import gdal, gdalconst, osr
 gdal.UseExceptions()
 
 
-def get_tile_bounds(info: dict, output_folder: str) -> None:
+def get_tile_bounds(info: dict, output_folder: Path) -> None:
     """Generate file with the bounds of the newly created vrt
-        Will return a file with: {"BOUNDS": [minx, miny, maxx, maxy], "EPSG": %EPSG}
+        Will return a file with: {"extent": [minx, miny, maxx, maxy], "EPSG": %EPSG}
+
     Args:
         info: gdalinfo dict from vrt file
         output_folder: folder to write "bounds.json"
