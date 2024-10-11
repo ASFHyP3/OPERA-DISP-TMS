@@ -47,7 +47,7 @@ def create_tile_map(output_folder: str, input_rasters: list[str]):
         stats = gdal.Info(mosaic_vrt.name, stats=True, format='json')['bands'][0]['metadata']['']
 
         # get bounds of VRT and write to file
-        get_tile_bounds(stats, output_folder)
+        get_tile_bounds(stats, Path(output_folder))
 
         gdal.Translate(
             destName=byte_vrt.name,
