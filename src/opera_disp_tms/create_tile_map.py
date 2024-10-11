@@ -26,9 +26,8 @@ def get_tile_bounds(info: dict, output_folder: Path) -> None:
         "EPSG": int(proj.GetAttrValue('AUTHORITY', 1))
     }
 
-    with open(output_folder + '/bounds.json', 'w') as outfile:
+    with open(output_folder / 'extent.json', 'w') as outfile:
         json.dump(bounds, outfile)
-    return
 
 
 def create_tile_map(output_folder: str, input_rasters: list[str]):
