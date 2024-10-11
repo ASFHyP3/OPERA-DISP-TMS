@@ -16,7 +16,7 @@ def get_tile_bounds(info: dict, output_folder: Path) -> None:
 
     Args:
         info: gdalinfo dict from vrt file
-        output_folder: folder to write "bounds.json"
+        output_folder: folder to write "extent.json"
     """
     minx, miny = info['cornerCoordinates']['lowerLeft']
     maxx, maxy = info['cornerCoordinates']['upperRight']
