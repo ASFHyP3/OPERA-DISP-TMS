@@ -27,7 +27,7 @@ def get_tile_bounds(info: dict, output_folder: Path) -> None:
     }
 
     with open(output_folder / 'extent.json', 'w') as outfile:
-        json.dump(bounds, outfile)
+        json.dump(extent, outfile)
 
 
 def create_tile_map(output_folder: str, input_rasters: list[str]):
