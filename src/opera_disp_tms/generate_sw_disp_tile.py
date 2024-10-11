@@ -6,14 +6,12 @@ from pathlib import Path
 from typing import Iterable, Tuple
 
 import numpy as np
-import xarray as xr
 from osgeo import gdal
 from rasterio.transform import Affine
 
-from opera_disp_tms import utils
 from opera_disp_tms.find_california_dataset import Granule, find_california_dataset
 from opera_disp_tms.s3_xarray import open_opera_disp_granule
-from opera_disp_tms.utils import DATE_FORMAT
+from opera_disp_tms.utils import DATE_FORMAT, get_raster_as_numpy, round_to_day
 
 
 gdal.UseExceptions()
@@ -25,8 +23,7 @@ class FrameMeta:
 
     frame_id: int
     reference_date: datetime
-    reference_point_array: tuple  # column, row
-    reference_point_geo: tuple  # lon, lat
+    reference_point_eastingnorthing: tuple  # easting, northing
 
 
 def extract_frame_metadata(frame_metadata: dict[str, str], frame_id: int) -> FrameMeta:
@@ -41,13 +38,10 @@ def extract_frame_metadata(frame_metadata: dict[str, str], frame_id: int) -> Fra
     """
     ref_date = datetime.strptime(frame_metadata[f'FRAME_{frame_id}_REF_TIME'], DATE_FORMAT)
 
-    ref_point_array = frame_metadata[f'FRAME_{frame_id}_REF_POINT_ARRAY'].split(', ')
-    ref_point_array = tuple(int(x) for x in ref_point_array)
+    ref_point_eastingnorthing = frame_metadata[f'FRAME_{frame_id}_REF_POINT_EASTINGNORTHING'].split(', ')
+    ref_point_eastingnorthing = tuple(int(x) for x in ref_point_eastingnorthing)
 
-    ref_point_geo = frame_metadata[f'FRAME_{frame_id}_REF_POINT_GEO'].split(', ')
-    ref_point_geo = tuple(float(x) for x in ref_point_geo)
-
-    return FrameMeta(frame_id, ref_date, ref_point_array, ref_point_geo)
+    return FrameMeta(frame_id, ref_date, ref_point_eastingnorthing)
 
 
 def frames_from_metadata(metadata_path: Path) -> dict[int, FrameMeta]:
@@ -89,46 +83,6 @@ def find_needed_granules(frame_ids: Iterable[int], begin_date: datetime, end_dat
             granule = max(granules, key=lambda x: x.secondary_date)
             needed_granules.append(granule)
     return needed_granules
-
-
-def update_spatiotemporal_reference(
-    in_granule: xr.DataArray, frame: FrameMeta, update_ref_date: bool = True, update_ref_point: bool = True
-) -> xr.DataArray:
-    """Update the spatiotemporal reference information of a granule to match the frame metadata
-
-    Args:
-        in_granule: The granule to update
-        frame: The frame metadata to update the granule to
-        update_ref_date: Whether to update the reference date
-        update_ref_point: Whether to update the reference point
-
-    Returns:
-        The updated granule
-    """
-    if in_granule.attrs['frame_id'] != frame.frame_id:
-        raise ValueError('Granule frame does not match frame metadata')
-
-    same_ref_date = utils.round_to_day(in_granule.attrs['reference_date']) == utils.round_to_day(frame.reference_date)
-    if not same_ref_date and update_ref_date:
-        raise NotImplementedError('Granule reference date does not match frame metadata, this is not yet supported.')
-
-    same_ref_point = np.isclose(in_granule.attrs['reference_point_geo'], frame.reference_point_geo).all()
-    if not same_ref_point and update_ref_point:
-        # FIXME transform_point may not be working correctly
-        ref_x, ref_y = utils.transform_point(
-            frame.reference_point_geo[0],
-            frame.reference_point_geo[1],
-            utils.wkt_from_epsg(4326),
-            in_granule['spatial_ref'].attrs['crs_wkt'],
-        )
-        ref_value = in_granule.sel(x=ref_x, y=ref_y, method='nearest').data.item()
-        if np.isnan(ref_value):
-            raise ValueError(f'Granule does not contain reference point {ref_x:.2f}, {ref_y:.2f}.')
-        in_granule -= ref_value
-        in_granule.attrs['reference_point_array'] = frame.reference_point_array
-        in_granule.attrs['reference_point_geo'] = frame.reference_point_geo
-
-    return in_granule
 
 
 def create_product_name(metadata_name: str, begin_date: datetime, end_date: datetime) -> str:
@@ -176,7 +130,10 @@ def add_granule_data_to_array(
     """
     datasets = ['short_wavelength_displacement', 'connected_component_labels']
     granule_xr = open_opera_disp_granule(granule.s3_uri, datasets)
-    granule_xr = update_spatiotemporal_reference(granule_xr, frame, update_ref_point=False)
+
+    same_ref_date = round_to_day(granule_xr.attrs['reference_date']) == round_to_day(frame.reference_date)
+    if not same_ref_date:
+        raise NotImplementedError('Granule reference date does not match metadata tile, this is not supported.')
 
     bbox = create_buffered_bbox(geotransform.to_gdal(), frame_map.shape, 120)  # EPSG:3857 is in meters
     granule_xr = granule_xr.rio.clip_box(*bbox, crs='EPSG:3857')
@@ -216,7 +173,7 @@ def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: dat
     frames = frames_from_metadata(metadata_path)
     needed_granules = find_needed_granules(list(frames.keys()), begin_date, end_date)
 
-    frame_map, geotransform = utils.get_raster_as_numpy(metadata_path)
+    frame_map, geotransform = get_raster_as_numpy(metadata_path)
     geotransform = Affine.from_gdal(*geotransform)
 
     sw_cumul_disp = np.full(frame_map.shape, np.nan, dtype=float)
