@@ -3,6 +3,7 @@ import json
 import multiprocessing
 import subprocess
 import tempfile
+from pathlib import Path
 
 from osgeo import gdal, gdalconst, osr
 
