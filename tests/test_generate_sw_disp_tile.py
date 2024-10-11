@@ -19,17 +19,15 @@ def test_extract_frame_metadata():
     metadata = {
         'OPERA_FRAMES': '1, 2',
         'FRAME_1_REF_TIME': '20210101T000000Z',
-        'FRAME_1_REF_POINT_COLROW': '1, 2',
         'FRAME_1_REF_POINT_EASTINGNORTHING': '1, 2',
         'FRAME_2_REF_TIME': '20210102T000000Z',
-        'FRAME_2_REF_POINT_COLROW': '3, 4',
         'FRAME_2_REF_POINT_EASTINGNORTHING': '3, 4',
     }
 
-    expected = sw.FrameMeta(1, datetime(2021, 1, 1), (1, 2), (1, 2))
+    expected = sw.FrameMeta(1, datetime(2021, 1, 1), (1, 2))
     assert sw.extract_frame_metadata(metadata, 1) == expected
 
-    expected = sw.FrameMeta(2, datetime(2021, 1, 2), (3, 4), (3, 4))
+    expected = sw.FrameMeta(2, datetime(2021, 1, 2), (3, 4))
     assert sw.extract_frame_metadata(metadata, 2) == expected
 
 
@@ -38,10 +36,8 @@ def test_frames_from_metadata(tmp_path):
     metadata = {
         'OPERA_FRAMES': '1, 2',
         'FRAME_1_REF_TIME': '20210101T000000Z',
-        'FRAME_1_REF_POINT_COLROW': '1, 2',
         'FRAME_1_REF_POINT_EASTINGNORTHING': '1, 2',
         'FRAME_2_REF_TIME': '20210102T000000Z',
-        'FRAME_2_REF_POINT_COLROW': '3, 4',
         'FRAME_2_REF_POINT_EASTINGNORTHING': '3, 4',
     }
     create_tif(tmp_tif, metadata)
@@ -49,11 +45,9 @@ def test_frames_from_metadata(tmp_path):
     assert len(frames) == 2
     assert frames[1].frame_id == 1
     assert frames[1].reference_date == datetime(2021, 1, 1, 0, 0, 0)
-    assert frames[1].reference_point_colrow == (1, 2)
     assert frames[1].reference_point_eastingnorthing == (1, 2)
     assert frames[2].frame_id == 2
     assert frames[2].reference_date == datetime(2021, 1, 2, 0, 0, 0)
-    assert frames[2].reference_point_colrow == (3, 4)
     assert frames[2].reference_point_eastingnorthing == (3, 4)
 
 

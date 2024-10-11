@@ -23,7 +23,6 @@ class FrameMeta:
 
     frame_id: int
     reference_date: datetime
-    reference_point_colrow: tuple  # column, row
     reference_point_eastingnorthing: tuple  # easting, northing
 
 
@@ -39,13 +38,10 @@ def extract_frame_metadata(frame_metadata: dict[str, str], frame_id: int) -> Fra
     """
     ref_date = datetime.strptime(frame_metadata[f'FRAME_{frame_id}_REF_TIME'], DATE_FORMAT)
 
-    ref_point_colrow = frame_metadata[f'FRAME_{frame_id}_REF_POINT_COLROW'].split(', ')
-    ref_point_colrow = tuple(int(x) for x in ref_point_colrow)
-
     ref_point_eastingnorthing = frame_metadata[f'FRAME_{frame_id}_REF_POINT_EASTINGNORTHING'].split(', ')
     ref_point_eastingnorthing = tuple(int(x) for x in ref_point_eastingnorthing)
 
-    return FrameMeta(frame_id, ref_date, ref_point_colrow, ref_point_eastingnorthing)
+    return FrameMeta(frame_id, ref_date, ref_point_eastingnorthing)
 
 
 def frames_from_metadata(metadata_path: Path) -> dict[int, FrameMeta]:
