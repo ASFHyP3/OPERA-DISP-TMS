@@ -21,8 +21,8 @@ def get_tile_bounds(info: dict, output_folder: Path) -> None:
     minx, miny = info['cornerCoordinates']['lowerLeft']
     maxx, maxy = info['cornerCoordinates']['upperRight']
     proj = osr.SpatialReference(info['coordinateSystem']['wkt'])
-    bounds = {
-        "BOUNDS": [minx, miny, maxx, maxy],
+    extent = {
+        "extent": [minx, miny, maxx, maxy],
         "EPSG": int(proj.GetAttrValue('AUTHORITY', 1))
     }
 
