@@ -10,7 +10,7 @@ from osgeo import gdal, gdalconst, osr
 gdal.UseExceptions()
 
 
-def get_tile_bounds(info: dict, output_folder: Path) -> None:
+def get_tile_extent(info: dict, output_folder: Path) -> None:
     """Generate file with the bounds of the newly created vrt
         Will return a file with: {"extent": [minx, miny, maxx, maxy], "EPSG": %EPSG}
 
@@ -46,7 +46,7 @@ def create_tile_map(output_folder: str, input_rasters: list[str]):
         stats = gdal.Info(mosaic_vrt.name, stats=True, format='json')['bands'][0]['metadata']['']
 
         # get bounds of VRT and write to file
-        get_tile_bounds(stats, Path(output_folder))
+        get_tile_extent(stats, Path(output_folder))
 
         gdal.Translate(
             destName=byte_vrt.name,
