@@ -11,7 +11,7 @@ from rasterio.transform import Affine
 
 from opera_disp_tms.find_california_dataset import Granule, find_california_dataset
 from opera_disp_tms.s3_xarray import open_opera_disp_granule
-from opera_disp_tms.utils import DATE_FORMAT, get_raster_as_numpy, round_to_day
+from opera_disp_tms.utils import DATE_FORMAT, create_buffered_bbox, get_raster_as_numpy, round_to_day
 
 
 gdal.UseExceptions()
@@ -117,18 +117,23 @@ def add_granule_data_to_array(
     Returns:
         The updated short wavelength cumulative displacement array and the secondary date of the granule
     """
-    granule_dataarray = open_opera_disp_granule(granule.s3_uri, 'short_wavelength_displacement')
+    datasets = ['short_wavelength_displacement', 'connected_component_labels']
+    granule_xr = open_opera_disp_granule(granule.s3_uri, datasets)
 
-    same_ref_date = round_to_day(granule_dataarray.attrs['reference_date']) == round_to_day(frame.reference_date)
+    same_ref_date = round_to_day(granule_xr.attrs['reference_date']) == round_to_day(frame.reference_date)
     if not same_ref_date:
         raise NotImplementedError('Granule reference date does not match metadata tile, this is not supported.')
 
-    granule_dataarray = granule_dataarray.rio.reproject('EPSG:3857', transform=geotransform, shape=frame_map.shape)
+    bbox = create_buffered_bbox(geotransform.to_gdal(), frame_map.shape, 120)  # EPSG:3857 is in meters
+    granule_xr = granule_xr.rio.clip_box(*bbox, crs='EPSG:3857')
+    valid_data_mask = granule_xr['connected_component_labels'] > 0
+    sw_cumul_disp_xr = granule_xr['short_wavelength_displacement'].where(valid_data_mask, np.nan)
+    sw_cumul_disp_xr = sw_cumul_disp_xr.rio.reproject('EPSG:3857', transform=geotransform, shape=frame_map.shape)
 
-    frame_locations = frame_map == granule_dataarray.attrs['frame_id']
-    sw_cumul_disp[frame_locations] = granule_dataarray.data[frame_locations].astype(float)
+    frame_locations = frame_map == granule_xr.attrs['frame_id']
+    sw_cumul_disp[frame_locations] = sw_cumul_disp_xr.data[frame_locations].astype(float)
 
-    secondary_date = datetime.strftime(granule_dataarray.attrs['secondary_date'], DATE_FORMAT)
+    secondary_date = datetime.strftime(granule_xr.attrs['secondary_date'], DATE_FORMAT)
     return sw_cumul_disp, secondary_date
 
 
