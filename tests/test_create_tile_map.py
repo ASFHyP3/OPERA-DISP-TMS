@@ -1,8 +1,9 @@
 import json
 import numpy as np
 
-from opera_disp_tms import create_tile_map
 from osgeo import gdal, osr
+
+from opera_disp_tms import create_tile_map
 
 
 def create_test_geotiff(output_file, geotransform, shape, epsg):
