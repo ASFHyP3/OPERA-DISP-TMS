@@ -126,8 +126,8 @@ def add_granule_data_to_array(
 
     bbox = create_buffered_bbox(geotransform.to_gdal(), frame_map.shape, 120)  # EPSG:3857 is in meters
     granule_xr = granule_xr.rio.clip_box(*bbox, crs='EPSG:3857')
-    conn_comp_mask = granule_xr['connected_component_labels'] == 0
-    sw_cumul_disp_xr = granule_xr['short_wavelength_displacement'].where(conn_comp_mask, np.nan)
+    valid_data_mask = granule_xr['connected_component_labels'] > 0
+    sw_cumul_disp_xr = granule_xr['short_wavelength_displacement'].where(valid_data_mask, np.nan)
     sw_cumul_disp_xr = sw_cumul_disp_xr.rio.reproject('EPSG:3857', transform=geotransform, shape=frame_map.shape)
 
     frame_locations = frame_map == granule_xr.attrs['frame_id']
