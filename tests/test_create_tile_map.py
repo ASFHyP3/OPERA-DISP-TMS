@@ -1,6 +1,6 @@
 import json
-import numpy as np
 
+import numpy as np
 from osgeo import gdal, osr
 
 from opera_disp_tms import create_tile_map
