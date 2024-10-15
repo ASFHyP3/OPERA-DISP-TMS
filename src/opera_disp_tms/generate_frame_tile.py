@@ -287,13 +287,14 @@ def create_tile_for_bbox(bbox: Iterable[int], direction: str) -> Path:
 
 def main():
     """CLI entry point
-    Example: generate_frame_tile -125 41 -124 42 ascending
+    Example: generate_metadata_tile -125 42 ascending
     """
-    parser = argparse.ArgumentParser(description='Create a frame metadata tile for a given bounding box')
-    parser.add_argument('bbox', type=int, nargs=4, help='Bounding box in the form of min_lon min_lat max_lon max_lat')
+    parser = argparse.ArgumentParser(description='Create a 1x1 degree metadata tile for a given bounding box')
+    parser.add_argument('corner', type=int, nargs=2, help='Upper left corner of tile in form: min_lon max_lat')
     parser.add_argument('direction', type=str, choices=['ascending', 'descending'], help='Direction of the orbit pass')
     args = parser.parse_args()
-    create_tile_for_bbox(args.bbox, direction=args.direction)
+    bbox = [args.corner[0], args.corner[2] - 1, args.corner[0] + 1, args.corner[2]]
+    create_tile_for_bbox(bbox, direction=args.direction)
 
 
 if __name__ == '__main__':
