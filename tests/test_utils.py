@@ -24,6 +24,14 @@ def test_transform_point():
     assert np.isclose(test_point, test_point_recreated).all()
 
 
+def test_create_buffered_bbox():
+    geotransform = (0, 1, 0, 0, 0, -1)
+    shape = (10, 10)
+    buffer_size = 1
+    bbox = ut.create_buffered_bbox(geotransform, shape, buffer_size)
+    assert bbox == (-1, -11, 11, 1)
+
+
 def test_validate_bbox():
     with pytest.raises(ValueError, match='Bounding box must have 4 elements'):
         ut.validate_bbox([1, 2, 3])

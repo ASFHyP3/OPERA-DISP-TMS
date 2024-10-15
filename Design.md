@@ -35,20 +35,18 @@ To do this, the 1x1 degree cumulative displacement COGs will have the following 
 Geotiff metadata attributes will contain the following fields:
 1. List of OPERA frames present in the cumulative displacement COG
 2. The frame reference and secondary date in the format YYYY/MM/DD for each frame present in the tile
-3. The frame reference point location encoded as both the array coordinates (row/column) and the geographic coordinates of the reference pixel in the native projection of the frame for each frame present in the tile
+3. The frame reference point location encoded as the geographic coordinates of the reference pixel in the native projection of the frame for each frame present in the tile
 4. A URL pointing to the location of OPERA frame image for that tile (see below)
 
 For example, the geotiff metadata attributes may look like:
 ```
 OPERA_FRAMES: "1, 2"
-FRAME_1_REF_POINT: "129877.23, 128383.28"
 FRAME_1_EPSG: "12345"
-FRAME_1_REF_POINT_ARRAY: "10, 20"
+FRAME_1_REF_POINT_EASTINGNORTHING: "129877, 128383"
 FRAME_1_REF_DATE: "2015/01/01"
 FRAME_1_SEC_DATE: "2015/01/02"
-FRAME_2_REF_POINT: "22348.23, 38973.28"
 FRAME_2_EPSG: "12345"
-FRAME_2_REF_POINT_ARRAY: "20, 11"
+FRAME_2_REF_POINT_EASTINGNORTHING: "22348, 38973"
 FRAME_2_REF_DATE: "2015/02/01"
 FRAME_2_SEC_DATE: "2015/02/02"
 TILE_METADATA_URL: "https://mybucket.s3-us-west-2.amazonaws.com/metadata_tiffs/N23W132.tiff"
@@ -61,13 +59,11 @@ In addition to this per-COG information, there will also be one accompanying met
 For example, the geotiff metadata attributes may look like:
 ```
 OPERA_FRAMES: "1, 2"
-FRAME_1_REF_POINT: "129877.23, 128383.28"
 FRAME_1_EPSG: "12345"
-FRAME_1_REF_POINT_ARRAY: "10, 20"
+FRAME_1_REF_POINT_EASTINGNORTHING: "129877, 128383"
 FRAME_1_REF_DATE: "2015/01/01"
-FRAME_2_REF_POINT: "22348.23, 38973.28"
 FRAME_2_EPSG: "12345"
-FRAME_2_REF_POINT_ARRAY: "20, 11"
+FRAME_2_REF_POINT_EASTINGNORTHING: "22348, 38973"
 FRAME_2_REF_DATE: "2015/02/01"
 ```
 This is similar to the short wavelength displacement metadata fields, but with the exclusion of the secondary date and metadata raster URL information.

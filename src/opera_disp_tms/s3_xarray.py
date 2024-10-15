@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Tuple
+from typing import List, Tuple
 
 import rioxarray  # noqa
 import s3fs
@@ -51,11 +51,10 @@ def get_opera_disp_granule_metadata(s3_uri) -> Tuple:
 
     row = int(ds_metadata['reference_point'].attrs['rows'])
     col = int(ds_metadata['reference_point'].attrs['cols'])
-    ref_point_array = (col, row)
 
-    longitude = float(ds_metadata['reference_point'].attrs['longitudes'])
-    latitude = float(ds_metadata['reference_point'].attrs['latitudes'])
-    ref_point_geo = (longitude, latitude)
+    easting = int(ds_metadata.x.values[col])
+    northing = int(ds_metadata.y.values[row])
+    ref_point_eastingnorthing = (easting, northing)
 
     srs = osr.SpatialReference()
     srs.ImportFromWkt(ds_metadata['spatial_ref'].attrs['crs_wkt'])
@@ -65,28 +64,25 @@ def get_opera_disp_granule_metadata(s3_uri) -> Tuple:
     secondary_date = datetime.strptime(s3_uri.split('/')[-1].split('_')[7], DATE_FORMAT)
     frame_id = int(s3_uri.split('/')[-1].split('_')[4][1:])
 
-    return ref_point_array, ref_point_geo, epsg, reference_date, secondary_date, frame_id
+    return ref_point_eastingnorthing, epsg, reference_date, secondary_date, frame_id
 
 
-def open_opera_disp_granule(s3_uri: str, data_var=str) -> xr.DataArray:
+def open_opera_disp_granule(s3_uri: str, data_vars=List[str]) -> xr.Dataset:
     """Open an OPERA DISP granule from S3 and set important attributes
 
     Args:
         s3_uri: URI of the granule on S3
-        data_var: Name of the data variable to open
+        data_vars: List of data variable names to include
 
     Returns:
-        DataArray of the granule
+        Dataset of the granule
     """
     ds = open_s3_xarray_dataset(s3_uri)
-    data = ds[data_var]
+    data = ds[data_vars]
     data.rio.write_crs(ds['spatial_ref'].attrs['crs_wkt'], inplace=True)
 
-    ref_point_array, ref_point_geo, _, reference_date, secondary_date, frame_id = get_opera_disp_granule_metadata(
-        s3_uri
-    )
-    data.attrs['reference_point_array'] = ref_point_array
-    data.attrs['reference_point_geo'] = ref_point_geo
+    ref_point_eastingnorthing, _, reference_date, secondary_date, frame_id = get_opera_disp_granule_metadata(s3_uri)
+    data.attrs['reference_point_eastingnorthing'] = ref_point_eastingnorthing
     data.attrs['reference_date'] = reference_date
     data.attrs['secondary_date'] = secondary_date
     data.attrs['frame_id'] = frame_id

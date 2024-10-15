@@ -100,6 +100,27 @@ def transform_point(x: float, y: float, source_wkt: str, target_wkt: str) -> Tup
     return x_transformed, y_transformed
 
 
+def create_buffered_bbox(geotransform: Iterable[int], shape: Iterable[int], buffer_size: float) -> Tuple[float]:
+    """Create a buffered bounding box from a geotransform and shape
+
+    Args:
+        geotransform: Geotransform of the raster in GDAL style
+        shape: Shape of the raster (n_rows, n_cols)
+        buffer_size: Size of the buffer to add to the bounding box in the same units as the geotransform
+
+    Returns:
+        Bounding box in the form (minx, miny, maxx, maxy)
+    """
+    minx, xres, _, maxy, _, yres = geotransform
+    miny = maxy + (shape[0] * yres)
+    maxx = minx + (shape[1] * xres)
+    minx -= buffer_size
+    maxx += buffer_size
+    miny -= buffer_size
+    maxy += buffer_size
+    return minx, miny, maxx, maxy
+
+
 def validate_bbox(bbox: Iterable[int]) -> None:
     """Check that bounding box:
     - Has four elements

@@ -1,12 +1,33 @@
 import argparse
+import json
 import multiprocessing
 import subprocess
 import tempfile
+from pathlib import Path
 
-from osgeo import gdal, gdalconst
-
+from osgeo import gdal, gdalconst, osr
 
 gdal.UseExceptions()
+
+
+def get_tile_extent(info: dict, output_folder: Path) -> None:
+    """Generate file with the bounds of the newly created vrt
+        Will return a file with: {"extent": [minx, miny, maxx, maxy], "EPSG": %EPSG}
+
+    Args:
+        info: gdalinfo dict from vrt file
+        output_folder: folder to write "extent.json"
+    """
+    minx, miny = info['cornerCoordinates']['lowerLeft']
+    maxx, maxy = info['cornerCoordinates']['upperRight']
+    proj = osr.SpatialReference(info['coordinateSystem']['wkt'])
+    extent = {
+        "extent": [minx, miny, maxx, maxy],
+        "EPSG": int(proj.GetAttrValue('AUTHORITY', 1))
+    }
+
+    with open(output_folder / 'extent.json', 'w') as outfile:
+        json.dump(extent, outfile)
 
 
 def create_tile_map(output_folder: str, input_rasters: list[str]):
@@ -22,7 +43,12 @@ def create_tile_map(output_folder: str, input_rasters: list[str]):
         gdal.BuildVRT(mosaic_vrt.name, input_rasters, resampleAlg='nearest')
 
         # scale the mosaic from Float to Byte
-        stats = gdal.Info(mosaic_vrt.name, stats=True, format='json')['bands'][0]['metadata']['']
+        vrt_info = gdal.Info(mosaic_vrt.name, stats=True, format='json')
+        stats = vrt_info['bands'][0]['metadata']['']
+
+        # get bounds of VRT and write to file
+        get_tile_extent(vrt_info, Path(output_folder))
+
         gdal.Translate(
             destName=byte_vrt.name,
             srcDS=mosaic_vrt.name,
