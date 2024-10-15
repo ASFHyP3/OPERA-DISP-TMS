@@ -264,16 +264,18 @@ def create_metadata_tile(bbox: Iterable[int], frames: Iterable[Frame], tile_path
     tile_ds = None
 
 
-def create_tile_for_bbox(bbox: Iterable[int], direction: str) -> Path:
+def create_tile_for_bbox(upper_left_corner: Iterable[int], direction: str) -> Path:
     """Create the frame metadata tile for a specific bounding box
 
     Args:
-        bbox: The bounding box to create the frame for in the (minx, miny, maxx, maxy) in EPSG:4326, integers only.
+        upper_left_corner: Coordinates of the upper left corner of the bounding box in EPSG 4326
         direction: The direction of the orbit pass ('ascending' or 'descending')
+
 
     Returns:
         The path to the frame metadata tile
     """
+    bbox = [upper_left_corner[0] - 1, upper_left_corner[1] - 1, upper_left_corner[0], upper_left_corner[1]]
     direction = direction.upper()
     if direction not in ['ASCENDING', 'DESCENDING']:
         raise ValueError('Direction must be either "ASCENDING" or "DESCENDING"')
@@ -287,10 +289,11 @@ def create_tile_for_bbox(bbox: Iterable[int], direction: str) -> Path:
 
 def main():
     """CLI entry point
-    Example: generate_frame_tile -125 41 -124 42 ascending
+    Example: generate_frame_tile -124 42 ascending
     """
     parser = argparse.ArgumentParser(description='Create a frame metadata tile for a given bounding box')
-    parser.add_argument('bbox', type=int, nargs=4, help='Bounding box in the form of min_lon min_lat max_lon max_lat')
+    parser.add_argument('bbox', type=int, nargs=2, help='Upper left coordinate (max_lon max_lat) in EPSG: 4326 to '
+                                                        'create a 1x1 bounding box')
     parser.add_argument('direction', type=str, choices=['ascending', 'descending'], help='Direction of the orbit pass')
     args = parser.parse_args()
     create_tile_for_bbox(args.bbox, direction=args.direction)
