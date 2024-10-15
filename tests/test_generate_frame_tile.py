@@ -36,7 +36,9 @@ def test_reorder_frames():
     frame_2_3 = StubFrame(2, 3, Geom([0, 0, 2, 2]), 'ASC')
     frame_2_4 = StubFrame(2, 4, Geom([2, 2, 3, 3]), 'ASC')
 
-    result = generate_metadata_tile.reorder_frames([frame_2_4, frame_1_2, frame_2_3, frame_1_1], order_by='frame_number')
+    result = generate_metadata_tile.reorder_frames(
+        [frame_2_4, frame_1_2, frame_2_3, frame_1_1], order_by='frame_number'
+    )
     assert result == [frame_2_4, frame_2_3, frame_1_2, frame_1_1]
 
     result = generate_metadata_tile.reorder_frames([frame_2_4, frame_1_2, frame_2_3, frame_1_1], order_by='west_most')
@@ -78,7 +80,7 @@ def test_burn_frame(tmp_path):
     ds = None
 
     golden = np.zeros(data.shape)
-    golden[int(data.shape[0] / 2):, :] = 9999
+    golden[int(data.shape[0] / 2) :, :] = 9999
     assert np.all(data == golden)
 
     frame2 = Frame(10000, 1, 1, 'ASCENDING', 1, 1, box(1, 1, 1.5, 2))
