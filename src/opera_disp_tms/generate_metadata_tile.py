@@ -293,7 +293,7 @@ def main():
     parser.add_argument('corner', type=int, nargs=2, help='Upper left corner of tile in form: min_lon max_lat')
     parser.add_argument('direction', type=str, choices=['ascending', 'descending'], help='Direction of the orbit pass')
     args = parser.parse_args()
-    bbox = [args.corner[0], args.corner[2] - 1, args.corner[0] + 1, args.corner[2]]
+    bbox = [args.corner[0], args.corner[1] - 1, args.corner[0] + 1, args.corner[1]]
     create_tile_for_bbox(bbox, direction=args.direction)
 
 
