@@ -284,7 +284,7 @@ def create_tile_for_bbox(bbox: Iterable[int], direction: str) -> Path:
     relevant_frames = intersect(bbox=bbox, orbit_pass=direction, is_north_america=True, is_land=True)
     updated_frames = [buffer_frame_geometry(x) for x in relevant_frames]
     # This ordering minimizes orbit-edge gaps in tilesets by prioritizing IW1 over IW3 data
-    order_by = 'east_most' if direction == 'ASCENDING' else 'west_most'
+    order_by = 'west_most' if direction == 'ASCENDING' else 'east_most'
     ordered_frames = reorder_frames(updated_frames, add_first=order_by)
     create_metadata_tile(bbox, ordered_frames, out_path)
     return out_path
