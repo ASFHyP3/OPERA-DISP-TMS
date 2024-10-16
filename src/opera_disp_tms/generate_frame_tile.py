@@ -291,11 +291,11 @@ def main():
     Example: generate_frame_tile -124 42 ascending
     """
     parser = argparse.ArgumentParser(description='Create a frame metadata tile for a given bounding box')
-    parser.add_argument('bbox', type=int, nargs=2, help='Upper left coordinate (max_lon max_lat) in EPSG: 4326 to '
-                                                        'create a 1x1 bounding box')
+    parser.add_argument('upper_left_corner', type=int, nargs=2, help='Upper left coordinate (max_lon max_lat) in '
+                                                                     'EPSG: 4326 to create a 1x1 bounding box')
     parser.add_argument('direction', type=str, choices=['ascending', 'descending'], help='Direction of the orbit pass')
     args = parser.parse_args()
-    create_tile_for_bbox(args.bbox, direction=args.direction)
+    create_tile_for_bbox(args.upper_left_corner, direction=args.direction)
 
 
 if __name__ == '__main__':
