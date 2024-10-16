@@ -263,18 +263,17 @@ def create_metadata_tile(bbox: Iterable[int], frames: Iterable[Frame], tile_path
     tile_ds = None
 
 
-def create_tile_for_bbox(upper_left_corner: Iterable[int], direction: str) -> Path:
-    """Create the frame metadata tile for a specific bounding box
+def create_tile_for_bbox(bbox: Iterable[int], direction: str) -> Path:
+    """Create the frame metadata tile for
 
     Args:
-        upper_left_corner: Coordinates of the upper left corner of the bounding box in EPSG 4326
+        bbox: The bounding box to create the frame for in the form (minx, miny, maxx, maxy) in EPSG 4326, integers only
         direction: The direction of the orbit pass ('ascending' or 'descending')
 
 
     Returns:
         The path to the frame metadata tile
     """
-    bbox = [upper_left_corner[0], upper_left_corner[1] - 1, upper_left_corner[0] + 1, upper_left_corner[1]]
     direction = direction.upper()
     if direction not in ['ASCENDING', 'DESCENDING']:
         raise ValueError('Direction must be either "ASCENDING" or "DESCENDING"')
@@ -295,7 +294,9 @@ def main():
                                                                      'EPSG: 4326 to create a 1x1 bounding box')
     parser.add_argument('direction', type=str, choices=['ascending', 'descending'], help='Direction of the orbit pass')
     args = parser.parse_args()
-    create_tile_for_bbox(args.upper_left_corner, direction=args.direction)
+    bbox = [args.upper_left_corner[0], args.upper_left_corner[1] - 1,
+            args.upper_left_corner[0] + 1, args.upper_left_corner[1]]
+    create_tile_for_bbox(bbox, direction=args.direction)
 
 
 if __name__ == '__main__':
