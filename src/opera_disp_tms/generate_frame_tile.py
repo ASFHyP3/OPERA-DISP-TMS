@@ -87,15 +87,13 @@ def reorder_frames(frame_list: Iterable[Frame], add_first: str) -> List[Frame]:
         frames = sorted(frames, key=lambda x: x.frame_id, reverse=True)
 
         if add_first == 'min_frame_number':
-            metric = max([x.frame_id for x in frames])
-        elif add_first == 'east_most':
-            metric = max([x.geom.bounds[3] for x in frames])
-        elif add_first == 'west_most':
-            metric = min([x.geom.bounds[0] for x in frames])
+            sort_metric = max([x.frame_id for x in frames])
+        elif add_first in ['east_most', 'west_most']:
+            sort_metric = max([x.geom.bounds[3] for x in frames])
         else:
             raise ValueError('Invalid order_by parameter. Use "min_frame_number", "east_most", or "west_most.')
 
-        orbit_groups[orbit] = (metric, frames)
+        orbit_groups[orbit] = (sort_metric, frames)
 
     reverse = add_first in ['east_most', 'min_frame_number']
     sorted_orbits = sorted(orbit_groups, key=lambda x: orbit_groups[x][0], reverse=reverse)
