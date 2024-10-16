@@ -85,16 +85,14 @@ def reorder_frames(frame_list: Iterable[Frame], add_first: str) -> List[Frame]:
     for orbit in orbits:
         frames = [frame for frame in frame_list if frame.relative_orbit_number == orbit]
         frames = sorted(frames, key=lambda x: x.frame_id, reverse=True)
-
         if add_first == 'min_frame_number':
             sort_metric = max([x.frame_id for x in frames])
         elif add_first in ['east_most', 'west_most']:
-            sort_metric = max([x.geom.bounds[3] for x in frames])
+            sort_metric = min([x.geom.bounds[0] for x in frames])
         else:
             raise ValueError('Invalid order_by parameter. Use "min_frame_number", "east_most", or "west_most.')
-
         orbit_groups[orbit] = (sort_metric, frames)
-
+    
     reverse = add_first in ['east_most', 'min_frame_number']
     sorted_orbits = sorted(orbit_groups, key=lambda x: orbit_groups[x][0], reverse=reverse)
     sorted_frames = [orbit_groups[orbit][1] for orbit in sorted_orbits]
@@ -282,7 +280,7 @@ def create_tile_for_bbox(bbox: Iterable[int], direction: str) -> Path:
     relevant_frames = intersect(bbox=bbox, orbit_pass=direction, is_north_america=True, is_land=True)
     updated_frames = [buffer_frame_geometry(x) for x in relevant_frames]
     # This ordering minimizes orbit-edge gaps in tilesets by prioritizing IW1 over IW3 data
-    order_by = 'west_most' if direction == 'ASCENDING' else 'east_most'
+    order_by = 'east_most' if direction == 'ASCENDING' else 'west_most'
     ordered_frames = reorder_frames(updated_frames, add_first=order_by)
     create_metadata_tile(bbox, ordered_frames, out_path)
     return out_path
