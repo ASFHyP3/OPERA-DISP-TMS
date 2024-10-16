@@ -92,7 +92,7 @@ def reorder_frames(frame_list: Iterable[Frame], add_first: str) -> List[Frame]:
         else:
             raise ValueError('Invalid order_by parameter. Use "min_frame_number", "east_most", or "west_most.')
         orbit_groups[orbit] = (sort_metric, frames)
-    
+
     reverse = add_first in ['east_most', 'min_frame_number']
     sorted_orbits = sorted(orbit_groups, key=lambda x: orbit_groups[x][0], reverse=reverse)
     sorted_frames = [orbit_groups[orbit][1] for orbit in sorted_orbits]
@@ -244,17 +244,16 @@ def create_metadata_tile(bbox: Iterable[int], frames: Iterable[Frame], tile_path
             frame_metadata[str(frame.frame_id)] = create_granule_metadata_dict(first_granule)
             burn_frame(frame, tile_path)
 
-    if frame_metadata == {}:
-        warnings.warn('No granules are available for this tile. The tile will not be created.')
-        tile_path.unlink()
-        return
-
     tile_ds = gdal.Open(str(tile_path), gdal.GA_Update)
     # Not all frames will be in the final array, so we need to find the included frames
     band = tile_ds.GetRasterBand(1)
     array = band.ReadAsArray()
     included_frames = np.unique(array)
     included_frames = included_frames[included_frames != 0]  # Account for 0 nodata value
+    if len(included_frames) == 0:
+        warnings.warn('No granules are available for this tile. The tile will not be created.')
+        tile_path.unlink()
+        return
 
     metadata_dict = {'OPERA_FRAMES': ', '.join([str(x) for x in included_frames])}
     [metadata_dict.update(frame_metadata[str(x)]) for x in included_frames]
