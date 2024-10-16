@@ -43,11 +43,9 @@ These tiles serve as the foundation for the creation of all other Tile Map Serve
 
 The `generate_frame_tile` CLI command can be used to generate a frame metadata tile:
 ```bash
-generate_frame_tile -125 41 -124 42 ascending
+generate_frame_tile -125 42 ascending
 ```
-Where `-125 41 -124 42` is a desired bounding box in **integer** `minx, miny, max, maxy` longitude/latitude values, and `ascending` specifies which orbit direction you want to generate a frame metadata tile for (`ascending` or `descending`).
-
-For TMS generation ASF will be using 1x1 degree tiles.
+Where `-125 42` is the upper left corner of the desired 1 by 1 grid bounding box in **integer** `minx maxy` longitude/latitude values in WGS84 projection, and `ascending` specifies which orbit direction you want to generate a frame metadata tile for (`ascending` or `descending`).
 
 The resulting products have the name format:
 `METADATA_{orbit direction}_{upper left corner in lon/lat}.tif`.
