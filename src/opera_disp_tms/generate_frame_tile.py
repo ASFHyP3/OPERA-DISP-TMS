@@ -275,7 +275,7 @@ def create_tile_for_bbox(upper_left_corner: Iterable[int], direction: str) -> Pa
     Returns:
         The path to the frame metadata tile
     """
-    bbox = [upper_left_corner[0] - 1, upper_left_corner[1] - 1, upper_left_corner[0], upper_left_corner[1]]
+    bbox = [upper_left_corner[0] + 1, upper_left_corner[1] - 1, upper_left_corner[0], upper_left_corner[1]]
     direction = direction.upper()
     if direction not in ['ASCENDING', 'DESCENDING']:
         raise ValueError('Direction must be either "ASCENDING" or "DESCENDING"')
