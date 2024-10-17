@@ -4,7 +4,6 @@ from pathlib import Path
 
 import numpy as np
 import xarray as xr
-from dask.distributed import LocalCluster
 from osgeo import gdal
 from rasterio.transform import Affine
 
@@ -23,22 +22,16 @@ def get_years_since_start(datetimes):
 
 def add_velocity_data_to_array(granules, frame, geotransform, frame_map_array, out_array):
     bbox = create_buffered_bbox(geotransform.to_gdal(), frame_map_array.shape, 90)  # EPSG:3857 is in meters
-    # TODO: Multithred to speed up
+
     granule_xrs = [sw_disp.load_sw_disp_granule(x, bbox, frame) for x in granules]
     cube = xr.concat(granule_xrs, dim='years_since_start')
     # ensures output units are m/yr
     years_since_start = get_years_since_start([g.attrs['secondary_date'] for g in granule_xrs])
     cube = cube.assign_coords(years_since_start=years_since_start)
-    del cube.attrs['secondary_date']
+
     non_nan_count = cube.count(dim='years_since_start')
     cube = cube.where(non_nan_count >= 2, np.nan)
-
-    cluster = LocalCluster()
-    client = cluster.get_client()
-    cube = cube.chunk({'x': 500, 'y': 500, 'years_since_start': -1})
     linear_fit = cube.polyfit(dim='years_since_start', deg=1)
-    linear_fit = linear_fit.compute(client=client)
-    client.close()
 
     # multiplying by 100 converts to cm/yr
     velocity = xr.Dataset({'velocity': linear_fit.polyfit_coefficients.sel(degree=1) * 100, 'count': non_nan_count})
@@ -65,6 +58,8 @@ def create_sw_vel_tile(metadata_path: Path, begin_date: datetime, end_date: date
     frames = sw_disp.frames_from_metadata(metadata_path)
     strategy = 'minmax' if minmax else 'all'
     needed_granules = sw_disp.find_needed_granules(list(frames.keys()), begin_date, end_date, strategy=strategy)
+    len_str = [f'    {frame_id}: {len(needed_granules[frame_id])}' for frame_id in needed_granules]
+    print('\n'.join(['N granules:'] + len_str))
 
     frame_map, geotransform = get_raster_as_numpy(metadata_path)
     geotransform = Affine.from_gdal(*geotransform)
@@ -98,13 +93,16 @@ def main():
     parser.add_argument(
         'end_date', type=str, help='End of secondary date search range to generate tile for (e.g., 20211231)'
     )
+    parser.add_argument(
+        '--full', action='store_false', help='Use a full linear fit instead of a secant fit (first/last date only)'
+    )
 
     args = parser.parse_args()
     args.metadata_path = Path(args.metadata_path)
     args.begin_date = datetime.strptime(args.begin_date, '%Y%m%d')
     args.end_date = datetime.strptime(args.end_date, '%Y%m%d')
 
-    create_sw_vel_tile(args.metadata_path, args.begin_date, args.end_date)
+    create_sw_vel_tile(args.metadata_path, args.begin_date, args.end_date, minmax=args.full)
 
 
 if __name__ == '__main__':
