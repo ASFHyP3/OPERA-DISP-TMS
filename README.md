@@ -43,7 +43,7 @@ These tiles serve as the foundation for the creation of all other Tile Map Serve
 
 The `generate_metadata_tile` CLI command can be used to generate a frame metadata tile:
 ```bash
-metadata_frame_tile -125 42 ascending
+generate_metadata_tile -125 42 ascending
 ```
 Where `-125 42` is the upper-left corner of the desired bounding box in **integer** `minx maxy` longitude/latitude values, and `ascending` specifies which orbit direction you want to generate a frame metadata tile for (`ascending` or `descending`).
 
