@@ -65,14 +65,14 @@ def buffer_frame_geometry(frame: Frame, buffer_size_in_meters: int = -3500) -> F
     return frame
 
 
-def reorder_frames(frame_list: Iterable[Frame], order_by: str = 'west_most') -> List[Frame]:
+def reorder_frames(frame_list: Iterable[Frame], add_first: str) -> List[Frame]:
     """Reorder a set of frames so that they overlap correctly when rasterized.
     Frames within a relative orbit are stacked so that higher frame numbers are on top (so they are rasterized first).
-    Relative orbits sets are orderd by either frame number, or from west to east.
+    Relative orbits sets are orderd by either frame number, from west to east, or from east to west.
 
     Args:
         frame_list: The list of frames to reorder
-        order_by: Strategy to use when ordering relative orbit sets (`frame_number`, or `west_most`)
+        add_first: Strategy to use when ordering relative orbit sets ("min_frame_number", "east_most", "west_most")
 
     Returns:
         The reordered list of frames
@@ -85,17 +85,16 @@ def reorder_frames(frame_list: Iterable[Frame], order_by: str = 'west_most') -> 
     for orbit in orbits:
         frames = [frame for frame in frame_list if frame.relative_orbit_number == orbit]
         frames = sorted(frames, key=lambda x: x.frame_id, reverse=True)
-
-        if order_by == 'frame_number':
-            metric = max([x.frame_id for x in frames])
-        elif order_by == 'west_most':
-            metric = max([x.geom.bounds[0] for x in frames])
+        if add_first == 'min_frame_number':
+            sort_metric = max([x.frame_id for x in frames])
+        elif add_first in ['east_most', 'west_most']:
+            sort_metric = min([x.geom.bounds[0] for x in frames])
         else:
-            raise ValueError('Invalid order_by parameter. Please use "frame_number" or "west_most".')
+            raise ValueError('Invalid order_by parameter. Use "min_frame_number", "east_most", or "west_most.')
+        orbit_groups[orbit] = (sort_metric, frames)
 
-        orbit_groups[orbit] = (metric, frames)
-
-    sorted_orbits = sorted(orbit_groups, key=lambda x: orbit_groups[x][0], reverse=True)
+    reverse = add_first in ['east_most', 'min_frame_number']
+    sorted_orbits = sorted(orbit_groups, key=lambda x: orbit_groups[x][0], reverse=reverse)
     sorted_frames = [orbit_groups[orbit][1] for orbit in sorted_orbits]
     sorted_frames = [frame for sublist in sorted_frames for frame in sublist]
     return sorted_frames
@@ -245,17 +244,16 @@ def create_metadata_tile(bbox: Iterable[int], frames: Iterable[Frame], tile_path
             frame_metadata[str(frame.frame_id)] = create_granule_metadata_dict(first_granule)
             burn_frame(frame, tile_path)
 
-    if frame_metadata == {}:
-        warnings.warn('No granules are available for this tile. The tile will not be created.')
-        tile_path.unlink()
-        return
-
     tile_ds = gdal.Open(str(tile_path), gdal.GA_Update)
     # Not all frames will be in the final array, so we need to find the included frames
     band = tile_ds.GetRasterBand(1)
     array = band.ReadAsArray()
     included_frames = np.unique(array)
     included_frames = included_frames[included_frames != 0]  # Account for 0 nodata value
+    if len(included_frames) == 0:
+        warnings.warn('No granules are available for this tile. The tile will not be created.')
+        tile_path.unlink()
+        return
 
     metadata_dict = {'OPERA_FRAMES': ', '.join([str(x) for x in included_frames])}
     [metadata_dict.update(frame_metadata[str(x)]) for x in included_frames]
@@ -280,7 +278,9 @@ def create_tile_for_bbox(bbox: Iterable[int], direction: str) -> Path:
     out_path = Path(create_product_name(['metadata'], direction, bbox) + '.tif')
     relevant_frames = intersect(bbox=bbox, orbit_pass=direction, is_north_america=True, is_land=True)
     updated_frames = [buffer_frame_geometry(x) for x in relevant_frames]
-    ordered_frames = reorder_frames(updated_frames)
+    # This ordering minimizes orbit-edge gaps in tilesets by prioritizing IW1 over IW3 data
+    order_by = 'east_most' if direction == 'ASCENDING' else 'west_most'
+    ordered_frames = reorder_frames(updated_frames, add_first=order_by)
     create_metadata_tile(bbox, ordered_frames, out_path)
     return out_path
 

@@ -29,27 +29,28 @@ def test_reorder_frames():
     frame_asc = StubFrame(1, 1, Geom([0, 0, 1, 1]), 'ASC')
     frame_des = StubFrame(1, 1, Geom([0, 0, 1, 1]), 'DES')
     with pytest.raises(ValueError):
-        generate_metadata_tile.reorder_frames([frame_asc, frame_des])
+        generate_metadata_tile.reorder_frames([frame_asc, frame_des], add_first='min_frame_number')
 
-    frame_1_1 = StubFrame(1, 1, Geom([1, 1, 2, 2]), 'ASC')
-    frame_1_2 = StubFrame(1, 2, Geom([3, 3, 4, 4]), 'ASC')
+    frame_1_1 = StubFrame(1, 1, Geom([2, 1, 4, 3]), 'ASC')
+    frame_1_2 = StubFrame(1, 2, Geom([4, 3, 6, 5]), 'ASC')
     frame_2_3 = StubFrame(2, 3, Geom([0, 0, 2, 2]), 'ASC')
-    frame_2_4 = StubFrame(2, 4, Geom([2, 2, 3, 3]), 'ASC')
+    frame_2_4 = StubFrame(2, 4, Geom([2, 2, 4, 4]), 'ASC')
 
     result = generate_metadata_tile.reorder_frames(
-        [frame_2_4, frame_1_2, frame_2_3, frame_1_1], order_by='frame_number'
+        [frame_2_4, frame_1_2, frame_2_3, frame_1_1], add_first='min_frame_number'
     )
     assert result == [frame_2_4, frame_2_3, frame_1_2, frame_1_1]
 
-    result = generate_metadata_tile.reorder_frames([frame_2_4, frame_1_2, frame_2_3, frame_1_1], order_by='west_most')
+    result = generate_metadata_tile.reorder_frames([frame_2_4, frame_1_2, frame_2_3, frame_1_1], add_first='west_most')
+    assert result == [frame_2_4, frame_2_3, frame_1_2, frame_1_1]
+
+    result = generate_metadata_tile.reorder_frames([frame_2_4, frame_1_2, frame_2_3, frame_1_1], add_first='east_most')
     assert result == [frame_1_2, frame_1_1, frame_2_4, frame_2_3]
 
     frame_1_anti = StubFrame(1, 1, Geom([-1, -1, 1, 1]), 'ASC')
     frame_2_norm = StubFrame(2, 1, Geom([0, 0, 2, 2]), 'ASC')
-    assert generate_metadata_tile.reorder_frames([frame_1_anti, frame_2_norm], order_by='west_most') == [
-        frame_2_norm,
-        frame_1_anti,
-    ]
+    result = generate_metadata_tile.reorder_frames([frame_1_anti, frame_2_norm], add_first='east_most')
+    assert result == [frame_2_norm, frame_1_anti]
 
 
 def test_create_empty_tile_frame(tmp_path):
