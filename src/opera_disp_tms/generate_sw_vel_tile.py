@@ -4,6 +4,7 @@ from pathlib import Path
 
 import numpy as np
 import xarray as xr
+from dask.distributed import LocalCluster
 from osgeo import gdal
 from rasterio.transform import Affine
 
@@ -31,7 +32,14 @@ def add_velocity_data_to_array(granules, frame, geotransform, frame_map_array, o
     del cube.attrs['secondary_date']
     non_nan_count = cube.count(dim='years_since_start')
     cube = cube.where(non_nan_count >= 2, np.nan)
+
+    cluster = LocalCluster()
+    client = cluster.get_client()
+    cube = cube.chunk({'x': 500, 'y': 500, 'years_since_start': -1})
     linear_fit = cube.polyfit(dim='years_since_start', deg=1)
+    linear_fit = linear_fit.compute(client=client)
+    client.close()
+
     # multiplying by 100 converts to cm/yr
     velocity = xr.Dataset({'velocity': linear_fit.polyfit_coefficients.sel(degree=1) * 100, 'count': non_nan_count})
     velocity.attrs = cube.attrs
