@@ -8,6 +8,9 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
 ## [0.2.0]
+### Added
+* Python scripts for generating California SW Disp tileset
+
 ### Changed
 * metadata tile script name from `generate_frame_tile.py` to `generate_metadata_tile.py`
 * `generate_frame_tile.py` CLI to take upper left corner of bounding box, instead of full bounding box, as input
