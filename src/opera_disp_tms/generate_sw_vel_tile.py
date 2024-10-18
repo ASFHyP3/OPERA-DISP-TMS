@@ -21,7 +21,7 @@ def get_years_since_start(datetimes):
     return yrs_since_start
 
 
-@njit#(float32[::1](float32[::1], float32[::1]), cache=True)
+@njit#(float32(float32[::1], float32[::1]), cache=True)
 def linear_regression_leastsquares(x, y):
     """From: https://www4.stat.ncsu.edu/%7Edickey/courses/st512/pdf_notes/Formulas.pdf"""
     if np.all(np.isnan(x)) or np.all(np.isclose(x, x[0], atol=1e-6)):
@@ -60,11 +60,11 @@ def add_velocity_data_to_array(granules, frame, geotransform, frame_map_array, o
     non_nan_count = cube.count(dim='years_since_start')
     cube = cube.where(non_nan_count >= 2, np.nan)
 
-    cube_array = cube.data * 1_000_000  # convert to um
-    slope, intercept = parallel_linear_regression(cube_array, cube.years_since_start.data.astype('float32'))
+    cube_array = (cube.data * 1_000_000).astype('float32')  # convert to um
+    slope = parallel_linear_regression(cube_array, cube.years_since_start.data.astype('float32'))
     new_coords = {'x': cube.x, 'y': cube.y, 'spatial_ref': cube.spatial_ref}
     slope_da = xr.DataArray(slope, dims=('y', 'x'), coords=new_coords)
-    velocity = xr.Dataset({'velocity': slope_da * 10_000, 'count': non_nan_count}, new_coords)
+    velocity = xr.Dataset({'velocity': slope_da / 10_000, 'count': non_nan_count}, new_coords)
     velocity.attrs = cube.attrs
 
     # cube *= 1_000_000  # convert to um/yr
