@@ -1,10 +1,11 @@
 import argparse
 from datetime import datetime
 from pathlib import Path
+from typing import List
 
 import numpy as np
 import xarray as xr
-from numba import float32, njit, prange
+from numba import njit, prange
 from osgeo import gdal
 from rasterio.transform import Affine
 
@@ -15,63 +16,80 @@ from opera_disp_tms.utils import create_buffered_bbox, get_raster_as_numpy
 gdal.UseExceptions()
 
 
-def get_years_since_start(datetimes):
+def get_years_since_start(datetimes: List[datetime]) -> np.ndarray:
+    """Get the number of years since the earliest date as a list of floats"""
     start = min(datetimes)
-    yrs_since_start = [(date - start).days / 365.25 for date in datetimes]
+    yrs_since_start = np.array([(date - start).days / 365.25 for date in datetimes])
     return yrs_since_start
 
 
-@njit  # (float32(float32[::1], float32[::1]), cache=True)
-def linear_regression_leastsquares(x, y):
-    """From: https://www4.stat.ncsu.edu/%7Edickey/courses/st512/pdf_notes/Formulas.pdf"""
-    if np.all(np.isnan(x)) or np.all(np.isclose(x, x[0], atol=1e-6)):
-        return np.nan
+@njit(cache=True)
+def linear_regression_leastsquares(x: np.ndarray, y: np.ndarray) -> tuple:
+    """Based on the scipy.stats.linregress implementation:
+    https://github.com/scipy/scipy/blob/v1.14.1/scipy/stats/_stats_py.py#L10752-L10947
 
-    n = len(x)
-    x_mean = np.mean(x)
-    y_mean = np.mean(y)
-    x_square_sum = np.sum(x**2)
-    sum_cross = np.sum(x * y)
-    x_correction = x_square_sum - (n * x_mean**2)
-    if np.isclose(x_correction, 0.0, atol=1e-6):
-        return np.nan
-    xy_correction = sum_cross - (n * x_mean * y_mean)
-    slope = xy_correction / x_correction
-    return slope
+    Args:
+        x: The independent variable as a 1D numpy array
+        y: The dependent variable as a 1D numpy array
+
+    Returns:
+        tuple: The slope and intercept of the linear regression
+    """
+    non_nan_indices = np.where(~np.isnan(x))
+    x = x[non_nan_indices]
+    y = y[non_nan_indices]
+
+    if len(x) < 2:
+        return np.nan, np.nan
+
+    if np.amax(x) == np.amin(x) and len(x) > 1:
+        return np.nan, np.nan
+
+    xmean = np.mean(x)
+    ymean = np.mean(y)
+    ssxm, ssxym, _, ssym = np.cov(x, y, bias=1).flat
+    slope = ssxym / ssxm
+    intercept = ymean - slope * xmean
+    return slope, intercept
 
 
-@njit(parallel=True)
-def parallel_linear_regression(X, y):
-    n, m, p = X.shape
-    slope = np.zeros((m, p))
+@njit(parallel=True, cache=True)
+def parallel_linear_regression(x: np.ndarray, y: np.ndarray) -> np.ndarray:
+    """Run linear regresions in parallel for each pixel in the x array
+
+    Args:
+        x: A 3D array of independent variables with dimensions (time, y, x)
+        y: A 1D array of dependent variables (i.e., time steps)
+    """
+    n, m, p = x.shape
+    slope_array = np.zeros((m, p))
     for i in prange(m):
         for j in prange(p):
-            slope[i, j] = linear_regression_leastsquares(X[:, i, j].copy(), y)
-    return slope
+            slope, intercept = linear_regression_leastsquares(x[:, i, j].copy(), y)
+            slope_array[i, j] = slope
+    return slope_array
 
 
 def add_velocity_data_to_array(granules, frame, geotransform, frame_map_array, out_array):
     bbox = create_buffered_bbox(geotransform.to_gdal(), frame_map_array.shape, 90)  # EPSG:3857 is in meters
     granule_xrs = [sw_disp.load_sw_disp_granule(x, bbox, frame) for x in granules]
     cube = xr.concat(granule_xrs, dim='years_since_start')
+    print('running regression...')
 
     years_since_start = get_years_since_start([g.attrs['secondary_date'] for g in granule_xrs])
     cube = cube.assign_coords(years_since_start=years_since_start)
-    non_nan_count = cube.count(dim='years_since_start')
-    cube = cube.where(non_nan_count >= 2, np.nan)
-
-    cube_array = cube.data.astype('float32')  # convert to um
-    slope = parallel_linear_regression(cube_array, cube.years_since_start.data.astype('float32'))
     new_coords = {'x': cube.x, 'y': cube.y, 'spatial_ref': cube.spatial_ref}
-    slope_da = xr.DataArray(slope, dims=('y', 'x'), coords=new_coords)
-    velocity = xr.Dataset({'velocity': slope_da * 100, 'count': non_nan_count}, new_coords)
-    velocity.attrs = cube.attrs
 
-    # cube *= 1_000_000  # convert to um/yr
+    slope = parallel_linear_regression(cube.data.astype('float64'), cube.years_since_start.data.astype('float64'))
+    slope_da = xr.DataArray(slope, dims=('y', 'x'), coords=new_coords)
+
+    # non_nan_count = cube.count(dim='years_since_start')
+    # cube = cube.where(non_nan_count >= 2, np.nan)
     # linear_fit = cube.polyfit(dim='years_since_start', deg=1)
-    # slope_da = linear_fit.polyfit_coefficients.sel(degree=1) / 10_000 # convert to cm/yr
-    # velocity = xr.Dataset({'velocity': slope_da, 'count': non_nan_count})
-    # velocity.attrs = cube.attrs
+    # slope_da = linear_fit.polyfit_coefficients.sel(degree=1) * 100
+
+    velocity = xr.Dataset({'velocity': slope_da}, new_coords)
+    velocity.attrs = cube.attrs
 
     velocity_reproj = velocity['velocity'].rio.reproject(
         'EPSG:3857', transform=geotransform, shape=frame_map_array.shape
