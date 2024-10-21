@@ -1,7 +1,7 @@
 import argparse
 from datetime import datetime
 from pathlib import Path
-from typing import List
+from typing import Iterable, List
 
 import numpy as np
 import xarray as xr
@@ -10,6 +10,7 @@ from osgeo import gdal
 from rasterio.transform import Affine
 
 from opera_disp_tms import generate_sw_disp_tile as sw_disp
+from opera_disp_tms.find_california_dataset import Granule
 from opera_disp_tms.utils import create_buffered_bbox, get_raster_as_numpy
 
 
@@ -17,7 +18,15 @@ gdal.UseExceptions()
 
 
 def get_years_since_start(datetimes: List[datetime]) -> np.ndarray:
-    """Get the number of years since the earliest date as a list of floats"""
+    """Get the number of years since the earliest date as an array of floats.
+    Order of the datetimes is preserved.
+
+    Args:
+        datetimes: A list of datetime objects
+
+    Returns:
+        np.ndarray: The number of years since the earliest date as a list of floats
+    """
     start = min(datetimes)
     yrs_since_start = np.array([(date - start).days / 365.25 for date in datetimes])
     return yrs_since_start
@@ -70,11 +79,28 @@ def parallel_linear_regression(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     return slope_array
 
 
-def add_velocity_data_to_array(granules, frame, geotransform, frame_map_array, out_array):
+def add_velocity_data_to_array(
+    granules: Iterable[Granule],
+    frame: sw_disp.FrameMeta,
+    geotransform: Affine,
+    frame_map_array: np.ndarray,
+    out_array: np.ndarray,
+) -> np.ndarray:
+    """Create and add velocity data to an array using granules source from a single frame.
+
+    Args:
+        granules: A list of granule objects
+        frame: The frame metadata
+        geotransform: The geotransform of the frame
+        frame_map_array: The frame map as a numpy array
+        out_array: The array to add the velocity data to
+
+    Returns:
+        np.ndarray: The updated array
+    """
     bbox = create_buffered_bbox(geotransform.to_gdal(), frame_map_array.shape, 90)  # EPSG:3857 is in meters
     granule_xrs = [sw_disp.load_sw_disp_granule(x, bbox, frame) for x in granules]
     cube = xr.concat(granule_xrs, dim='years_since_start')
-    print('running regression...')
 
     years_since_start = get_years_since_start([g.attrs['secondary_date'] for g in granule_xrs])
     cube = cube.assign_coords(years_since_start=years_since_start)
@@ -83,6 +109,7 @@ def add_velocity_data_to_array(granules, frame, geotransform, frame_map_array, o
     slope = parallel_linear_regression(cube.data.astype('float64'), cube.years_since_start.data.astype('float64'))
     slope_da = xr.DataArray(slope, dims=('y', 'x'), coords=new_coords)
 
+    # None-numba version is 4x slower
     # non_nan_count = cube.count(dim='years_since_start')
     # cube = cube.where(non_nan_count >= 2, np.nan)
     # linear_fit = cube.polyfit(dim='years_since_start', deg=1)
