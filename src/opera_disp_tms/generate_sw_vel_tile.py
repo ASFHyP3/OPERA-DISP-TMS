@@ -32,7 +32,7 @@ def get_years_since_start(datetimes: List[datetime]) -> np.ndarray:
     return yrs_since_start
 
 
-@njit(cache=True)
+@njit
 def linear_regression_leastsquares(x: np.ndarray, y: np.ndarray) -> tuple:
     """Based on the scipy.stats.linregress implementation:
     https://github.com/scipy/scipy/blob/v1.14.1/scipy/stats/_stats_py.py#L10752-L10947
@@ -62,19 +62,19 @@ def linear_regression_leastsquares(x: np.ndarray, y: np.ndarray) -> tuple:
     return slope, intercept
 
 
-@njit(parallel=True, cache=True)
+@njit(parallel=True)
 def parallel_linear_regression(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """Run linear regresions in parallel for each pixel in the x array
 
     Args:
-        x: A 3D array of independent variables with dimensions (time, y, x)
-        y: A 1D array of dependent variables (i.e., time steps)
+        x: A 1D array of independent variables (i.e., time steps)
+        y: A 3D array of dependent variables with dimensions (time, y, x)
     """
-    n, m, p = x.shape
+    n, m, p = y.shape
     slope_array = np.zeros((m, p))
     for i in prange(m):
         for j in prange(p):
-            slope, intercept = linear_regression_leastsquares(x[:, i, j].copy(), y)
+            slope, intercept = linear_regression_leastsquares(x, y[:, i, j].copy())
             slope_array[i, j] = slope
     return slope_array
 
@@ -106,15 +106,9 @@ def add_velocity_data_to_array(
     cube = cube.assign_coords(years_since_start=years_since_start)
     new_coords = {'x': cube.x, 'y': cube.y, 'spatial_ref': cube.spatial_ref}
 
-    slope = parallel_linear_regression(cube.data.astype('float64'), cube.years_since_start.data.astype('float64'))
+    # Using xarray's polyfit is 13x slower when running a regression for 44 time steps
+    slope = parallel_linear_regression(cube.years_since_start.data.astype('float64'), cube.data.astype('float64'))
     slope_da = xr.DataArray(slope, dims=('y', 'x'), coords=new_coords)
-
-    # None-numba version is 4x slower
-    # non_nan_count = cube.count(dim='years_since_start')
-    # cube = cube.where(non_nan_count >= 2, np.nan)
-    # linear_fit = cube.polyfit(dim='years_since_start', deg=1)
-    # slope_da = linear_fit.polyfit_coefficients.sel(degree=1) * 100
-
     velocity = xr.Dataset({'velocity': slope_da}, new_coords)
     velocity.attrs = cube.attrs
 
