@@ -11,7 +11,7 @@ from opera_disp_tms.utils import create_tile_name
 def make_cal_tiles(meta_tile_dir: Path, workflow: str, begin_date: datetime, end_date: datetime):
     workflow_opts = {
         'displacement': ['SW_CUMUL_DISP', create_sw_disp_tile, None],
-        'velocity': ['SW_VEL', create_sw_vel_tile, [-0.05, 0.05]],
+        'velocity': ['SW_VELOCITY', create_sw_vel_tile, [-0.05, 0.05]],
     }
     prod_type, create_tile_func, scale_range = workflow_opts[workflow]
     tiles = list(meta_tile_dir.glob('*.tif'))
@@ -20,7 +20,6 @@ def make_cal_tiles(meta_tile_dir: Path, workflow: str, begin_date: datetime, end
         if product_name.exists():
             print(f'{product_name} already exists. Skipping.')
             continue
-
         create_tile_func(tile, begin_date, end_date)
 
     tiles = [str(x) for x in Path.cwd().glob('*.tif')]
