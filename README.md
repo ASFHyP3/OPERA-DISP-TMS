@@ -10,7 +10,7 @@ Package for [OPERA DISP](https://www.jpl.nasa.gov/go/opera/products/disp-product
 
 To run all commands in sequence use:
 ```bash
-git clone https://github.com/ASFHyP3/opera-disp-tms.git 
+git clone https://github.com/ASFHyP3/opera-disp-tms.git
 cd OPERA-DISP-TMS
 mamba env create -f environment.yml
 mamba activate opera-disp-tms
@@ -65,6 +65,20 @@ The resulting products have the name format:
 `SW_CUMUL_DISP_{start date search range}_{stop data search range}_{orbit direction}_{upper left corner in lon/lat}.tif`
 For example:
 `SW_CUMUL_DISP_20170901_20171231_ASCENDING_W125N42.tif`
+
+### Create a Short Wavelength Velocity tile
+The `generate_sw_vel_tile` CLI command can be used to generate a short wavelength velocity geotiff:
+```bash
+generate_sw_vel_tile METADATA_ASCENDING_W125N42.tif 20170901 20171231
+```
+Where `METADATA_ASCENDING_W125N42.tif` is the path to the frame metadata tile you want to generate a Short Wavelength Velocity tile for, and `20170901`/`20171231` specify the start/end of the secondary date search range to generate a tile for in format `%Y%m%d`.
+
+By default, the velocity will be calculated with **only** two data points (the first and last dates in the search range), but you can pass the optional `--full` flag to calculate the velocity using all available data in the search range. Using this option will significantly increase processing times.
+
+The resulting products have the name format:
+`SW_VEL_DISP_{start date search range}_{stop data search range}_{orbit direction}_{upper left corner in lon/lat}.tif`
+For example:
+`SW_VEL_DISP_20170901_20171231_ASCENDING_W125N42.tif`
 
 ### Create a Tile Map
 The `create_tile_map` CLI command generates a directory with small .png tiles from a list of rasters in a common projection, following the OSGeo Tile Map Service Specification, using gdal2tiles: https://gdal.org/en/latest/programs/gdal2tiles.html
