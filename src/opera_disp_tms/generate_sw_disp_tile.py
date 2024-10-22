@@ -12,7 +12,7 @@ from rasterio.transform import Affine
 
 from opera_disp_tms.find_california_dataset import Granule, find_california_dataset
 from opera_disp_tms.s3_xarray import open_opera_disp_granule
-from opera_disp_tms.utils import DATE_FORMAT, create_buffered_bbox, get_raster_as_numpy, round_to_day
+from opera_disp_tms.utils import DATE_FORMAT, create_buffered_bbox, create_tile_name, get_raster_as_numpy, round_to_day
 
 
 gdal.UseExceptions()
@@ -101,26 +101,6 @@ def find_needed_granules(
     return needed_granules
 
 
-def create_product_name(
-    metadata_name: str, begin_date: datetime, end_date: datetime, prod_type: str = 'SW_CUMUL_DISP'
-) -> str:
-    """Create a product name for a short wavelength cumulative displacement tile
-    Takes the form: SW_CUMUL_DISP_YYYYMMDD_YYYYMMDD_DIRECTION_TILECOORDS.tif
-
-    Args:
-        metadata_name: The name of the metadata file
-        begin_date: Start of secondary date search range to generate tile for
-        end_date: End of secondary date search range to generate tile for
-        prod_type: Product type prefix to use
-    """
-    _, flight_direction, tile_coordinates = metadata_name.split('_')
-    date_fmt = '%Y%m%d'
-    begin_date = datetime.strftime(begin_date, date_fmt)
-    end_date = datetime.strftime(end_date, date_fmt)
-    name = '_'.join([prod_type, begin_date, end_date, flight_direction, tile_coordinates])
-    return name
-
-
 def load_sw_disp_granule(granule: Granule, bbox: Iterable[int], frame: FrameMeta) -> xr.DataArray:
     datasets = ['short_wavelength_displacement', 'connected_component_labels']
     granule_xr = open_opera_disp_granule(granule.s3_uri, datasets)
@@ -181,7 +161,7 @@ def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: dat
     if begin_date > end_date:
         raise ValueError('Begin date must be before end date')
 
-    product_name = create_product_name(metadata_path.name, begin_date, end_date)
+    product_name = create_tile_name(metadata_path.name, begin_date, end_date)
     product_path = Path.cwd() / product_name
     print(f'Generating tile {product_name}')
 

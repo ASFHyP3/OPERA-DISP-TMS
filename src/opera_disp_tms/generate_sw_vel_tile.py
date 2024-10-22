@@ -11,7 +11,7 @@ from rasterio.transform import Affine
 
 from opera_disp_tms import generate_sw_disp_tile as sw_disp
 from opera_disp_tms.find_california_dataset import Granule
-from opera_disp_tms.utils import create_buffered_bbox, get_raster_as_numpy
+from opera_disp_tms.utils import create_buffered_bbox, create_tile_name, get_raster_as_numpy
 
 
 gdal.UseExceptions()
@@ -126,7 +126,7 @@ def create_sw_vel_tile(metadata_path: Path, begin_date: datetime, end_date: date
     if begin_date > end_date:
         raise ValueError('Begin date must be before end date')
 
-    product_name = sw_disp.create_product_name(metadata_path.name, begin_date, end_date, 'SW_VELOCITY')
+    product_name = create_tile_name(metadata_path.name, begin_date, end_date, 'SW_VELOCITY')
     product_path = Path.cwd() / product_name
     print(f'Generating tile {product_name}')
 

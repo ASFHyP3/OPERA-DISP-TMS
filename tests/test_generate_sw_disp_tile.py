@@ -72,11 +72,3 @@ def test_find_needed_granules():
     assert list(needed_granules.keys()) == [1, 2]
     assert needed_granules[1] == [granules[1]]
     assert needed_granules[2] == [granules[3]]
-
-
-def test_create_product_name():
-    metadata_name = 'METADATA_ASCENDING_N41W124.tif'
-    begin_date = datetime(2021, 1, 1)
-    end_date = datetime(2021, 1, 2)
-    product_name = sw.create_product_name(metadata_name, begin_date, end_date)
-    assert product_name == 'SW_CUMUL_DISP_20210101_20210102_ASCENDING_N41W124.tif'

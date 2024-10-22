@@ -142,3 +142,23 @@ def validate_bbox(bbox: Iterable[int]) -> None:
 
     if bbox[1] > bbox[3]:
         raise ValueError('Bounding box miny is greater than maxy')
+
+
+def create_tile_name(
+    metadata_name: str, begin_date: datetime, end_date: datetime, prod_type: str = 'SW_CUMUL_DISP'
+) -> str:
+    """Create a product name for a short wavelength cumulative displacement tile
+    Takes the form: SW_CUMUL_DISP_YYYYMMDD_YYYYMMDD_DIRECTION_TILECOORDS.tif
+
+    Args:
+        metadata_name: The name of the metadata file
+        begin_date: Start of secondary date search range to generate tile for
+        end_date: End of secondary date search range to generate tile for
+        prod_type: Product type prefix to use
+    """
+    _, flight_direction, tile_coordinates = metadata_name.split('_')
+    date_fmt = '%Y%m%d'
+    begin_date = datetime.strftime(begin_date, date_fmt)
+    end_date = datetime.strftime(end_date, date_fmt)
+    name = '_'.join([prod_type, begin_date, end_date, flight_direction, tile_coordinates])
+    return name
