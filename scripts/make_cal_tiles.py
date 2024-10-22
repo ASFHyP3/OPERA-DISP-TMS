@@ -34,19 +34,19 @@ def main():
     parser = argparse.ArgumentParser(description='Create a short wavelength cumulative displacement tile')
     parser.add_argument('meta_tile_dir', type=str, help='Path to the metadata tile')
     parser.add_argument(
-        'workflow', type=str, options=['displacement', 'velocity'], help='Workflow to run (displacement or velocity)'
+        'workflow', type=str, choices=['displacement', 'velocity'], help='Workflow to run (displacement or velocity)'
     )
     parser.add_argument(
-        '--begin_date',
+        '--begin-date',
         type=str,
         default='20170101',
         help='Start of secondary date search range to generate tile for (e.g., 20240101)',
     )
     parser.add_argument(
-        '--end_date',
+        '--end-date',
         type=str,
         default='20171231',
-        help='End of secondary date search range to generate tile for (e.g., 20240101',
+        help='End of secondary date search range to generate tile for (e.g., 20240101)',
     )
 
     args = parser.parse_args()
