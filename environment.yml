@@ -26,5 +26,6 @@ dependencies:
   - h5netcdf
   - xarray
   - rioxarray
+  - numba
   - s3fs
   - cachetools

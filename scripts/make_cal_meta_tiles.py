@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 
-from opera_disp_tms.generate_frame_tile import create_product_name, create_tile_for_bbox
+from opera_disp_tms.generate_metadata_tile import create_product_name, create_tile_for_bbox
 
 
 def make_cal_meta_tiles(orbit_direction):

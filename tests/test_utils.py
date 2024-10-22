@@ -46,3 +46,11 @@ def test_validate_bbox():
         ut.validate_bbox([1, 4, 3, 2])
 
     ut.validate_bbox([1, 2, 3, 4])
+
+
+def test_create_product_name():
+    metadata_name = 'METADATA_ASCENDING_N41W124.tif'
+    begin_date = datetime(2021, 1, 1)
+    end_date = datetime(2021, 1, 2)
+    product_name = ut.create_tile_name(metadata_name, begin_date, end_date)
+    assert product_name == 'SW_CUMUL_DISP_20210101_20210102_ASCENDING_N41W124.tif'
