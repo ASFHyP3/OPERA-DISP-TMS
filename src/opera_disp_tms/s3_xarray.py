@@ -11,13 +11,13 @@ from opera_disp_tms.utils import DATE_FORMAT
 
 IO_PARAMS = {
     'fsspec_params': {
-        # "skip_instance_cache": True
-        'cache_type': 'blockcache',  # or "first" with enough space
+        'skip_instance_cache': True,
+        'cache_type': 'first',  # or "first" with enough space
         'block_size': 8 * 1024 * 1024,  # could be bigger
     },
     'h5py_params': {
         'driver_kwds': {  # only recent versions of xarray and h5netcdf allow this correctly
-            'page_buf_size': 16 * 1024 * 1024,  # this one only works in repacked files
+            'page_buf_size': 32 * 1024 * 1024,  # this one only works in repacked files
             'rdcc_nbytes': 8 * 1024 * 1024,  # this one is to read the chunks
         }
     },

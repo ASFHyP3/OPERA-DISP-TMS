@@ -130,6 +130,7 @@ def load_sw_disp_granule(granule: Granule, bbox: Iterable[int], frame: FrameMeta
         raise NotImplementedError('Granule reference date does not match metadata tile, this is not supported.')
 
     granule_xr = granule_xr.rio.clip_box(*bbox, crs='EPSG:3857')
+    granule_xr = granule_xr.load()
     valid_data_mask = granule_xr['connected_component_labels'] > 0
     sw_cumul_disp_xr = granule_xr['short_wavelength_displacement'].where(valid_data_mask, np.nan)
     sw_cumul_disp_xr.attrs = granule_xr.attrs
