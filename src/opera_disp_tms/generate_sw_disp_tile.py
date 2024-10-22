@@ -72,7 +72,7 @@ def find_needed_granules(
         frame_ids: The frame ids to generate the tile for
         begin_date: Start of secondary date search range to generate tile for
         end_date: End of secondary date search range to generate tile for
-        strategy: Selection strategy for granules within search range ("minmax" or "all")
+        strategy: Selection strategy for granules within search date range ("max", "minmax" or "all")
                   - Use "max" to get first granule
                   - Use "minmax" to get first and last granules
                   - Use "all" to get all granules
