@@ -76,9 +76,9 @@ Where `METADATA_ASCENDING_W125N42.tif` is the path to the frame metadata tile yo
 By default, the velocity will be calculated with **only** two data points (the first and last dates in the search range), but you can pass the optional `--full` flag to calculate the velocity using all available data in the search range. Using this option will significantly increase processing times.
 
 The resulting products have the name format:
-`SW_VEL_DISP_{start date search range}_{stop data search range}_{orbit direction}_{upper left corner in lon/lat}.tif`
+`SW_VELOCITY_DISP_{start date search range}_{stop data search range}_{orbit direction}_{upper left corner in lon/lat}.tif`
 For example:
-`SW_VEL_DISP_20170901_20171231_ASCENDING_W125N42.tif`
+`SW_VELOCITY_DISP_20170901_20171231_ASCENDING_W125N42.tif`
 
 ### Create a Tile Map
 The `create_tile_map` CLI command generates a directory with small .png tiles from a list of rasters in a common projection, following the OSGeo Tile Map Service Specification, using gdal2tiles: https://gdal.org/en/latest/programs/gdal2tiles.html
