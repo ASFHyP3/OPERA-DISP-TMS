@@ -8,7 +8,13 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.3.0]
 ### Added
-* Ability to generate SW Disp velocity tiles
+* Ability to generate SW velocity tiles in `generated_sw_vel_tile.py`
+
+### Changed
+* California dataset scripts to allow for generation of SW velocity tiles
+* Rename `generate_frame_tile.py` to `generate_metadata_tile.py`
+* Simplified CLI and filenames of metadata tiles so that location is specified by the upper-left corner of the tile, not the full bounding box
+* Expanded/modified some functions in `generate_sw_disp_tile.py` so that they could be reused by `generate_sw_vel_tile.py`
 
 ## [0.2.0]
 ### Added
