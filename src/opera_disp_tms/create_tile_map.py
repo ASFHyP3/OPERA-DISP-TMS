@@ -46,9 +46,6 @@ def create_tile_map(output_folder: str, input_rasters: list[str], scale_range: L
         vrt_info = gdal.Info(mosaic_vrt.name, stats=True, format='json')
         stats = vrt_info['bands'][0]['metadata']['']
 
-        # get bounds of VRT and write to file
-        get_tile_extent(vrt_info, Path(output_folder))
-
         if scale_range is None:
             scale_range = [stats['STATISTICS_MINIMUM'], stats['STATISTICS_MAXIMUM']]
 
@@ -73,6 +70,9 @@ def create_tile_map(output_folder: str, input_rasters: list[str], scale_range: L
             output_folder,
         ]
         subprocess.run(command)
+
+        # get bounds of VRT and write to file
+        get_tile_extent(vrt_info, Path(output_folder))
 
 
 def main():

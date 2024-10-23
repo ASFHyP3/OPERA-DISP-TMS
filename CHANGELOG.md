@@ -10,6 +10,9 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 * Ability to generate SW Disp velocity tiles
 
+### Fixed
+* `extent.json` will be written during `create_tile_map.py` even if the directory `tiles/` does not exist prior to running
+
 ## [0.2.0]
 ### Added
 * Python scripts for generating California SW Disp tileset
