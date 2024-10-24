@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0]
+### Added
+* Ability to generate SW velocity tiles in `generated_sw_vel_tile.py`
+
+### Changed
+* California dataset scripts to allow for generation of SW velocity tiles
+* Rename `generate_frame_tile.py` to `generate_metadata_tile.py`
+* Simplified CLI and filenames of metadata tiles so that location is specified by the upper-left corner of the tile, not the full bounding box
+* Expanded/modified some functions in `generate_sw_disp_tile.py` so that they could be reused by `generate_sw_vel_tile.py`
+
+### Fixed
+* `extent.json` will be written during `create_tile_map.py` even if the directory `tiles/` does not exist prior to running
 
 ## [0.2.0]
 ### Added

@@ -6,12 +6,13 @@ from pathlib import Path
 from typing import Iterable, Tuple
 
 import numpy as np
+import xarray as xr
 from osgeo import gdal
 from rasterio.transform import Affine
 
 from opera_disp_tms.find_california_dataset import Granule, find_california_dataset
 from opera_disp_tms.s3_xarray import open_opera_disp_granule
-from opera_disp_tms.utils import DATE_FORMAT, create_buffered_bbox, get_raster_as_numpy, round_to_day
+from opera_disp_tms.utils import DATE_FORMAT, create_buffered_bbox, create_tile_name, get_raster_as_numpy, round_to_day
 
 
 gdal.UseExceptions()
@@ -60,7 +61,9 @@ def frames_from_metadata(metadata_path: Path) -> dict[int, FrameMeta]:
     return frames
 
 
-def find_needed_granules(frame_ids: Iterable[int], begin_date: datetime, end_date: datetime) -> list[Granule]:
+def find_needed_granules(
+    frame_ids: Iterable[int], begin_date: datetime, end_date: datetime, strategy: str
+) -> dict[int, Granule]:
     """Find the granules needed to generate a short wavelength displacement tile.
     For each `frame_id` the most recent granule whose secondary date is between
     `begin_date` and `end_date` is selected.
@@ -69,37 +72,49 @@ def find_needed_granules(frame_ids: Iterable[int], begin_date: datetime, end_dat
         frame_ids: The frame ids to generate the tile for
         begin_date: Start of secondary date search range to generate tile for
         end_date: End of secondary date search range to generate tile for
+        strategy: Selection strategy for granules within search date range ("max", "minmax" or "all")
+                  - Use "max" to get first granule
+                  - Use "minmax" to get first and last granules
+                  - Use "all" to get all granules
 
     Returns:
-        A list of granules needed to generate the tile
+        A dictionary with form {frame_id: [granules]}
     """
     cali_dataset = find_california_dataset()
-    needed_granules = []
+    needed_granules = {}
     for frame_id in frame_ids:
         granules = [g for g in cali_dataset if g.frame_id == frame_id and begin_date <= g.secondary_date <= end_date]
-        if not granules:
-            warnings.warn(f'No granules found for frame {frame_id} between {begin_date} and {end_date}.')
+        if len(granules) < 2:
+            warnings.warn(f'Less than two granules found for frame {frame_id} between {begin_date} and {end_date}.')
+        elif strategy == 'max':
+            oldest_granule = max(granules, key=lambda x: x.secondary_date)
+            needed_granules[frame_id] = [oldest_granule]
+        elif strategy == 'minmax':
+            youngest_granule = min(granules, key=lambda x: x.secondary_date)
+            oldest_granule = max(granules, key=lambda x: x.secondary_date)
+            needed_granules[frame_id] = [youngest_granule, oldest_granule]
+        elif strategy == 'all':
+            needed_granules[frame_id] = granules
         else:
-            granule = max(granules, key=lambda x: x.secondary_date)
-            needed_granules.append(granule)
+            raise ValueError(f'Invalid strategy: {strategy}. Must be "seacant" or "all".')
+
     return needed_granules
 
 
-def create_product_name(metadata_name: str, begin_date: datetime, end_date: datetime) -> str:
-    """Create a product name for a short wavelength cumulative displacement tile
-    Takes the form: SW_CUMUL_DISP_YYYYMMDD_YYYYMMDD_DIRECTION_TILECOORDS.tif
+def load_sw_disp_granule(granule: Granule, bbox: Iterable[int], frame: FrameMeta) -> xr.DataArray:
+    datasets = ['short_wavelength_displacement', 'connected_component_labels']
+    granule_xr = open_opera_disp_granule(granule.s3_uri, datasets)
 
-    Args:
-        metadata_name: The name of the metadata file
-        begin_date: Start of secondary date search range to generate tile for
-        end_date: End of secondary date search range to generate tile for
-    """
-    _, flight_direction, tile_coordinates = metadata_name.split('_')
-    date_fmt = '%Y%m%d'
-    begin_date = datetime.strftime(begin_date, date_fmt)
-    end_date = datetime.strftime(end_date, date_fmt)
-    name = '_'.join(['SW_CUMUL_DISP', begin_date, end_date, flight_direction, tile_coordinates])
-    return name
+    same_ref_date = round_to_day(granule_xr.attrs['reference_date']) == round_to_day(frame.reference_date)
+    if not same_ref_date:
+        raise NotImplementedError('Granule reference date does not match metadata tile, this is not supported.')
+
+    granule_xr = granule_xr.rio.clip_box(*bbox, crs='EPSG:3857')
+    granule_xr = granule_xr.load()
+    valid_data_mask = granule_xr['connected_component_labels'] > 0
+    sw_cumul_disp_xr = granule_xr['short_wavelength_displacement'].where(valid_data_mask, np.nan)
+    sw_cumul_disp_xr.attrs = granule_xr.attrs
+    return sw_cumul_disp_xr
 
 
 def add_granule_data_to_array(
@@ -117,23 +132,14 @@ def add_granule_data_to_array(
     Returns:
         The updated short wavelength cumulative displacement array and the secondary date of the granule
     """
-    datasets = ['short_wavelength_displacement', 'connected_component_labels']
-    granule_xr = open_opera_disp_granule(granule.s3_uri, datasets)
-
-    same_ref_date = round_to_day(granule_xr.attrs['reference_date']) == round_to_day(frame.reference_date)
-    if not same_ref_date:
-        raise NotImplementedError('Granule reference date does not match metadata tile, this is not supported.')
-
     bbox = create_buffered_bbox(geotransform.to_gdal(), frame_map.shape, 120)  # EPSG:3857 is in meters
-    granule_xr = granule_xr.rio.clip_box(*bbox, crs='EPSG:3857')
-    valid_data_mask = granule_xr['connected_component_labels'] > 0
-    sw_cumul_disp_xr = granule_xr['short_wavelength_displacement'].where(valid_data_mask, np.nan)
-    sw_cumul_disp_xr = sw_cumul_disp_xr.rio.reproject('EPSG:3857', transform=geotransform, shape=frame_map.shape)
+    sw_cumul_disp_xr = load_sw_disp_granule(granule, bbox, frame)
 
-    frame_locations = frame_map == granule_xr.attrs['frame_id']
+    sw_cumul_disp_xr = sw_cumul_disp_xr.rio.reproject('EPSG:3857', transform=geotransform, shape=frame_map.shape)
+    frame_locations = frame_map == sw_cumul_disp_xr.attrs['frame_id']
     sw_cumul_disp[frame_locations] = sw_cumul_disp_xr.data[frame_locations].astype(float)
 
-    secondary_date = datetime.strftime(granule_xr.attrs['secondary_date'], DATE_FORMAT)
+    secondary_date = datetime.strftime(sw_cumul_disp_xr.attrs['secondary_date'], DATE_FORMAT)
     return sw_cumul_disp, secondary_date
 
 
@@ -155,25 +161,26 @@ def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: dat
     if begin_date > end_date:
         raise ValueError('Begin date must be before end date')
 
-    product_name = create_product_name(metadata_path.name, begin_date, end_date)
+    product_name = create_tile_name(metadata_path.name, begin_date, end_date)
     product_path = Path.cwd() / product_name
     print(f'Generating tile {product_name}')
 
     frames = frames_from_metadata(metadata_path)
-    needed_granules = find_needed_granules(list(frames.keys()), begin_date, end_date)
+    needed_granules = find_needed_granules(list(frames.keys()), begin_date, end_date, strategy='max')
 
     frame_map, geotransform = get_raster_as_numpy(metadata_path)
     geotransform = Affine.from_gdal(*geotransform)
 
     sw_cumul_disp = np.full(frame_map.shape, np.nan, dtype=float)
     secondary_dates = {}
-    for granule in needed_granules:
-        print(f'Granule {granule.scene_name} selected for frame {granule.frame_id}.')
-        frame = frames[granule.frame_id]
+    for frame_id, granules in needed_granules.items():
+        granule = granules[0]
+        print(f'Granule {granule.scene_name} selected for frame {frame_id}.')
+        frame = frames[frame_id]
         sw_cumul_disp, secondary_date = add_granule_data_to_array(
             granule, frame, frame_map, geotransform, sw_cumul_disp
         )
-        secondary_dates[f'FRAME_{frame.frame_id}_SEC_TIME'] = secondary_date
+        secondary_dates[f'FRAME_{frame_id}_SEC_TIME'] = secondary_date
 
     gdal.Translate(str(product_path), str(metadata_path), outputType=gdal.GDT_Float32, format='GTiff')
     ds = gdal.Open(str(product_path), gdal.GA_Update)
@@ -192,7 +199,7 @@ def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: dat
 def main():
     """CLI entry point
     Example:
-    generate_sw_disp_tile METADATA_ASCENDING_N41W125_N42W124.tif 20170901 20171231
+    generate_sw_disp_tile METADATA_ASCENDING_N42W124.tif 20170901 20171231
     """
     parser = argparse.ArgumentParser(description='Create a short wavelength cumulative displacement tile')
     parser.add_argument('metadata_path', type=str, help='Path to the metadata tile')
