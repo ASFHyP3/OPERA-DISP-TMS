@@ -102,7 +102,7 @@ def find_needed_granules(
 
 
 def load_sw_disp_granule(granule: Granule, bbox: Iterable[int], frame: FrameMeta) -> xr.DataArray:
-    datasets = ['short_wavelength_displacement', 'connected_component_labels']
+    datasets = ['short_wavelength_displacement', 'recommended_mask']
     granule_xr = open_opera_disp_granule(granule.s3_uri, datasets)
 
     same_ref_date = round_to_day(granule_xr.attrs['reference_date']) == round_to_day(frame.reference_date)
@@ -111,7 +111,7 @@ def load_sw_disp_granule(granule: Granule, bbox: Iterable[int], frame: FrameMeta
 
     granule_xr = granule_xr.rio.clip_box(*bbox, crs='EPSG:3857')
     granule_xr = granule_xr.load()
-    valid_data_mask = granule_xr['connected_component_labels'] > 0
+    valid_data_mask = granule_xr['recommended_mask'] > 0
     sw_cumul_disp_xr = granule_xr['short_wavelength_displacement'].where(valid_data_mask, np.nan)
     sw_cumul_disp_xr.attrs = granule_xr.attrs
     return sw_cumul_disp_xr
