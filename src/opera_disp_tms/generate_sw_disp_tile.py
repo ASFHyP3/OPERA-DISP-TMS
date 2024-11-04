@@ -147,7 +147,7 @@ def update_reference_date(granule: xr.DataArray, frame: FrameMeta) -> xr.DataArr
         prev_ref_date_min = prev_ref_date - timedelta(days=1)
         prev_ref_date_max = prev_ref_date + timedelta(days=1)
         # We can assume that there is only one granule for a frame that has
-        # a secondary date equal to another granule's reference date  
+        # a secondary date equal to another granule's reference date
         granule_dict = find_needed_granules([frame.frame_id], prev_ref_date_min, prev_ref_date_max, strategy='max')
         older_granule_meta = granule_dict[frame.frame_id][0]
         older_granule = load_sw_disp_granule(older_granule_meta, granule.attrs['bbox'], frame)
