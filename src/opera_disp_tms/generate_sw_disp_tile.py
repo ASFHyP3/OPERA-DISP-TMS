@@ -139,19 +139,22 @@ def update_reference_date(granule: xr.DataArray, frame: FrameMeta) -> xr.DataArr
         granule: The granule to update
         frame: The frame metadata
     """
-    fully_updated = False
+    fully_updated = within_one_day(granule.attrs['reference_date'], frame.reference_date)
     while not fully_updated:
         if granule.attrs['reference_date'] < frame.reference_date:
             raise ValueError('Granule reference date is older than frame reference date, cannot be updated.')
         prev_ref_date = granule.attrs['reference_date']
         prev_ref_date_min = prev_ref_date - timedelta(days=1)
         prev_ref_date_max = prev_ref_date + timedelta(days=1)
+        # We can assume that there is only one granule for a frame that has
+        # a secondary date equal to another granule's reference date  
         granule_dict = find_needed_granules([frame.frame_id], prev_ref_date_min, prev_ref_date_max, strategy='max')
         older_granule_meta = granule_dict[frame.frame_id][0]
         older_granule = load_sw_disp_granule(older_granule_meta, granule.attrs['bbox'], frame)
         granule['short_wavelength_displacement'] += older_granule['short_wavelength_displacement']
         granule.attrs['reference_date'] = older_granule.attrs['reference_date']
         fully_updated = within_one_day(granule.attrs['reference_date'], frame.reference_date)
+
     return granule
 
 
@@ -172,9 +175,7 @@ def add_granule_data_to_array(
     """
     bbox = create_buffered_bbox(geotransform.to_gdal(), frame_map.shape, 120)  # EPSG:3857 is in meters
     sw_cumul_disp_xr = load_sw_disp_granule(granule, bbox, frame)
-
-    if not within_one_day(sw_cumul_disp_xr.attrs['reference_date'], frame.reference_date):
-        update_reference_date(sw_cumul_disp_xr, frame)
+    update_reference_date(sw_cumul_disp_xr, frame)
 
     sw_cumul_disp_xr = sw_cumul_disp_xr.rio.reproject('EPSG:3857', transform=geotransform, shape=frame_map.shape)
     frame_locations = frame_map == sw_cumul_disp_xr.attrs['frame_id']
