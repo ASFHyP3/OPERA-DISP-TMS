@@ -1,7 +1,7 @@
 import argparse
 import warnings
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Iterable, Tuple
 
@@ -25,6 +25,11 @@ class FrameMeta:
     frame_id: int
     reference_date: datetime
     reference_point_eastingnorthing: tuple  # easting, northing
+
+
+def within_one_day(date1: datetime, date2: datetime) -> bool:
+    """Check if two dates are within one day of each other"""
+    return abs(date1 - date2) <= timedelta(days=1)
 
 
 def extract_frame_metadata(frame_metadata: dict[str, str], frame_id: int) -> FrameMeta:
@@ -73,7 +78,7 @@ def find_needed_granules(
         begin_date: Start of secondary date search range to generate tile for
         end_date: End of secondary date search range to generate tile for
         strategy: Selection strategy for granules within search date range ("max", "minmax" or "all")
-                  - Use "max" to get first granule
+                  - Use "max" to get last granule
                   - Use "minmax" to get first and last granules
                   - Use "all" to get all granules
 
@@ -102,19 +107,51 @@ def find_needed_granules(
 
 
 def load_sw_disp_granule(granule: Granule, bbox: Iterable[int], frame: FrameMeta) -> xr.DataArray:
+    """Load the short wavelength displacement data for and OPERA DISP granule.
+    Clips to frame map and masks out invalid data.
+
+    Args:
+        granule: The granule to load
+        bbox: The bounding box to clip to
+        frame: The frame metadata
+
+    Returns:
+        The short wavelength displacement data as an xarray DataArray
+    """
     datasets = ['short_wavelength_displacement', 'connected_component_labels']
     granule_xr = open_opera_disp_granule(granule.s3_uri, datasets)
-
-    same_ref_date = round_to_day(granule_xr.attrs['reference_date']) == round_to_day(frame.reference_date)
-    if not same_ref_date:
-        raise NotImplementedError('Granule reference date does not match metadata tile, this is not supported.')
-
     granule_xr = granule_xr.rio.clip_box(*bbox, crs='EPSG:3857')
     granule_xr = granule_xr.load()
     valid_data_mask = granule_xr['connected_component_labels'] > 0
     sw_cumul_disp_xr = granule_xr['short_wavelength_displacement'].where(valid_data_mask, np.nan)
     sw_cumul_disp_xr.attrs = granule_xr.attrs
+    sw_cumul_disp_xr.attrs['bbox'] = bbox
     return sw_cumul_disp_xr
+
+
+def update_reference_date(granule: xr.DataArray, frame: FrameMeta) -> xr.DataArray:
+    """Update the reference date of a granule to match the reference date of a frame.
+
+    Note: Assumes that reference date that will be updated to is older than the current reference date.
+
+    Args:
+        granule: The granule to update
+        frame: The frame metadata
+    """
+    fully_updated = False
+    while not fully_updated:
+        if granule.attrs['reference_date'] < frame.reference_date:
+            raise ValueError('Granule reference date is older than frame reference date, cannot be updated.')
+        prev_ref_date = granule.attrs['reference_date']
+        prev_ref_date_min = prev_ref_date - timedelta(days=1)
+        prev_ref_date_max = prev_ref_date + timedelta(days=1)
+        granule_dict = find_needed_granules([frame.frame_id], prev_ref_date_min, prev_ref_date_max, strategy='max')
+        older_granule_meta = granule_dict[frame.frame_id][0]
+        older_granule = load_sw_disp_granule(older_granule_meta, granule.attrs['bbox'], frame)
+        granule['short_wavelength_displacement'] += older_granule['short_wavelength_displacement']
+        granule.attrs['reference_date'] = older_granule.attrs['reference_date']
+        fully_updated = within_one_day(granule.attrs['reference_date'], frame.reference_date)
+    return granule
 
 
 def add_granule_data_to_array(
@@ -134,6 +171,9 @@ def add_granule_data_to_array(
     """
     bbox = create_buffered_bbox(geotransform.to_gdal(), frame_map.shape, 120)  # EPSG:3857 is in meters
     sw_cumul_disp_xr = load_sw_disp_granule(granule, bbox, frame)
+
+    if not within_one_day(sw_cumul_disp_xr.attrs['reference_date'], frame.reference_date):
+        update_reference_date(sw_cumul_disp_xr, frame)
 
     sw_cumul_disp_xr = sw_cumul_disp_xr.rio.reproject('EPSG:3857', transform=geotransform, shape=frame_map.shape)
     frame_locations = frame_map == sw_cumul_disp_xr.attrs['frame_id']

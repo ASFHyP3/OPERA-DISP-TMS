@@ -8,6 +8,10 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.3.0]
 ### Added
+* Ability to update the reference date for OPERA DISP granule xarray objects
+
+## [0.3.0]
+### Added
 * Ability to generate SW velocity tiles in `generated_sw_vel_tile.py`
 
 ### Changed
