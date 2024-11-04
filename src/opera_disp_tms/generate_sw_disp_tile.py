@@ -12,7 +12,13 @@ from rasterio.transform import Affine
 
 from opera_disp_tms.find_california_dataset import Granule, find_california_dataset
 from opera_disp_tms.s3_xarray import open_opera_disp_granule
-from opera_disp_tms.utils import DATE_FORMAT, create_buffered_bbox, create_tile_name, get_raster_as_numpy, within_one_day
+from opera_disp_tms.utils import (
+    DATE_FORMAT,
+    create_buffered_bbox,
+    create_tile_name,
+    get_raster_as_numpy,
+    within_one_day,
+)
 
 
 gdal.UseExceptions()
@@ -25,8 +31,6 @@ class FrameMeta:
     frame_id: int
     reference_date: datetime
     reference_point_eastingnorthing: tuple  # easting, northing
-
-
 
 
 def extract_frame_metadata(frame_metadata: dict[str, str], frame_id: int) -> FrameMeta:
