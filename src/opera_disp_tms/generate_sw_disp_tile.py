@@ -12,7 +12,7 @@ from rasterio.transform import Affine
 
 from opera_disp_tms.find_california_dataset import Granule, find_california_dataset
 from opera_disp_tms.s3_xarray import open_opera_disp_granule
-from opera_disp_tms.utils import DATE_FORMAT, create_buffered_bbox, create_tile_name, get_raster_as_numpy, round_to_day
+from opera_disp_tms.utils import DATE_FORMAT, create_buffered_bbox, create_tile_name, get_raster_as_numpy, within_one_day
 
 
 gdal.UseExceptions()
@@ -27,9 +27,6 @@ class FrameMeta:
     reference_point_eastingnorthing: tuple  # easting, northing
 
 
-def within_one_day(date1: datetime, date2: datetime) -> bool:
-    """Check if two dates are within one day of each other"""
-    return abs(date1 - date2) <= timedelta(days=1)
 
 
 def extract_frame_metadata(frame_metadata: dict[str, str], frame_id: int) -> FrameMeta:
