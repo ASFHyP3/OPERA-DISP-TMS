@@ -5,6 +5,7 @@ from typing import Iterable, List
 
 import numpy as np
 import pyproj
+import requests
 from osgeo import gdal, ogr, osr
 from shapely.ops import transform
 
@@ -203,6 +204,24 @@ def burn_frame(frame: Frame, tile_path: Path) -> None:
     tile_band.FlushCache()
     tile_ds = None
     tmp_tiff.unlink()
+
+
+def get_cmr_metadata(frame_id: int, start_datetime: str, end_datetime: str) -> list[dict]:
+    uat_url = 'https://cmr.uat.earthdata.nasa.gov/search/granules.umm_json'
+    # TODO:
+    #  - pagination
+    #  - how does temporal[] param work?
+    #  - apply more precise temporal filter on results
+    cmr_parameters = {
+        'provider_short_name': 'ASF',
+        'short_name': 'OPERA_L3_DISP-S1_PROVISIONAL_V0',
+        'attribute[]': [f'int,FRAME_ID,{frame_id}', 'float,PRODUCT_VERSION,0.7'],
+        'temporal[]': ','.join([start_datetime, end_datetime]),
+        'page_size': 2000,
+    }
+    response = requests.post(uat_url, data=cmr_parameters)
+    response.raise_for_status()
+    return response.json()['items']
 
 
 def create_granule_metadata_dict(granule: Granule) -> dict:
