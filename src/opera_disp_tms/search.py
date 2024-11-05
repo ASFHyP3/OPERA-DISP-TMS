@@ -81,10 +81,10 @@ CAL_ASC_FRAMES = [
     44328,
     44329,
 ]
-CAL_FRAMES = sorted(CAL_ASC_FRAMES + CAL_DES_FRAMES)
+CAL_FRAMES = sorted(CAL_ASC_FRAMES + CAL_DES_FRAMES) # TODO delete if not needed (it's never used)
 
 
-@dataclass
+@dataclass(frozen=True)
 class Granule:
     scene_name: str
     frame_id: int
@@ -106,8 +106,9 @@ class Granule:
             A Granule object created from the search result.
         """
         scene_name = umm['meta']['native-id']
+
         attributes = umm['umm']['AdditionalAttributes']
-        frame_id = int([x['Values'][0] for x in attributes if x['Name'] == 'FRAME_ID'][0])
+        frame_id = int(next(att['Values'][0] for att in attributes if att['Name'] == 'FRAME_ID'))
 
         # TODO: get orbit from umm metadata when it becomes available
         if frame_id in CAL_ASC_FRAMES:
@@ -118,8 +119,8 @@ class Granule:
             orbit_pass = 'UNKNOWN'
 
         urls = umm['umm']['RelatedUrls']
-        url = [x['URL'] for x in urls if x['Type'] == 'GET DATA'][0]
-        s3_uri = [x['URL'] for x in urls if x['Type'] == 'GET DATA VIA DIRECT ACCESS'][0]
+        url = next(url['URL'] for url in urls if url['Type'] == 'GET DATA')
+        s3_uri = next(url['URL'] for url in urls if url['Type'] == 'GET DATA VIA DIRECT ACCESS')
 
         reference_date = datetime.strptime(
             umm['umm']['TemporalExtent']['RangeDateTime']['BeginningDateTime'], CMR_DATE_FORMAT
