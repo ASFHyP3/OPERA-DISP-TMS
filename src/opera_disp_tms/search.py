@@ -7,10 +7,10 @@ from datetime import datetime
 
 import requests
 
+CAL_START = datetime(2016, 1, 1)
+CAL_END = datetime(2020, 1, 1)
 
-DATE_FORMAT = '%Y%m%dT%H%M%SZ'
-CAL_START = datetime.strptime('20160701T000000Z', DATE_FORMAT)
-CAL_END = datetime.strptime('20190702T000000Z', DATE_FORMAT)
+CMR_DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
 CAL_DES_FRAMES = [
     3325,
@@ -96,11 +96,11 @@ class Granule:
     creation_date: datetime
 
     @classmethod
-    def from_umm(cls, umm) -> 'Granule':
+    def from_umm(cls, umm: dict) -> 'Granule':
         """Create a Granule object from a UMM search result.
 
         Args:
-            search_product: The search result to create the Granule from.
+            umm: UMM JSON for the granule
 
         Returns:
             A Granule object created from the search result.
@@ -118,9 +118,17 @@ class Granule:
         urls = umm['umm']['RelatedUrls']
         url = [x['URL'] for x in urls if x['Type'] == 'GET DATA'][0]
         s3_uri = [x['URL'] for x in urls if x['Type'] == 'GET DATA VIA DIRECT ACCESS'][0]
-        reference_date = datetime.strptime(scene_name.split('_')[-4], DATE_FORMAT)
-        secondary_date = datetime.strptime(scene_name.split('_')[-3], DATE_FORMAT)
-        creation_date = datetime.strptime(scene_name.split('_')[-1], DATE_FORMAT)
+
+        reference_date = datetime.strptime(
+            umm['umm']['TemporalExtent']['RangeDateTime']['BeginningDateTime'], CMR_DATE_FORMAT
+        )
+        secondary_date = datetime.strptime(
+            umm['umm']['TemporalExtent']['RangeDateTime']['EndingDateTime'], CMR_DATE_FORMAT
+        )
+        creation_date = datetime.strptime(
+            umm['umm']['DataGranule']['ProductionDateTime'], CMR_DATE_FORMAT
+        )
+
         return cls(
             scene_name=scene_name,
             frame_id=frame_id,
@@ -135,8 +143,8 @@ class Granule:
 
 def get_cmr_metadata(
     frame_id: int,
-    version: float = 0.7,
-    temporal_range=[CAL_START, CAL_END],
+    version: str = '0.7',
+    temporal_range=(CAL_START, CAL_END),
     cmr_endpoint='https://cmr.uat.earthdata.nasa.gov/search/granules.umm_json',
 ) -> list[dict]:
     """Find all OPERA L3 DISP S1 granules created for a specific frame ID, product version, and temporal range.
@@ -147,16 +155,20 @@ def get_cmr_metadata(
         temporal_range: The temporal range to search for granules in.
         cmr_endpoint: The endpoint to query for granules.
     """
+    page_size = 2000
     cmr_parameters = {
         'provider_short_name': 'ASF',
         'short_name': 'OPERA_L3_DISP-S1_PROVISIONAL_V0',
         'attribute[]': [f'int,FRAME_ID,{frame_id}', f'float,PRODUCT_VERSION,{version}'],
-        'temporal[]': ','.join([date.strftime('%Y-%m-%dT%H:%M:%SZ') for date in temporal_range]),
-        'page_size': 2000,
+        'temporal[]': ','.join([date.strftime(CMR_DATE_FORMAT) for date in temporal_range]),
+        'page_size': page_size,
     }
     response = requests.post(cmr_endpoint, data=cmr_parameters)
     response.raise_for_status()
-    return response.json()['items']
+    items = response.json()['items']
+    if len(items) == page_size:
+        raise NotImplementedError(f'Got full page of {page_size} items, please implement pagination')
+    return items
 
 
 def find_california_granules_for_frame(frame_id: int):
