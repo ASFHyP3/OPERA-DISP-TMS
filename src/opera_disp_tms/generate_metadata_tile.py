@@ -8,9 +8,9 @@ import pyproj
 from osgeo import gdal, ogr, osr
 from shapely.ops import transform
 
-from opera_disp_tms.find_california_dataset import Granule, find_california_dataset
 from opera_disp_tms.frames import Frame, intersect
 from opera_disp_tms.s3_xarray import get_opera_disp_granule_metadata
+from opera_disp_tms.search import Granule, find_california_granules_for_frame
 from opera_disp_tms.utils import validate_bbox
 
 
@@ -232,11 +232,10 @@ def create_metadata_tile(bbox: Iterable[int], frames: Iterable[Frame], tile_path
         tile_path: The path to the frame metadata tile
     """
     validate_bbox(bbox)
-    cal_data = find_california_dataset()  # TODO: delete this line
     create_empty_frame_tile(bbox, tile_path)
     frame_metadata = {}
     for frame in frames:
-        relevant_granules = [x for x in cal_data if x.frame_id == frame.frame_id]  # TODO: replace this line with CMR query
+        relevant_granules = find_california_granules_for_frame(frame.frame_id)
         if len(relevant_granules) == 0:
             warnings.warn(f'No granules found for frame {frame.frame_id}, this frame will not be added to the tile.')
         else:
