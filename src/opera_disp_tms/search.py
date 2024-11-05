@@ -81,7 +81,7 @@ CAL_ASC_FRAMES = [
     44328,
     44329,
 ]
-CAL_FRAMES = sorted(CAL_ASC_FRAMES + CAL_DES_FRAMES) # TODO delete if not needed (it's never used)
+CAL_FRAMES = sorted(CAL_ASC_FRAMES + CAL_DES_FRAMES)  # TODO delete if not needed (it's never used)
 
 
 @dataclass(frozen=True)
