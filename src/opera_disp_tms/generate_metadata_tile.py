@@ -206,21 +206,26 @@ def burn_frame(frame: Frame, tile_path: Path) -> None:
     tmp_tiff.unlink()
 
 
-def get_cmr_metadata(frame_id: int, start_datetime: str, end_datetime: str) -> list[dict]:
+def get_cmr_metadata(frame_id: int, start_datetime: str = None, end_datetime: str = None) -> list[dict]:
     uat_url = 'https://cmr.uat.earthdata.nasa.gov/search/granules.umm_json'
     # TODO:
     #  - pagination
-    #  - how does temporal[] param work?
-    #  - apply more precise temporal filter on results
+    #  - apply more precise temporal filter on results after calling this function
+
     cmr_parameters = {
         'provider_short_name': 'ASF',
         'short_name': 'OPERA_L3_DISP-S1_PROVISIONAL_V0',
         'attribute[]': [f'int,FRAME_ID,{frame_id}', 'float,PRODUCT_VERSION,0.7'],
-        'temporal[]': ','.join([start_datetime, end_datetime]),
+
+        # TODO: decide if we actually need this filter as part of the query
+        #'temporal[]': ','.join([start_datetime, end_datetime]),
+
         'page_size': 2000,
     }
     response = requests.post(uat_url, data=cmr_parameters)
     response.raise_for_status()
+
+    # TODO: return list of Granule dataclass objects?
     return response.json()['items']
 
 
@@ -251,11 +256,11 @@ def create_metadata_tile(bbox: Iterable[int], frames: Iterable[Frame], tile_path
         tile_path: The path to the frame metadata tile
     """
     validate_bbox(bbox)
-    cal_data = find_california_dataset()
+    cal_data = find_california_dataset()  # TODO: delete this line
     create_empty_frame_tile(bbox, tile_path)
     frame_metadata = {}
     for frame in frames:
-        relevant_granules = [x for x in cal_data if x.frame_id == frame.frame_id]
+        relevant_granules = [x for x in cal_data if x.frame_id == frame.frame_id]  # TODO: replace this line with CMR query
         if len(relevant_granules) == 0:
             warnings.warn(f'No granules found for frame {frame.frame_id}, this frame will not be added to the tile.')
         else:

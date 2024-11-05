@@ -61,6 +61,7 @@ def frames_from_metadata(metadata_path: Path) -> dict[int, FrameMeta]:
     return frames
 
 
+# TODO: modify to use CMR query?
 def find_needed_granules(
     frame_ids: Iterable[int], begin_date: datetime, end_date: datetime, strategy: str
 ) -> dict[int, Granule]:

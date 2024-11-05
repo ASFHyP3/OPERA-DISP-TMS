@@ -100,6 +100,7 @@ class Granule:
     secondary_date: datetime
     creation_date: datetime
 
+    # TODO: take CMR metadata instead?
     @classmethod
     def from_search_result(cls, search_product: asf.ASFProduct) -> 'Granule':
         """Create a Granule object from an ASF search result.
@@ -137,7 +138,7 @@ class Granule:
         )
 
     @classmethod
-    def from_tuple(cls, tup: Tuple) -> 'Granule':
+    def from_tuple(cls, tup: Tuple) -> 'Granule':  # TODO: delete?
         """Create a Granule object from a tuple.
 
         Args:
@@ -158,7 +159,7 @@ class Granule:
             creation_date=datetime.strptime(creation_date, DATE_FORMAT),
         )
 
-    def to_tuple(self):
+    def to_tuple(self):  # TODO: delete?
         return (
             self.scene_name,
             self.frame_id,
