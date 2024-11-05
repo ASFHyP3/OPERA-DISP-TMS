@@ -7,6 +7,7 @@ from datetime import datetime
 
 import requests
 
+
 CAL_START = datetime(2016, 1, 1)
 CAL_END = datetime(2020, 1, 1)
 
@@ -81,7 +82,6 @@ CAL_ASC_FRAMES = [
     44328,
     44329,
 ]
-CAL_FRAMES = sorted(CAL_ASC_FRAMES + CAL_DES_FRAMES)  # TODO delete if not needed (it's never used)
 
 
 @dataclass(frozen=True)
@@ -128,10 +128,7 @@ class Granule:
         secondary_date = datetime.strptime(
             umm['umm']['TemporalExtent']['RangeDateTime']['EndingDateTime'], CMR_DATE_FORMAT
         )
-        creation_date = datetime.strptime(
-            umm['umm']['DataGranule']['ProductionDateTime'], CMR_DATE_FORMAT
-        )
-
+        creation_date = datetime.strptime(umm['umm']['DataGranule']['ProductionDateTime'], CMR_DATE_FORMAT)
         return cls(
             scene_name=scene_name,
             frame_id=frame_id,
