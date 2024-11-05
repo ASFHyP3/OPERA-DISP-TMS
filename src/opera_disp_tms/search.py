@@ -108,13 +108,15 @@ class Granule:
         scene_name = umm['meta']['native-id']
         attributes = umm['umm']['AdditionalAttributes']
         frame_id = int([x['Values'][0] for x in attributes if x['Name'] == 'FRAME_ID'][0])
-        # TODO: can change when orbit direction is added to UMM
+
+        # TODO: get orbit from umm metadata when it becomes available
         if frame_id in CAL_ASC_FRAMES:
             orbit_pass = 'ASCENDING'
         elif frame_id in CAL_DES_FRAMES:
             orbit_pass = 'DESCENDING'
         else:
             orbit_pass = 'UNKNOWN'
+
         urls = umm['umm']['RelatedUrls']
         url = [x['URL'] for x in urls if x['Type'] == 'GET DATA'][0]
         s3_uri = [x['URL'] for x in urls if x['Type'] == 'GET DATA VIA DIRECT ACCESS'][0]
