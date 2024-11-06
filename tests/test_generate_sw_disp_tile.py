@@ -56,19 +56,19 @@ def test_find_needed_granules():
     granules = [
         GranuleStub(frame_id=1, secondary_date=datetime(2021, 1, 1)),
         GranuleStub(frame_id=1, secondary_date=datetime(2021, 1, 2)),
-        GranuleStub(frame_id=2, secondary_date=datetime(2021, 1, 1)),
-        GranuleStub(frame_id=2, secondary_date=datetime(2021, 1, 2)),
+        GranuleStub(frame_id=1, secondary_date=datetime(2021, 1, 3)),
     ]
-    with mock.patch('opera_disp_tms.generate_sw_disp_tile.find_california_dataset', return_value=granules):
+
+    fn_name = 'opera_disp_tms.generate_sw_disp_tile.find_california_granules_for_frame'
+    with mock.patch(fn_name, return_value=granules):
         needed_granules = sw.find_needed_granules([1], datetime(2021, 1, 1), datetime(2021, 1, 3), strategy='max')
+        assert len(needed_granules[1]) == 1
+        assert needed_granules[1] == [granules[2]]
 
-    assert list(needed_granules.keys()) == [1]
-    assert len(needed_granules[1]) == 1
-    assert needed_granules[1] == [granules[1]]
+        needed_granules = sw.find_needed_granules([1], datetime(2021, 1, 1), datetime(2021, 1, 3), strategy='minmax')
+        assert len(needed_granules[1]) == 2
+        assert needed_granules[1] == [granules[0], granules[2]]
 
-    with mock.patch('opera_disp_tms.generate_sw_disp_tile.find_california_dataset', return_value=granules):
-        needed_granules = sw.find_needed_granules([1, 2], datetime(2021, 1, 1), datetime(2021, 1, 2), strategy='max')
-
-    assert list(needed_granules.keys()) == [1, 2]
-    assert needed_granules[1] == [granules[1]]
-    assert needed_granules[2] == [granules[3]]
+        needed_granules = sw.find_needed_granules([1], datetime(2021, 1, 1), datetime(2021, 1, 3), strategy='all')
+        assert len(needed_granules[1]) == 3
+        assert needed_granules[1] == granules

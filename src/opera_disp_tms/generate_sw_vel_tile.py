@@ -10,7 +10,7 @@ from osgeo import gdal
 from rasterio.transform import Affine
 
 from opera_disp_tms import generate_sw_disp_tile as sw_disp
-from opera_disp_tms.find_california_dataset import Granule
+from opera_disp_tms.search import Granule
 from opera_disp_tms.utils import create_buffered_bbox, create_tile_name, get_raster_as_numpy
 
 

@@ -9,6 +9,15 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [0.4.0]
 ### Added
 * Ability to update the reference date for OPERA DISP granule xarray objects
+* Integration with CMR metadata when searching for granules
+
+### Changed
+* find_california_dataset.py to search.py and added functionality to search for granules in CMR
+* Updated all scripts to use the new find_california_granules_for_frame function
+* `generate_sw_disp_tile.py` now masks using `recomended_mask`
+
+### Removed
+* CSV-based caching of granules in favor of CMR-based searching
 
 ## [0.3.0]
 ### Added

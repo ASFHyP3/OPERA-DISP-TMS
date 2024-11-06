@@ -10,8 +10,8 @@ import xarray as xr
 from osgeo import gdal
 from rasterio.transform import Affine
 
-from opera_disp_tms.find_california_dataset import Granule, find_california_dataset
 from opera_disp_tms.s3_xarray import open_opera_disp_granule
+from opera_disp_tms.search import Granule, find_california_granules_for_frame
 from opera_disp_tms.utils import (
     DATE_FORMAT,
     create_buffered_bbox,
@@ -86,10 +86,10 @@ def find_needed_granules(
     Returns:
         A dictionary with form {frame_id: [granules]}
     """
-    cali_dataset = find_california_dataset()
     needed_granules = {}
     for frame_id in frame_ids:
-        granules = [g for g in cali_dataset if g.frame_id == frame_id and begin_date <= g.secondary_date <= end_date]
+        granules_full_stack = find_california_granules_for_frame(frame_id)
+        granules = [g for g in granules_full_stack if begin_date <= g.secondary_date <= end_date]
         if len(granules) < 2:
             warnings.warn(f'Less than two granules found for frame {frame_id} between {begin_date} and {end_date}.')
         elif strategy == 'max':
@@ -119,11 +119,11 @@ def load_sw_disp_granule(granule: Granule, bbox: Iterable[int], frame: FrameMeta
     Returns:
         The short wavelength displacement data as an xarray DataArray
     """
-    datasets = ['short_wavelength_displacement', 'connected_component_labels']
+    datasets = ['short_wavelength_displacement', 'recommended_mask']
     granule_xr = open_opera_disp_granule(granule.s3_uri, datasets)
     granule_xr = granule_xr.rio.clip_box(*bbox, crs='EPSG:3857')
     granule_xr = granule_xr.load()
-    valid_data_mask = granule_xr['connected_component_labels'] > 0
+    valid_data_mask = granule_xr['recommended_mask'] == 1
     sw_cumul_disp_xr = granule_xr['short_wavelength_displacement'].where(valid_data_mask, np.nan)
     sw_cumul_disp_xr.attrs = granule_xr.attrs
     sw_cumul_disp_xr.attrs['bbox'] = bbox
