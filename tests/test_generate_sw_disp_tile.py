@@ -80,7 +80,7 @@ def test_update_reference_date():
     def make_xr(value, ref_date):
         dim_coords = dict(dims=['x'], coords={'x': [1]})
         da = {'short_wavelength_displacement': xr.DataArray([value], **dim_coords)}
-        out = xr.Dataset(da, attrs={'reference_date': ref_date, 'bbox':[0, 0, 0, 0]})
+        out = xr.Dataset(da, attrs={'reference_date': ref_date, 'bbox': [0, 0, 0, 0]})
         return out
 
     to_correct = make_xr(2, datetime(2021, 1, 1))
