@@ -6,9 +6,9 @@ import pytest
 import opera_disp_tms.utils as ut
 
 
-def test_round_to_day():
-    assert ut.round_to_day(datetime(2021, 1, 1, 12, 1, 1)) == datetime(2021, 1, 2, 0, 0, 0)
-    assert ut.round_to_day(datetime(2021, 1, 1, 11, 1, 1)) == datetime(2021, 1, 1, 0, 0, 0)
+def test_within_in_day():
+    assert ut.within_one_day(datetime(2021, 1, 1, 12, 1, 1), datetime(2021, 1, 2, 0, 0, 0))
+    assert not ut.within_one_day(datetime(2021, 1, 1, 12, 1, 1), datetime(2021, 1, 2, 12, 1, 2))
 
 
 def test_transform_point():
