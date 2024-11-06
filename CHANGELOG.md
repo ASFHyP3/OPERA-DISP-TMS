@@ -13,6 +13,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 * find_california_dataset.py to search.py and added functionality to search for granules in CMR
 * Updated all scripts to use the new find_california_granules_for_frame function
+* `generate_sw_disp_tile.py` now masks using `recomended_mask`
 
 ### Removed
 * CSV-based caching of granules in favor of CMR-based searching
