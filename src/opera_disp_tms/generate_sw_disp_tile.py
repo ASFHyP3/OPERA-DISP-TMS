@@ -127,7 +127,7 @@ def load_sw_disp_granule(granule: Granule, bbox: Iterable[int], frame: FrameMeta
 def update_reference_date(granule: xr.DataArray, frame: FrameMeta) -> xr.DataArray:
     """Update the reference date of a granule to match the reference date of a frame.
 
-    Note: Assumes that reference date that will be updated to is older than the current reference date.
+    Note: Assumes that reference date that will be updated is older than the current reference date.
 
     Args:
         granule: The granule to update
