@@ -1,7 +1,7 @@
 import argparse
 import warnings
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Iterable, Tuple
 
@@ -10,9 +10,9 @@ import xarray as xr
 from osgeo import gdal
 from rasterio.transform import Affine
 
+from opera_disp_tms import utils
 from opera_disp_tms.s3_xarray import open_opera_disp_granule
 from opera_disp_tms.search import Granule, find_california_granules_for_frame
-from opera_disp_tms.utils import DATE_FORMAT, create_buffered_bbox, create_tile_name, get_raster_as_numpy, round_to_day
 
 
 gdal.UseExceptions()
@@ -37,7 +37,7 @@ def extract_frame_metadata(frame_metadata: dict[str, str], frame_id: int) -> Fra
     Returns:
         A FrameMeta object for the desired frame
     """
-    ref_date = datetime.strptime(frame_metadata[f'FRAME_{frame_id}_REF_TIME'], DATE_FORMAT)
+    ref_date = datetime.strptime(frame_metadata[f'FRAME_{frame_id}_REF_TIME'], utils.DATE_FORMAT)
 
     ref_point_eastingnorthing = frame_metadata[f'FRAME_{frame_id}_REF_POINT_EASTINGNORTHING'].split(', ')
     ref_point_eastingnorthing = tuple(int(x) for x in ref_point_eastingnorthing)
@@ -73,7 +73,7 @@ def find_needed_granules(
         begin_date: Start of secondary date search range to generate tile for
         end_date: End of secondary date search range to generate tile for
         strategy: Selection strategy for granules within search date range ("max", "minmax" or "all")
-                  - Use "max" to get first granule
+                  - Use "max" to get last granule
                   - Use "minmax" to get first and last granules
                   - Use "all" to get all granules
 
@@ -102,19 +102,54 @@ def find_needed_granules(
 
 
 def load_sw_disp_granule(granule: Granule, bbox: Iterable[int], frame: FrameMeta) -> xr.DataArray:
+    """Load the short wavelength displacement data for and OPERA DISP granule.
+    Clips to frame map and masks out invalid data.
+
+    Args:
+        granule: The granule to load
+        bbox: The bounding box to clip to
+        frame: The frame metadata
+
+    Returns:
+        The short wavelength displacement data as an xarray DataArray
+    """
     datasets = ['short_wavelength_displacement', 'recommended_mask']
     granule_xr = open_opera_disp_granule(granule.s3_uri, datasets)
-
-    same_ref_date = round_to_day(granule_xr.attrs['reference_date']) == round_to_day(frame.reference_date)
-    if not same_ref_date:
-        raise NotImplementedError('Granule reference date does not match metadata tile, this is not supported.')
-
     granule_xr = granule_xr.rio.clip_box(*bbox, crs='EPSG:3857')
     granule_xr = granule_xr.load()
     valid_data_mask = granule_xr['recommended_mask'] == 1
     sw_cumul_disp_xr = granule_xr['short_wavelength_displacement'].where(valid_data_mask, np.nan)
     sw_cumul_disp_xr.attrs = granule_xr.attrs
+    sw_cumul_disp_xr.attrs['bbox'] = bbox
     return sw_cumul_disp_xr
+
+
+def update_reference_date(granule: xr.DataArray, frame: FrameMeta) -> xr.DataArray:
+    """Update the reference date of a granule to match the reference date of a frame.
+
+    Note: Assumes that reference date that will be updated is older than the current reference date.
+
+    Args:
+        granule: The granule to update
+        frame: The frame metadata
+    """
+    fully_updated = utils.within_one_day(granule.attrs['reference_date'], frame.reference_date)
+    while not fully_updated:
+        if granule.attrs['reference_date'] < frame.reference_date:
+            raise ValueError('Granule reference date is older than frame reference date, cannot be updated.')
+        prev_ref_date = granule.attrs['reference_date']
+        prev_ref_date_min = prev_ref_date - timedelta(days=1)
+        prev_ref_date_max = prev_ref_date + timedelta(days=1)
+        # We can assume that there is only one granule for a frame that has
+        # a secondary date equal to another granule's reference date
+        granule_dict = find_needed_granules([frame.frame_id], prev_ref_date_min, prev_ref_date_max, strategy='max')
+        older_granule_meta = granule_dict[frame.frame_id][0]
+        older_granule = load_sw_disp_granule(older_granule_meta, granule.attrs['bbox'], frame)
+        granule['short_wavelength_displacement'] += older_granule['short_wavelength_displacement']
+        granule.attrs['reference_date'] = older_granule.attrs['reference_date']
+        fully_updated = utils.within_one_day(granule.attrs['reference_date'], frame.reference_date)
+
+    return granule
 
 
 def add_granule_data_to_array(
@@ -132,14 +167,15 @@ def add_granule_data_to_array(
     Returns:
         The updated short wavelength cumulative displacement array and the secondary date of the granule
     """
-    bbox = create_buffered_bbox(geotransform.to_gdal(), frame_map.shape, 120)  # EPSG:3857 is in meters
+    bbox = utils.create_buffered_bbox(geotransform.to_gdal(), frame_map.shape, 120)  # EPSG:3857 is in meters
     sw_cumul_disp_xr = load_sw_disp_granule(granule, bbox, frame)
+    update_reference_date(sw_cumul_disp_xr, frame)
 
     sw_cumul_disp_xr = sw_cumul_disp_xr.rio.reproject('EPSG:3857', transform=geotransform, shape=frame_map.shape)
     frame_locations = frame_map == sw_cumul_disp_xr.attrs['frame_id']
     sw_cumul_disp[frame_locations] = sw_cumul_disp_xr.data[frame_locations].astype(float)
 
-    secondary_date = datetime.strftime(sw_cumul_disp_xr.attrs['secondary_date'], DATE_FORMAT)
+    secondary_date = datetime.strftime(sw_cumul_disp_xr.attrs['secondary_date'], utils.DATE_FORMAT)
     return sw_cumul_disp, secondary_date
 
 
@@ -161,14 +197,14 @@ def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: dat
     if begin_date > end_date:
         raise ValueError('Begin date must be before end date')
 
-    product_name = create_tile_name(metadata_path.name, begin_date, end_date)
+    product_name = utils.create_tile_name(metadata_path.name, begin_date, end_date)
     product_path = Path.cwd() / product_name
     print(f'Generating tile {product_name}')
 
     frames = frames_from_metadata(metadata_path)
     needed_granules = find_needed_granules(list(frames.keys()), begin_date, end_date, strategy='max')
 
-    frame_map, geotransform = get_raster_as_numpy(metadata_path)
+    frame_map, geotransform = utils.get_raster_as_numpy(metadata_path)
     geotransform = Affine.from_gdal(*geotransform)
 
     sw_cumul_disp = np.full(frame_map.shape, np.nan, dtype=float)

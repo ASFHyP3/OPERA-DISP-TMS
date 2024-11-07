@@ -55,16 +55,9 @@ def download_file(
     session.close()
 
 
-def round_to_day(dt: datetime) -> datetime:
-    """Round a datetime to the nearest day
-
-    Args:
-        dt: Datetime to round
-
-    Returns:
-        The rounded datetime
-    """
-    return (dt + timedelta(hours=12)).replace(hour=0, minute=0, second=0, microsecond=0)
+def within_one_day(date1: datetime, date2: datetime) -> bool:
+    """Check if two dates are within one day of each other"""
+    return abs(date1 - date2) <= timedelta(days=1)
 
 
 def wkt_from_epsg(epsg_code: int) -> str:

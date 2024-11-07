@@ -8,6 +8,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.4.0]
 ### Added
+* Ability to update the reference date for OPERA DISP granule xarray objects
 * Integration with CMR metadata when searching for granules
 
 ### Changed
