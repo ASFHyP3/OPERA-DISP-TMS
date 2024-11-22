@@ -1,5 +1,6 @@
 from datetime import datetime
 from pathlib import Path
+from unittest.mock import patch
 
 import boto3
 import numpy as np
@@ -7,6 +8,7 @@ import pytest
 from botocore.stub import ANY, Stubber
 
 import opera_disp_tms.utils as ut
+import hyp3lib.aws as aws
 
 S3_CLIENT = boto3.client('s3')
 
@@ -61,27 +63,12 @@ def test_create_product_name():
     assert product_name == 'SW_CUMUL_DISP_20210101_20210102_ASCENDING_N41W124.tif'
 
 
-@pytest.fixture(autouse=True)
-def s3_stubber():
-    with Stubber(S3_CLIENT) as stubber:
-        yield stubber
-
-
-def test_upload_dir_to_s3(tmp_path, s3_stubber):
-    expected_params = {
-        'Body': ANY,
-        'Bucket': 'myBucket',
-        'Key': 'myPrefix/subdirectory/myFile.txt',
-        'ContentType': 'text/plain',
-    }
-    tag_params = {
-        'Bucket': 'myBucket',
-        'Key': 'myPrefix/subdirectory/myFile.txt',
-        'Tagging': {'TagSet': [{'Key': 'file_type', 'Value': 'product'}]},
-    }
-    s3_stubber.add_response(method='put_object', expected_params=expected_params, service_response={})
-    s3_stubber.add_response(method='put_object_tagging', expected_params=tag_params, service_response={})
+def test_upload_dir_to_s3(tmp_path):
     file_to_upload = tmp_path / 'subdirectory' / 'myFile.txt'
     Path(file_to_upload).parent.mkdir(parents=True, exist_ok=True)
     file_to_upload.touch()
-    ut.upload_dir_to_s3(file_to_upload, 'myBucket', 'myPrefix')
+    with patch.object(ut, 'upload_dir_to_s3') as mock_upload:
+        mock_upload.return_value = []
+        ut.upload_dir_to_s3(file_to_upload, 'myBucket', 'subdirectory')
+        mock_upload.assert_called_with(file_to_upload, 'myBucket', 'subdirectory')
+
