@@ -155,3 +155,29 @@ def create_tile_name(
     end_date = datetime.strftime(end_date, date_fmt)
     name = '_'.join([prod_type, begin_date, end_date, flight_direction, tile_coordinates])
     return name
+
+
+def upload_dir_to_s3(path_to_dir: Path, bucket: str, prefix: str = ''):
+    """Upload a local directory, subdirectory, and all contents to an S3 bucket
+
+    Args:
+        path_to_dir: The local path to directory
+        bucket: S3 bucket to which the directory should be uploaded
+        prefix: prefix in S3 bucket to upload the directory to. Defaults to ''
+    """
+    dir_parent = str(path_to_dir.parent)
+
+    for branch in os.walk(path_to_dir, topdown=True):
+        if branch[2]:
+            branch_path = branch[0]
+            key = str(Path(prefix)) / branch_path.replace(dir_parent, '')
+            extra_args = {'ContentType': get_content_type(key)}
+
+            for filename in branch[2]:
+                path_to_file = Path(branch_path / filename)
+                S3_CLIENT.upload_file(str(path_to_file), bucket, key, extra_args)
+
+                tag_set = get_tag_set(path_to_file.name)
+
+                S3_CLIENT.put_object_tagging(Bucket=bucket, Key=key, Tagging=tag_set)
+                logging.info(f'Uploaded {path_to_file} to s3://{bucket}/{key}')
