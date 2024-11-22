@@ -4,10 +4,11 @@ from pathlib import Path
 from typing import Iterable, Tuple, Union
 
 import boto3
-from hyp3lib import aws
 import requests
-from pyproj import Transformer
 from osgeo import gdal, osr
+
+from hyp3lib import aws
+from pyproj import Transformer
 
 
 gdal.UseExceptions()
