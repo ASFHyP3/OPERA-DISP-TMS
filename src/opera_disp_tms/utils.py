@@ -1,14 +1,14 @@
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Iterable, Tuple, Union
-
+import boto3
 import requests
+from datetime import datetime, timedelta
 from osgeo import gdal, osr
+from pathlib import Path
 from pyproj import Transformer
-
+from typing import Iterable, Tuple, Union
 
 gdal.UseExceptions()
 
+S3_CLIENT = boto3.client('s3')
 
 DATE_FORMAT = '%Y%m%dT%H%M%SZ'
 
@@ -170,11 +170,11 @@ def upload_dir_to_s3(path_to_dir: Path, bucket: str, prefix: str = ''):
     for branch in os.walk(path_to_dir, topdown=True):
         if branch[2]:
             branch_path = branch[0]
-            key = str(Path(prefix)) / branch_path.replace(dir_parent, '')
-            extra_args = {'ContentType': get_content_type(key)}
-
             for filename in branch[2]:
                 path_to_file = Path(branch_path / filename)
+                key = str(Path(prefix)) / path_to_file.replace(dir_parent, '')
+                extra_args = {'ContentType': get_content_type(key)}
+
                 S3_CLIENT.upload_file(str(path_to_file), bucket, key, extra_args)
 
                 tag_set = get_tag_set(path_to_file.name)
