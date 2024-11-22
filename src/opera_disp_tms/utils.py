@@ -172,15 +172,9 @@ def upload_dir_to_s3(path_to_dir: Path, bucket: str, prefix: str = ''):
     dir_parent = str(path_to_dir.parent)
 
     for branch in os.walk(path_to_dir, topdown=True):
-        if branch[2]:
-            branch_path = branch[0]
-            for filename in branch[2]:
-                path_to_file = Path(branch_path / filename)
-                key = str(Path(prefix)) / path_to_file.replace(dir_parent, '')
-                extra_args = {'ContentType': aws.get_content_type(key)}
+        branch_path = branch[0]
+        for filename in branch[2]:
+            path_to_file = Path(branch_path) / filename
+            file_prefix = prefix / str(path_to_file).replace(dir_parent, '').split('.')[0]
 
-                S3_CLIENT.upload_file(str(path_to_file), bucket, key, extra_args)
-
-                tag_set = aws.get_tag_set(path_to_file.name)
-
-                S3_CLIENT.put_object_tagging(Bucket=bucket, Key=key, Tagging=tag_set)
+            hyp3lib.aws.upload_file(path_to_file, bucket, file_prefix)
