@@ -5,7 +5,6 @@ from typing import Iterable, Tuple, Union
 
 import boto3
 import requests
-
 from hyp3lib import aws
 from osgeo import gdal, osr
 from pyproj import Transformer
