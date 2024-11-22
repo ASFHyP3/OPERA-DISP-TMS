@@ -75,7 +75,7 @@ def main():
                                                  args.end_date)
     # TODO: move this somewhere else?
     if args.bucket:
-        upload_to_s3(opera_disp_tiles, args.bucket, args.bucket_prefix)
+        upload_dir_to_s3(opera_disp_tiles, args.bucket, args.bucket_prefix)
 
 
 if __name__ == '__main__':
