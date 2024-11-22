@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Iterable, Tuple, Union
 
 import requests
-from hyp3lib import aws
+from hyp3lib.aws import upload_file_to_s3
 from osgeo import gdal, osr
 from pyproj import Transformer
 
@@ -166,12 +166,9 @@ def upload_dir_to_s3(path_to_dir: Path, bucket: str, prefix: str = ''):
         bucket: S3 bucket to which the directory should be uploaded
         prefix: prefix in S3 bucket to upload the directory to. Defaults to ''
     """
-    dir_parent = str(path_to_dir.parent)
-
     for branch in os.walk(path_to_dir, topdown=True):
         branch_path = branch[0]
         for filename in branch[2]:
             path_to_file = Path(branch_path) / filename
-            file_prefix = prefix / str(path_to_file).replace(dir_parent, '').split('.')[0]
-
-            aws.upload_file(path_to_file, bucket, file_prefix)
+            file_prefix = str(prefix / path_to_file.relative_to(path_to_dir).parent)
+            upload_file_to_s3(path_to_file, bucket, file_prefix)

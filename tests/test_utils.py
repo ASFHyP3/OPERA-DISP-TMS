@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import numpy as np
 import pytest
+from hyp3lib import aws
 
 import opera_disp_tms.utils as ut
 
@@ -59,10 +60,10 @@ def test_create_product_name():
 
 
 def test_upload_dir_to_s3(tmp_path):
-    file_to_upload = tmp_path / 'subdirectory' / 'myFile.txt'
+    file_to_upload = tmp_path / 'subdir1' / 'subdir2' / 'myFile.txt'
     Path(file_to_upload).parent.mkdir(parents=True, exist_ok=True)
     file_to_upload.touch()
-    with patch.object(ut, 'upload_dir_to_s3') as mock_upload:
+    with patch.object(ut, 'upload_file_to_s3') as mock_upload:
         mock_upload.return_value = []
-        ut.upload_dir_to_s3(file_to_upload, 'myBucket', 'subdirectory')
-        mock_upload.assert_called_once_with(file_to_upload, 'myBucket', 'subdirectory')
+        ut.upload_dir_to_s3(tmp_path, 'myBucket', 'myPrefix')
+        mock_upload.assert_called_once_with(file_to_upload, 'myBucket', 'myPrefix/subdir1/subdir2')
