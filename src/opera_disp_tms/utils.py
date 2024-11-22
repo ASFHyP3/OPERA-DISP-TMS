@@ -167,8 +167,7 @@ def upload_dir_to_s3(path_to_dir: Path, bucket: str, prefix: str = ''):
         prefix: prefix in S3 bucket to upload the directory to. Defaults to ''
     """
     for branch in os.walk(path_to_dir, topdown=True):
-        branch_path = branch[0]
         for filename in branch[2]:
-            path_to_file = Path(branch_path) / filename
+            path_to_file = Path(branch[0]) / filename
             file_prefix = str(prefix / path_to_file.relative_to(path_to_dir).parent)
             upload_file_to_s3(path_to_file, bucket, file_prefix)
