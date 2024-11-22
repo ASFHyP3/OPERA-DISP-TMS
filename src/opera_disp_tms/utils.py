@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Iterable, Tuple, Union
 
-import boto3
 import requests
 from hyp3lib import aws
 from osgeo import gdal, osr
@@ -11,8 +10,6 @@ from pyproj import Transformer
 
 
 gdal.UseExceptions()
-
-S3_CLIENT = boto3.client('s3')
 
 DATE_FORMAT = '%Y%m%dT%H%M%SZ'
 
