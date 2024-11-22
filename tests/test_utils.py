@@ -54,3 +54,29 @@ def test_create_product_name():
     end_date = datetime(2021, 1, 2)
     product_name = ut.create_tile_name(metadata_name, begin_date, end_date)
     assert product_name == 'SW_CUMUL_DISP_20210101_20210102_ASCENDING_N41W124.tif'
+
+
+@pytest.fixture(autouse=True)
+def s3_stubber():
+    with Stubber(aws.S3_CLIENT) as stubber:
+        yield stubber
+        stubber.assert_no_pending_responses()
+
+
+def test_upload_dir_to_s3(tmp_path, s3_stubber):
+    expected_params = {
+        'Body': ANY,
+        'Bucket': 'myBucket',
+        'Key': 'myPrefix/subdirectory/myFile.txt',
+        'ContentType': 'text/plain',
+    }
+    tag_params = {
+        'Bucket': 'myBucket',
+        'Key': 'myPrefix/subdirectory/myFile.txt',
+        'Tagging': {'TagSet': [{'Key': 'file_type', 'Value': 'product'}]},
+    }
+    s3_stubber.add_response(method='put_object', expected_params=expected_params, service_response={})
+    s3_stubber.add_response(method='put_object_tagging', expected_params=tag_params, service_response={})
+    file_to_upload = tmp_path / 'subdirectory/myFile.txt'
+    file_to_upload.touch()
+    ut.upload_dir_to_s3(file_to_upload, 'myBucket', 'myPrefix')
