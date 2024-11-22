@@ -4,7 +4,6 @@ from unittest.mock import patch
 
 import numpy as np
 import pytest
-from hyp3lib import aws
 
 import opera_disp_tms.utils as ut
 
