@@ -12,7 +12,7 @@ from opera_disp_tms.utils import upload_dir_to_s3
 
 
 def generate_opera_disp_tile(
-        tile_type: str, corner: Iterable[int], direction: str, begin_date: datetime, end_date: datetime
+    tile_type: str, corner: Iterable[int], direction: str, begin_date: datetime, end_date: datetime
 ):
     bbox = [corner[0], corner[1] - 1, corner[0] + 1, corner[1]]
     metadata_path = create_tile_for_bbox(bbox, direction=direction)
@@ -32,10 +32,11 @@ def generate_opera_disp_tile(
 
 
 def generate_opera_disp_tiles(
-        tile_type: str, bbox: Iterable[int], direction: str, begin_date: datetime, end_date: datetime
+    tile_type: str, bbox: Iterable[int], direction: str, begin_date: datetime, end_date: datetime
 ):
     tiles = []
     for corner in product(range(bbox[0], bbox[2]), range(bbox[1], bbox[3])):
+        # TODO: get and set AWS tmp AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN
         tiles.append(generate_opera_disp_tile(tile_type, corner, direction, begin_date, end_date))
 
     scale = {
@@ -44,9 +45,6 @@ def generate_opera_disp_tiles(
         'velocity': [-0.05, 0.05],
     }
     create_tile_map(tile_type, [str(x) for x in tiles], scale[tile_type])
-    # TOOD: upload map directory
-    # TODO: upload openlayers.html
-    # TODO: upload bounds.json
     return Path(tile_type)
 
 
@@ -68,8 +66,9 @@ def main():
     args.begin_date = datetime.strptime(args.begin_date, '%Y%m%d')
     args.end_date = datetime.strptime(args.end_date, '%Y%m%d')
 
-    opera_disp_tiles = generate_opera_disp_tiles(args.tile_type, args.bbox, args.direction, args.begin_date,
-                                                 args.end_date)
+    opera_disp_tiles = generate_opera_disp_tiles(
+        args.tile_type, args.bbox, args.direction, args.begin_date, args.end_date
+    )
     if args.bucket:
         upload_dir_to_s3(opera_disp_tiles, args.bucket, args.bucket_prefix)
 
