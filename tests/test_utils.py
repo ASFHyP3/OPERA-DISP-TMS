@@ -66,4 +66,3 @@ def test_upload_dir_to_s3(tmp_path):
         mock_upload.return_value = []
         ut.upload_dir_to_s3(file_to_upload, 'myBucket', 'subdirectory')
         mock_upload.assert_called_once_with(file_to_upload, 'myBucket', 'subdirectory')
-
