@@ -24,6 +24,7 @@ dependencies:
   - pyproj
   - h5py
   - h5netcdf
+  - hyp3lib
   - xarray
   - rioxarray
   - numba
