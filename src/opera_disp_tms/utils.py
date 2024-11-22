@@ -4,10 +4,10 @@ from pathlib import Path
 from typing import Iterable, Tuple, Union
 
 import requests
-from pyproj import Transformer
 
 import boto3
 from hyp3lib import aws
+from pyproj import Transformer
 from osgeo import gdal, osr
 
 
