@@ -79,8 +79,8 @@ def test_find_needed_granules():
 def test_update_reference_date():
     def make_xr(value, ref_date):
         dim_coords = dict(dims=['x'], coords={'x': [1]})
-        da = {'short_wavelength_displacement': xr.DataArray([value], **dim_coords)}
-        out = xr.Dataset(da, attrs={'reference_date': ref_date, 'bbox': [0, 0, 0, 0]})
+        attrs = {'reference_date': ref_date, 'bbox': [0, 0, 0, 0]}
+        out = xr.DataArray([value], **dim_coords, attrs=attrs)
         return out
 
     to_correct = make_xr(2, datetime(2021, 1, 1))
@@ -94,7 +94,7 @@ def test_update_reference_date():
         mock_load.side_effect = [back1, back2]
         to_correct = sw.update_reference_date(to_correct, frame)
         assert to_correct.attrs['reference_date'] == datetime(2020, 1, 1)
-        assert to_correct.short_wavelength_displacement.values == 6
+        assert to_correct.values == 6
 
     to_correct = make_xr(2, datetime(2021, 1, 1))
     frame = sw.FrameMeta(1, datetime(2019, 1, 1), (0, 0))
@@ -104,4 +104,4 @@ def test_update_reference_date():
         mock_load.side_effect = [back1, back2]
         to_correct = sw.update_reference_date(to_correct, frame)
         assert to_correct.attrs['reference_date'] == datetime(2019, 1, 1)
-        assert to_correct.short_wavelength_displacement.values == 13
+        assert to_correct.values == 13

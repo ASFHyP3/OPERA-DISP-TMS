@@ -62,7 +62,7 @@ def frames_from_metadata(metadata_path: Path) -> dict[int, FrameMeta]:
 
 
 def find_needed_granules(
-    frame_ids: Iterable[int], begin_date: datetime, end_date: datetime, strategy: str
+    frame_ids: Iterable[int], begin_date: datetime, end_date: datetime, strategy: str, min_granules: int = 2
 ) -> dict[int, Granule]:
     """Find the granules needed to generate a short wavelength displacement tile.
     For each `frame_id` the most recent granule whose secondary date is between
@@ -76,6 +76,7 @@ def find_needed_granules(
                   - Use "max" to get last granule
                   - Use "minmax" to get first and last granules
                   - Use "all" to get all granules
+        min_granules: Minimum number of granules that need to be present in order to return a result
 
     Returns:
         A dictionary with form {frame_id: [granules]}
@@ -84,8 +85,10 @@ def find_needed_granules(
     for frame_id in frame_ids:
         granules_full_stack = find_california_granules_for_frame(frame_id)
         granules = [g for g in granules_full_stack if begin_date <= g.secondary_date <= end_date]
-        if len(granules) < 2:
-            warnings.warn(f'Less than two granules found for frame {frame_id} between {begin_date} and {end_date}.')
+        if len(granules) < min_granules:
+            warnings.warn(
+                f'Less than {min_granules} granules found for frame {frame_id} between {begin_date} and {end_date}.'
+            )
         elif strategy == 'max':
             oldest_granule = max(granules, key=lambda x: x.secondary_date)
             needed_granules[frame_id] = [oldest_granule]
@@ -142,10 +145,12 @@ def update_reference_date(granule: xr.DataArray, frame: FrameMeta) -> xr.DataArr
         prev_ref_date_max = prev_ref_date + timedelta(days=1)
         # We can assume that there is only one granule for a frame that has
         # a secondary date equal to another granule's reference date
-        granule_dict = find_needed_granules([frame.frame_id], prev_ref_date_min, prev_ref_date_max, strategy='max')
+        granule_dict = find_needed_granules(
+            [frame.frame_id], prev_ref_date_min, prev_ref_date_max, strategy='max', min_granules=1
+        )
         older_granule_meta = granule_dict[frame.frame_id][0]
         older_granule = load_sw_disp_granule(older_granule_meta, granule.attrs['bbox'], frame)
-        granule['short_wavelength_displacement'] += older_granule['short_wavelength_displacement']
+        granule += older_granule
         granule.attrs['reference_date'] = older_granule.attrs['reference_date']
         fully_updated = utils.within_one_day(granule.attrs['reference_date'], frame.reference_date)
 

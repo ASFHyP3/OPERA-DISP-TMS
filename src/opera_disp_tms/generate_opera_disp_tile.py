@@ -1,10 +1,8 @@
 import argparse
 from datetime import datetime
-from itertools import combinations
+from itertools import product
 from pathlib import Path
 from typing import Iterable
-
-import numpy as np
 
 from opera_disp_tms.create_tile_map import create_tile_map
 from opera_disp_tms.generate_metadata_tile import create_tile_for_bbox
@@ -16,7 +14,7 @@ from opera_disp_tms.utils import upload_dir_to_s3
 def generate_opera_disp_tile(
     tile_type: str, corner: Iterable[int], direction: str, begin_date: datetime, end_date: datetime
 ):
-    bbox = [corner[0], corner[1] - 1, corner[0] + corner[1]]
+    bbox = [corner[0], corner[1] - 1, corner[0] + 1, corner[1]]
     metadata_path = create_tile_for_bbox(bbox, direction=direction)
     if not metadata_path:
         return
@@ -33,12 +31,13 @@ def generate_opera_disp_tile(
     return out_path
 
 
-def generate_opera_disp_tiles(tile_type: str, bbox: Iterable[int], direction: str, begin_date: datetime,
-                              end_date: datetime):
-    lon_range = list(np.arange(bbox[0], bbox[2]))
-    lat_range = list(np.arange(bbox[1], bbox[3]))
+
+def generate_opera_disp_tiles(
+    tile_type: str, bbox: Iterable[int], direction: str, begin_date: datetime, end_date: datetime
+):
+
     tiles = []
-    for corner in combinations(lon_range, lat_range):
+    for corner in product(range(bbox[0], bbox[2]), range(bbox[1], bbox[3])):
         tiles.append(generate_opera_disp_tile(tile_type, corner, direction, begin_date, end_date))
 
     scale = {
@@ -71,6 +70,7 @@ def main():
     args.begin_date = datetime.strptime(args.begin_date, '%Y%m%d')
     args.end_date = datetime.strptime(args.end_date, '%Y%m%d')
 
+
     opera_disp_tiles = generate_opera_disp_tiles(args.tile_type, args.bbox, args.direction, args.begin_date,
                                                  args.end_date)
     # TODO: move this somewhere else?
@@ -80,3 +80,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
