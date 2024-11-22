@@ -1,13 +1,12 @@
 import boto3
 import os
-
 import requests
 from datetime import datetime, timedelta
+from hyp3lib import aws
 from osgeo import gdal, osr
 from pathlib import Path
 from pyproj import Transformer
 from typing import Iterable, Tuple, Union
-from hyp3lib import aws
 
 gdal.UseExceptions()
 
