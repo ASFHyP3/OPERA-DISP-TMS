@@ -1,10 +1,13 @@
 from datetime import datetime
 
+import boto3
 import numpy as np
 import pytest
 from botocore.stub import ANY, Stubber
 
 import opera_disp_tms.utils as ut
+
+S3_CLIENT = boto3.client('s3')
 
 
 def test_within_in_day():
@@ -59,7 +62,7 @@ def test_create_product_name():
 
 @pytest.fixture(autouse=True)
 def s3_stubber():
-    with Stubber(aws.S3_CLIENT) as stubber:
+    with Stubber(S3_CLIENT) as stubber:
         yield stubber
         stubber.assert_no_pending_responses()
 
