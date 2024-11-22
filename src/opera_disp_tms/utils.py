@@ -1,10 +1,13 @@
 import boto3
+import os
+
 import requests
 from datetime import datetime, timedelta
 from osgeo import gdal, osr
 from pathlib import Path
 from pyproj import Transformer
 from typing import Iterable, Tuple, Union
+from hyp3lib import aws
 
 gdal.UseExceptions()
 
@@ -173,11 +176,10 @@ def upload_dir_to_s3(path_to_dir: Path, bucket: str, prefix: str = ''):
             for filename in branch[2]:
                 path_to_file = Path(branch_path / filename)
                 key = str(Path(prefix)) / path_to_file.replace(dir_parent, '')
-                extra_args = {'ContentType': get_content_type(key)}
+                extra_args = {'ContentType': aws.get_content_type(key)}
 
                 S3_CLIENT.upload_file(str(path_to_file), bucket, key, extra_args)
 
-                tag_set = get_tag_set(path_to_file.name)
+                tag_set = aws.get_tag_set(path_to_file.name)
 
                 S3_CLIENT.put_object_tagging(Bucket=bucket, Key=key, Tagging=tag_set)
-                logging.info(f'Uploaded {path_to_file} to s3://{bucket}/{key}')
