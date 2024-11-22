@@ -177,4 +177,4 @@ def upload_dir_to_s3(path_to_dir: Path, bucket: str, prefix: str = ''):
             path_to_file = Path(branch_path) / filename
             file_prefix = prefix / str(path_to_file).replace(dir_parent, '').split('.')[0]
 
-            hyp3lib.aws.upload_file(path_to_file, bucket, file_prefix)
+            aws.upload_file(path_to_file, bucket, file_prefix)
