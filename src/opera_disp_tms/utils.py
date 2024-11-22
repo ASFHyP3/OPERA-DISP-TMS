@@ -3,10 +3,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Iterable, Tuple, Union
 
-import requests
-
 import boto3
 from hyp3lib import aws
+import requests
 from pyproj import Transformer
 from osgeo import gdal, osr
 
