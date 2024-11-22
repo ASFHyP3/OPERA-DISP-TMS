@@ -22,7 +22,7 @@ def main():
     args, unknowns = parser.parse_known_args()
 
     # NOTE: Cast to set because of: https://github.com/pypa/setuptools/issues/3649
-    process_entry_point = set(entry_points(group='hyp3', name=args.process))[0]
+    (process_entry_point,) = set(entry_points(group='hyp3', name=args.process))
     sys.argv = [args.process, *unknowns]
     sys.exit(process_entry_point.load()())
 

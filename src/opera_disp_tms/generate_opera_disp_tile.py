@@ -69,7 +69,3 @@ def main():
     args.end_date = datetime.strptime(args.end_date, '%Y%m%d')
 
     generate_opera_disp_tiles(args.tile_type, args.bbox, args.direction, args.begin_date, args.end_date)
-
-
-if __name__ == '__main__':
-    main()
