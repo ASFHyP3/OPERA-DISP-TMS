@@ -22,10 +22,7 @@ def main():
     args, unknowns = parser.parse_known_args()
 
     # NOTE: Cast to set because of: https://github.com/pypa/setuptools/issues/3649
-    # NOTE: Will need to update to `entry_points(group='hyp3', name=args.process)` when updating to python 3.10
-    # eps = entry_points()['hyp3']
-    # (process_entry_point,) = {process for process in eps if process.name == args.process}
-    process_entry_point = list(entry_points(group='hyp3', name=args.process))[0]
+    process_entry_point = set(entry_points(group='hyp3', name=args.process))[0]
     sys.argv = [args.process, *unknowns]
     sys.exit(process_entry_point.load()())
 
