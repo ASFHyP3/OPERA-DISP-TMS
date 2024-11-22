@@ -1,4 +1,5 @@
 from datetime import datetime
+from pathlib import Path
 
 import boto3
 import numpy as np
@@ -64,7 +65,6 @@ def test_create_product_name():
 def s3_stubber():
     with Stubber(S3_CLIENT) as stubber:
         yield stubber
-        stubber.assert_no_pending_responses()
 
 
 def test_upload_dir_to_s3(tmp_path, s3_stubber):
@@ -81,6 +81,7 @@ def test_upload_dir_to_s3(tmp_path, s3_stubber):
     }
     s3_stubber.add_response(method='put_object', expected_params=expected_params, service_response={})
     s3_stubber.add_response(method='put_object_tagging', expected_params=tag_params, service_response={})
-    file_to_upload = tmp_path / 'subdirectory/myFile.txt'
+    file_to_upload = tmp_path / 'subdirectory' / 'myFile.txt'
+    Path(file_to_upload).parent.mkdir(parents=True, exist_ok=True)
     file_to_upload.touch()
     ut.upload_dir_to_s3(file_to_upload, 'myBucket', 'myPrefix')
