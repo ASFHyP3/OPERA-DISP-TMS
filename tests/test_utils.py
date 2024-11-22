@@ -2,15 +2,10 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 
-import boto3
 import numpy as np
 import pytest
-from botocore.stub import ANY, Stubber
 
 import opera_disp_tms.utils as ut
-import hyp3lib.aws as aws
-
-S3_CLIENT = boto3.client('s3')
 
 
 def test_within_in_day():
@@ -70,5 +65,5 @@ def test_upload_dir_to_s3(tmp_path):
     with patch.object(ut, 'upload_dir_to_s3') as mock_upload:
         mock_upload.return_value = []
         ut.upload_dir_to_s3(file_to_upload, 'myBucket', 'subdirectory')
-        mock_upload.assert_called_with(file_to_upload, 'myBucket', 'subdirectory')
+        mock_upload.assert_called_once_with(file_to_upload, 'myBucket', 'subdirectory')
 
