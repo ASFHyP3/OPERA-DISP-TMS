@@ -1,6 +1,6 @@
 import argparse
-from datetime import datetime
 import os
+from datetime import datetime
 from itertools import product
 from pathlib import Path
 from typing import Iterable
