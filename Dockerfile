@@ -1,5 +1,11 @@
-LABEL org.opencontainers.image.documentation="https://hyp3-docs.asf.alaska.edu"
+FROM condaforge/mambaforge:latest
 
+# For opencontainers label definitions, see:
+#    https://github.com/opencontainers/image-spec/blob/master/annotations.md
+LABEL org.opencontainers.image.title="OPERA-DISP-TMS"
+LABEL org.opencontainers.image.vendor="Alaska Satellite Facility"
+LABEL org.opencontainers.image.licenses="BSD-3-Clause"
+LABEL org.opencontainers.image.documentation="https://hyp3-docs.asf.alaska.edu"
 # Dynamic lables to define at build time via `docker build --label`
 # LABEL org.opencontainers.image.created=""
 # LABEL org.opencontainers.image.version=""
@@ -31,7 +37,7 @@ RUN mamba env create -f /OPERA-DISP-TMS/environment.yml && \
     conda clean -afy && \
     conda activate opera-disp-tms && \
     sed -i 's/conda activate base/conda activate opera-disp-tms/g' /home/conda/.profile && \
-    python -m pip install --no-cache-dir /opera_disp_tms
+    python -m pip install --no-cache-dir /OPERA-DISP-TMS
 
 ENTRYPOINT ["/OPERA-DISP-TMS/src/opera_disp_tms/entrypoint.sh"]
 CMD ["-h"]
