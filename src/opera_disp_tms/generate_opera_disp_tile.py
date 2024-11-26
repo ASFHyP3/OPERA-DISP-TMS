@@ -60,6 +60,9 @@ def main():
     parser.add_argument(
         'begin_date', type=str, help='Start of secondary date search range to generate tile for (e.g., 20211231)'
     )
+    parser.add_argument(
+        'end_date', type=str, help='End of secondary date search range to generate tile for (e.g., 20211231)'
+    )
 
     args = parser.parse_args()
     args.begin_date = datetime.strptime(args.begin_date, '%Y%m%d')
