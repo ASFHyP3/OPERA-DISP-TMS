@@ -9,7 +9,7 @@ from opera_disp_tms.create_tile_map import create_tile_map
 from opera_disp_tms.generate_metadata_tile import create_tile_for_bbox
 from opera_disp_tms.generate_sw_disp_tile import create_sw_disp_tile
 from opera_disp_tms.generate_sw_vel_tile import create_sw_vel_tile
-from opera_disp_tms.tmp_s3_access import tmp_s3_access
+from opera_disp_tms.get_tmp_s3_creds import get_temporary_aws_credentials
 from opera_disp_tms.utils import upload_dir_to_s3
 
 
@@ -34,7 +34,7 @@ def generate_opera_disp_tile(
 
 
 def refresh_aws_credentials():
-    aws_credentials = tmp_s3_access()
+    aws_credentials = get_temporary_aws_credentials()
     os.environ['AWS_ACCESS_KEY_ID'] = aws_credentials["accessKeyId"]
     os.environ['AWS_SECRET_ACCESS_KEY'] = aws_credentials["secretAccessKey"]
     os.environ['AWS_SESSION_TOKEN'] = aws_credentials["sessionToken"]
