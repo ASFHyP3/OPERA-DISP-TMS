@@ -1,5 +1,4 @@
 import argparse
-import os
 from datetime import datetime
 from itertools import product
 from pathlib import Path
