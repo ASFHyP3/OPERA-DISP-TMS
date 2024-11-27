@@ -28,5 +28,4 @@ dependencies:
   - xarray
   - rioxarray
   - numba
-  - s3fs
   - cachetools
