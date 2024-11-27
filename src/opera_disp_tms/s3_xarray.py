@@ -33,7 +33,7 @@ def open_s3_xarray_dataset(url: str, group: str = '/') -> xr.Dataset:
         group: Group within the dataset to open
     """
     ds = xr.open_dataset(
-        S3_FS.open(s3_uri, **IO_PARAMS['fsspec_params']), group=group, engine='h5netcdf', **IO_PARAMS['h5py_params']
+        S3_FS.open(url, **IO_PARAMS['fsspec_params']), group=group, engine='h5netcdf', **IO_PARAMS['h5py_params']
     )
     return ds
 
@@ -60,9 +60,9 @@ def get_opera_disp_granule_metadata(url: str) -> Tuple:
     srs.ImportFromWkt(ds_metadata['spatial_ref'].attrs['crs_wkt'])
     epsg = int(srs.GetAuthorityCode(None))
 
-    reference_date = datetime.strptime(s3_url.split('/')[-1].split('_')[6], DATE_FORMAT)
-    secondary_date = datetime.strptime(s3_url.split('/')[-1].split('_')[7], DATE_FORMAT)
-    frame_id = int(s3_url.split('/')[-1].split('_')[4][1:])
+    reference_date = datetime.strptime(url.split('/')[-1].split('_')[6], DATE_FORMAT)
+    secondary_date = datetime.strptime(url.split('/')[-1].split('_')[7], DATE_FORMAT)
+    frame_id = int(url.split('/')[-1].split('_')[4][1:])
 
     return ref_point_eastingnorthing, epsg, reference_date, secondary_date, frame_id
 
@@ -81,7 +81,7 @@ def open_opera_disp_granule(url: str, data_vars=List[str]) -> xr.Dataset:
     data = ds[data_vars]
     data.rio.write_crs(ds['spatial_ref'].attrs['crs_wkt'], inplace=True)
 
-    ref_point_eastingnorthing, _, reference_date, secondary_date, frame_id = get_opera_disp_granule_metadata(s3_url)
+    ref_point_eastingnorthing, _, reference_date, secondary_date, frame_id = get_opera_disp_granule_metadata(url)
     data.attrs['reference_point_eastingnorthing'] = ref_point_eastingnorthing
     data.attrs['reference_date'] = reference_date
     data.attrs['secondary_date'] = secondary_date
