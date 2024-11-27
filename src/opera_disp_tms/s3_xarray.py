@@ -6,8 +6,8 @@ import xarray as xr
 from hyp3lib.fetch import download_file
 from osgeo import osr
 
-from opera_disp_tms.utils import DATE_FORMAT
 from opera_disp_tms.search import Granule
+from opera_disp_tms.utils import DATE_FORMAT
 
 
 IO_PARAMS = {
