@@ -214,7 +214,7 @@ def create_granule_metadata_dict(granule: Granule) -> dict:
     Returns:
         The granule metadata dictionary
     """
-    granule_info = get_opera_disp_granule_metadata(granule.s3_uri)
+    granule_info = get_opera_disp_granule_metadata(granule.url)
     ref_point_eastingnorthing, epsg, reference_date, secondary_date, frame = granule_info
     frame_metadata = {}
     frame_metadata[f'FRAME_{frame}_REF_POINT_EASTINGNORTHING'] = ', '.join([str(x) for x in ref_point_eastingnorthing])

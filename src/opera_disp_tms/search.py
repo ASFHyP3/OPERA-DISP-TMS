@@ -91,7 +91,6 @@ class Granule:
     frame_id: int
     orbit_pass: str
     url: str
-    s3_uri: str
     reference_date: datetime
     secondary_date: datetime
     creation_date: datetime
@@ -121,7 +120,6 @@ class Granule:
 
         urls = umm['umm']['RelatedUrls']
         url = next(url['URL'] for url in urls if url['Type'] == 'GET DATA')
-        s3_uri = next(url['URL'] for url in urls if url['Type'] == 'GET DATA VIA DIRECT ACCESS')
 
         reference_date = datetime.strptime(
             umm['umm']['TemporalExtent']['RangeDateTime']['BeginningDateTime'], CMR_DATE_FORMAT
@@ -135,7 +133,6 @@ class Granule:
             frame_id=frame_id,
             orbit_pass=orbit_pass,
             url=url,
-            s3_uri=s3_uri,
             reference_date=reference_date,
             secondary_date=secondary_date,
             creation_date=creation_date,
