@@ -117,7 +117,7 @@ def load_sw_disp_granule(granule: Granule, bbox: Iterable[int], frame: FrameMeta
         The short wavelength displacement data as an xarray DataArray
     """
     datasets = ['short_wavelength_displacement', 'recommended_mask']
-    granule_xr = open_opera_disp_granule(granule.url, datasets)
+    granule_xr = open_opera_disp_granule(granule, datasets)
     granule_xr = granule_xr.rio.clip_box(*bbox, crs='EPSG:3857')
     granule_xr = granule_xr.load()
     valid_data_mask = granule_xr['recommended_mask'] == 1

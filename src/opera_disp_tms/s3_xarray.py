@@ -7,6 +7,7 @@ import xarray as xr
 from osgeo import osr
 
 from opera_disp_tms.utils import DATE_FORMAT
+from opera_disp_tms.search import Granule
 
 
 IO_PARAMS = {
@@ -38,16 +39,16 @@ def open_s3_xarray_dataset(url: str, group: str = '/') -> xr.Dataset:
     return ds
 
 
-def get_opera_disp_granule_metadata(url: str) -> Tuple:
+def get_opera_disp_granule_metadata(granule: Granule) -> Tuple:
     """Get metadata from an OPERA DISP granule
 
     Args:
-        url: URL of the granule
+        granule: the OPERA DISP granule
 
     Returns:
         Tuple of reference point array, reference point geo, reference date, secondary date, frame_id, and EPSG
     """
-    ds_metadata = open_s3_xarray_dataset(url, group='/corrections')
+    ds_metadata = open_s3_xarray_dataset(granule.url, group='/corrections')
 
     row = int(ds_metadata['reference_point'].attrs['rows'])
     col = int(ds_metadata['reference_point'].attrs['cols'])
@@ -60,28 +61,24 @@ def get_opera_disp_granule_metadata(url: str) -> Tuple:
     srs.ImportFromWkt(ds_metadata['spatial_ref'].attrs['crs_wkt'])
     epsg = int(srs.GetAuthorityCode(None))
 
-    reference_date = datetime.strptime(s3_uri.split('/')[-1].split('_')[6], DATE_FORMAT)
-    secondary_date = datetime.strptime(s3_uri.split('/')[-1].split('_')[7], DATE_FORMAT)
-    frame_id = int(s3_uri.split('/')[-1].split('_')[4][1:])
-
-    return ref_point_eastingnorthing, epsg, reference_date, secondary_date, frame_id
+    return ref_point_eastingnorthing, epsg, granule.reference_date, granule.secondary_date, granule.frame_id
 
 
-def open_opera_disp_granule(url: str, data_vars=List[str]) -> xr.Dataset:
+def open_opera_disp_granule(granule: Granule, data_vars=List[str]) -> xr.Dataset:
     """Open an OPERA DISP granule from S3 and set important attributes
 
     Args:
-        url: URL of the granule
+        granule: the OPERA DISP granule
         data_vars: List of data variable names to include
 
     Returns:
         Dataset of the granule
     """
-    ds = open_s3_xarray_dataset(url)
+    ds = open_s3_xarray_dataset(granule.url)
     data = ds[data_vars]
     data.rio.write_crs(ds['spatial_ref'].attrs['crs_wkt'], inplace=True)
 
-    ref_point_eastingnorthing, _, reference_date, secondary_date, frame_id = get_opera_disp_granule_metadata(s3_uri)
+    ref_point_eastingnorthing, _, reference_date, secondary_date, frame_id = get_opera_disp_granule_metadata(granule)
     data.attrs['reference_point_eastingnorthing'] = ref_point_eastingnorthing
     data.attrs['reference_date'] = reference_date
     data.attrs['secondary_date'] = secondary_date
