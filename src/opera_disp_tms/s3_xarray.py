@@ -2,20 +2,15 @@ from datetime import datetime
 from typing import List, Tuple
 
 import rioxarray  # noqa
-import s3fs
 import xarray as xr
 from osgeo import osr
 
+from hyp3lib.fetch import download_file
 from opera_disp_tms.utils import DATE_FORMAT
 from opera_disp_tms.search import Granule
 
 
 IO_PARAMS = {
-    'fsspec_params': {
-        'skip_instance_cache': True,
-        'cache_type': 'first',  # or "first" with enough space
-        'block_size': 8 * 1024 * 1024,  # could be bigger
-    },
     'h5py_params': {
         'driver_kwds': {  # only recent versions of xarray and h5netcdf allow this correctly
             'page_buf_size': 32 * 1024 * 1024,  # this one only works in repacked files
@@ -23,7 +18,6 @@ IO_PARAMS = {
         }
     },
 }
-S3_FS = s3fs.S3FileSystem()
 
 
 def open_s3_xarray_dataset(url: str, group: str = '/') -> xr.Dataset:
@@ -33,8 +27,9 @@ def open_s3_xarray_dataset(url: str, group: str = '/') -> xr.Dataset:
         url: URL of the dataset
         group: Group within the dataset to open
     """
+    local_dataset_path = download_file(url, chunk_size=10485760)
     ds = xr.open_dataset(
-        S3_FS.open(url, **IO_PARAMS['fsspec_params']), group=group, engine='h5netcdf', **IO_PARAMS['h5py_params']
+        local_dataset_path, group=group, engine='h5netcdf', **IO_PARAMS['h5py_params']
     )
     return ds
 
