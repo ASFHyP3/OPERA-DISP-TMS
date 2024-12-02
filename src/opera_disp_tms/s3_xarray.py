@@ -8,7 +8,16 @@ from osgeo import osr
 from opera_disp_tms.search import Granule
 
 
+# TODO: re-enable when moving to production
+# import s3fs
+# S3_FS = s3fs.S3FileSystem()
+
 IO_PARAMS = {
+    'fsspec_params': {
+        'skip_instance_cache': True,
+        'cache_type': 'first',  # or "first" with enough space
+        'block_size': 8 * 1024 * 1024,  # could be bigger
+    },
     'h5py_params': {
         'driver_kwds': {  # only recent versions of xarray and h5netcdf allow this correctly
             'page_buf_size': 32 * 1024 * 1024,  # this one only works in repacked files
@@ -26,9 +35,11 @@ def open_s3_xarray_dataset(url: str, group: str = '/') -> xr.Dataset:
         group: Group within the dataset to open
     """
     local_dataset_path = download_file(url, chunk_size=10485760)
-    ds = xr.open_dataset(
-        local_dataset_path, group=group, engine='h5netcdf', **IO_PARAMS['h5py_params']
-    )
+    # TODO: re-enable when moving to production
+    # ds = xr.open_dataset(
+    #     S3_FS.open(s3_uri, **IO_PARAMS['fsspec_params']), group=group, engine='h5netcdf', **IO_PARAMS['h5py_params']
+    # )
+    ds = xr.open_dataset(local_dataset_path, group=group, engine='h5netcdf', **IO_PARAMS['h5py_params'])
     return ds
 
 
@@ -41,6 +52,7 @@ def get_opera_disp_granule_metadata(granule: Granule) -> Tuple:
     Returns:
         Tuple of reference point array, reference point geo, reference date, secondary date, frame_id, and EPSG
     """
+    # TODO: switch to granule.s3_uri when moving to production
     ds_metadata = open_s3_xarray_dataset(granule.url, group='/corrections')
 
     row = int(ds_metadata['reference_point'].attrs['rows'])
@@ -67,6 +79,7 @@ def open_opera_disp_granule(granule: Granule, data_vars=List[str]) -> xr.Dataset
     Returns:
         Dataset of the granule
     """
+    # TODO: switch to granule.s3_uri when moving to production
     ds = open_s3_xarray_dataset(granule.url)
     data = ds[data_vars]
     data.rio.write_crs(ds['spatial_ref'].attrs['crs_wkt'], inplace=True)
