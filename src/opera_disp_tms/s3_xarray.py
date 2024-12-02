@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List, Tuple
 
 import rioxarray  # noqa
@@ -34,7 +35,9 @@ def open_s3_xarray_dataset(url: str, group: str = '/') -> xr.Dataset:
         url: URL of the dataset
         group: Group within the dataset to open
     """
-    local_dataset_path = download_file(url, chunk_size=10485760)
+    local_dataset_path = Path.cwd() / url.split('/')[-1]
+    if not local_dataset_path.exists():
+        download_file(url, chunk_size=10485760)
     # TODO: re-enable when moving to production
     # ds = xr.open_dataset(
     #     S3_FS.open(s3_uri, **IO_PARAMS['fsspec_params']), group=group, engine='h5netcdf', **IO_PARAMS['h5py_params']
