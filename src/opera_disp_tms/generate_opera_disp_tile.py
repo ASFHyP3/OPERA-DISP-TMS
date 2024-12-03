@@ -63,6 +63,8 @@ def main():
     parser = argparse.ArgumentParser(description='Create a short wavelength cumulative displacement tile')
     parser.add_argument('--bucket', help='AWS S3 bucket HyP3 for upload the final products')
     parser.add_argument('--bucket-prefix', default='', help='Add a bucket prefix to products')
+    parser.add_argument('--edc-username', help='Earth Data Cloud username')
+    parser.add_argument('--edc-password', help='Earth Data Cloud password')
     parser.add_argument(
         'tile_type', type=str, choices=['displacement', 'secant_velocity', 'velocity'], help='Type of tile to produce'
     )
@@ -78,6 +80,11 @@ def main():
     args = parser.parse_args()
     args.begin_date = datetime.strptime(args.begin_date, '%Y%m%d')
     args.end_date = datetime.strptime(args.end_date, '%Y%m%d')
+
+    if args.edc_username and args.edc_password:
+        create_netrc(args.edc_username, args.edc_password)
+    else:
+        logging.log('Using local netrc file for EDC credentials')
 
     opera_disp_tiles = generate_opera_disp_tiles(
         args.tile_type, args.bbox, args.direction, args.begin_date, args.end_date
