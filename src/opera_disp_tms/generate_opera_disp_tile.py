@@ -55,7 +55,12 @@ def main():
     parser.add_argument(
         'tile_type', type=str, choices=['displacement', 'secant_velocity', 'velocity'], help='Type of tile to produce'
     )
-    parser.add_argument('bbox', type=int, nargs=4, help='Upper left corner of tile in form: min_lon max_lat')
+    parser.add_argument(
+        'bbox',
+        type=str.split,
+        nargs='+',
+        help='Integer bounds in EPSG:4326, formatted like [min lon, min lat, max lon, max lat]'
+    )
     parser.add_argument('direction', type=str, choices=['ascending', 'descending'], help='Direction of the orbit pass')
     parser.add_argument(
         'begin_date', type=str, help='Start of secondary date search range to generate tile for (e.g., 20211231)'
@@ -65,6 +70,11 @@ def main():
     )
 
     args = parser.parse_args()
+
+    args.bbox = [int(item) for sublist in args.bbox for item in sublist]
+    if len(args.bbox) != 4:
+        parser.error('Bounds must have exactly 4 values: [min lon, min lat, max lon, max lat] in EPSG:4326.')
+
     args.begin_date = datetime.strptime(args.begin_date, '%Y%m%d')
     args.end_date = datetime.strptime(args.end_date, '%Y%m%d')
 
