@@ -5,6 +5,7 @@ from itertools import product
 from pathlib import Path
 from typing import Iterable
 
+from hyp3lib.fetch import write_credentials_to_netrc_file
 from opera_disp_tms.create_tile_map import create_tile_map
 from opera_disp_tms.generate_metadata_tile import create_tile_for_bbox
 from opera_disp_tms.generate_sw_disp_tile import create_sw_disp_tile
@@ -82,9 +83,7 @@ def main():
     args.end_date = datetime.strptime(args.end_date, '%Y%m%d')
 
     if args.edc_username and args.edc_password:
-        create_netrc(args.edc_username, args.edc_password)
-    else:
-        logging.log('Using local netrc file for EDC credentials')
+        write_credentials_to_netrc_file(args.edc_username, args.edc_password)
 
     opera_disp_tiles = generate_opera_disp_tiles(
         args.tile_type, args.bbox, args.direction, args.begin_date, args.end_date
