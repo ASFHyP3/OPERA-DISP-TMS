@@ -1,4 +1,5 @@
 import argparse
+import os
 from datetime import datetime
 from itertools import product
 from pathlib import Path
@@ -8,6 +9,7 @@ from opera_disp_tms.create_tile_map import create_tile_map
 from opera_disp_tms.generate_metadata_tile import create_tile_for_bbox
 from opera_disp_tms.generate_sw_disp_tile import create_sw_disp_tile
 from opera_disp_tms.generate_sw_vel_tile import create_sw_vel_tile
+from opera_disp_tms.tmp_s3_access import get_temporary_aws_credentials
 from opera_disp_tms.utils import upload_dir_to_s3
 
 
@@ -31,11 +33,20 @@ def generate_opera_disp_tile(
     return out_path
 
 
+# TODO clear env vars after use?
+def refresh_aws_credentials():
+    aws_credentials = get_temporary_aws_credentials()
+    os.environ['AWS_ACCESS_KEY_ID'] = aws_credentials['accessKeyId']
+    os.environ['AWS_SECRET_ACCESS_KEY'] = aws_credentials['secretAccessKey']
+    os.environ['AWS_SESSION_TOKEN'] = aws_credentials['sessionToken']
+
+
 def generate_opera_disp_tiles(
     tile_type: str, bbox: Iterable[int], direction: str, begin_date: datetime, end_date: datetime
 ):
     tiles = []
     for corner in product(range(bbox[0], bbox[2]), range(bbox[1], bbox[3])):
+        refresh_aws_credentials()
         tiles.append(generate_opera_disp_tile(tile_type, corner, direction, begin_date, end_date))
 
     scale = {
