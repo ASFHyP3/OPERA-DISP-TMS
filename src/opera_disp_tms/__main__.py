@@ -27,7 +27,7 @@ def main():
     username = os.getenv('EARTHDATA_USERNAME')
     password = os.getenv('EARTHDATA_PASSWORD')
     if username and password:
-        write_credentials_to_netrc_file(username, password, append=False)
+        write_credentials_to_netrc_file(username, password, domain='uat.urs.earthdata.nasa.gov', append=False)
 
     # NOTE: Cast to set because of: https://github.com/pypa/setuptools/issues/3649
     (process_entry_point,) = set(entry_points(group='hyp3', name=args.process))
