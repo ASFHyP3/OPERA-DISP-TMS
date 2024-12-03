@@ -1,5 +1,6 @@
 import argparse
 
+import boto3
 import cachetools.func
 import requests
 
@@ -20,6 +21,18 @@ def get_temporary_aws_credentials(endpoint: str = 'https://cumulus-test.asf.alas
     resp = requests.get(endpoint)
     resp.raise_for_status()
     return resp.json()
+
+
+@cachetools.func.ttl_cache(ttl=60 * 50)
+def get_temporary_s3_session(endpoint: str = 'https://cumulus-test.asf.alaska.edu/s3credentials') -> dict:
+    creds = get_temporary_aws_credentials(endpoint=endpoint)
+    s3_client = boto3.client(
+        's3',
+        aws_access_key_id=creds['accessKeyId'],
+        aws_secret_access_key=creds['secretAccessKey'],
+        aws_session_token=creds['sessionToken'],
+    )
+    return s3_client
 
 
 def main():
