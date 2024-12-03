@@ -1,8 +1,8 @@
 import argparse
 
-import boto3
 import cachetools.func
 import requests
+import s3fs
 
 
 # Set TTL to number of seconds to cache.
@@ -24,15 +24,10 @@ def get_temporary_aws_credentials(endpoint: str = 'https://cumulus-test.asf.alas
 
 
 @cachetools.func.ttl_cache(ttl=60 * 50)
-def get_temporary_s3_session(endpoint: str = 'https://cumulus-test.asf.alaska.edu/s3credentials') -> dict:
+def get_temporary_s3_fs(endpoint: str = 'https://cumulus-test.asf.alaska.edu/s3credentials') -> dict:
     creds = get_temporary_aws_credentials(endpoint=endpoint)
-    s3_client = boto3.client(
-        's3',
-        aws_access_key_id=creds['accessKeyId'],
-        aws_secret_access_key=creds['secretAccessKey'],
-        aws_session_token=creds['sessionToken'],
-    )
-    return s3_client
+    s3_fs = s3fs.S3FileSystem(key=creds['accessKeyId'], secret=creds['secretAccessKey'], token=creds['sessionToken'])
+    return s3_fs
 
 
 def main():

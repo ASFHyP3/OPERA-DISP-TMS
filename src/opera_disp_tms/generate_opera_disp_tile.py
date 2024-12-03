@@ -8,14 +8,12 @@ from opera_disp_tms.create_tile_map import create_tile_map
 from opera_disp_tms.generate_metadata_tile import create_tile_for_bbox
 from opera_disp_tms.generate_sw_disp_tile import create_sw_disp_tile
 from opera_disp_tms.generate_sw_vel_tile import create_sw_vel_tile
-from opera_disp_tms.tmp_s3_access import get_temporary_s3_session
 from opera_disp_tms.utils import upload_dir_to_s3
 
 
 def generate_opera_disp_tile(
     tile_type: str, corner: Iterable[int], direction: str, begin_date: datetime, end_date: datetime
 ):
-    s3_client = get_temporary_s3_session()
     bbox = [corner[0], corner[1] - 1, corner[0] + 1, corner[1]]
     metadata_path = create_tile_for_bbox(bbox, direction=direction)
     if not metadata_path:

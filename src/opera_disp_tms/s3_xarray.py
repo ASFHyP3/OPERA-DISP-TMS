@@ -2,10 +2,10 @@ from datetime import datetime
 from typing import List, Tuple
 
 import rioxarray  # noqa
-import s3fs
 import xarray as xr
 from osgeo import osr
 
+from opera_disp_tms.tmp_s3_access import get_temporary_s3_fs
 from opera_disp_tms.utils import DATE_FORMAT
 
 
@@ -22,7 +22,6 @@ IO_PARAMS = {
         }
     },
 }
-S3_FS = s3fs.S3FileSystem()
 
 
 def open_s3_xarray_dataset(s3_uri: str, group: str = '/') -> xr.Dataset:
@@ -32,8 +31,10 @@ def open_s3_xarray_dataset(s3_uri: str, group: str = '/') -> xr.Dataset:
         s3_uri: URI of the dataset on S3
         group: Group within the dataset to open
     """
+    # TODO: try block to download data via http in s3 auth fails
+    s3_fs = get_temporary_s3_fs()
     ds = xr.open_dataset(
-        S3_FS.open(s3_uri, **IO_PARAMS['fsspec_params']), group=group, engine='h5netcdf', **IO_PARAMS['h5py_params']
+        s3_fs.open(s3_uri, **IO_PARAMS['fsspec_params']), group=group, engine='h5netcdf', **IO_PARAMS['h5py_params']
     )
     return ds
 
