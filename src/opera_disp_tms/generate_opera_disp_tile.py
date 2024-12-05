@@ -40,7 +40,7 @@ def generate_opera_disp_tiles(
 
     scale = {
         'displacement': None,
-        'seacant_velocity': [-0.05, 0.05],
+        'secant_velocity': [-0.05, 0.05],
         'velocity': [-0.05, 0.05],
     }
     create_tile_map(tile_type, [str(x) for x in tiles], scale[tile_type])
