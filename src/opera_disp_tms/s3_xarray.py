@@ -28,10 +28,12 @@ class s3_xarray_dataset:
     def __init__(self, s3_uri: str, group: str = '/'):
         self.s3_uri = s3_uri
         self.group = group
+
     def __enter__(self) -> xr.Dataset:
         self.s3_fs = get_temporary_s3_fs().open(self.s3_uri, **IO_PARAMS['fsspec_params'])
         self.ds = xr.open_dataset(self.s3_fs, group=self.group, engine='h5netcdf', **IO_PARAMS['h5py_params'])
         return self.ds
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.ds.close()
         self.s3_fs.close()

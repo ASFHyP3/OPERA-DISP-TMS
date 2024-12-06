@@ -11,8 +11,7 @@ from osgeo import gdal
 from rasterio.transform import Affine
 
 from opera_disp_tms import utils
-from opera_disp_tms.s3_xarray import s3_xarray_dataset
-from opera_disp_tms.s3_xarray import open_opera_disp_granule
+from opera_disp_tms.s3_xarray import open_opera_disp_granule, s3_xarray_dataset
 from opera_disp_tms.search import Granule, find_california_granules_for_frame
 
 
