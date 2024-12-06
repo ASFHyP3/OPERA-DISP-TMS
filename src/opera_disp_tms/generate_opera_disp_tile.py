@@ -1,6 +1,5 @@
 import argparse
 from datetime import datetime
-from itertools import product
 from pathlib import Path
 
 from opera_disp_tms.create_tile_map import create_tile_map
