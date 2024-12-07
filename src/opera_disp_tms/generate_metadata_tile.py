@@ -223,7 +223,7 @@ def create_granule_metadata_dict(granule: Granule) -> dict:
     return frame_metadata
 
 
-def create_metadata_tile(bbox: Iterable[int], frames: Iterable[Frame], tile_path: Path) -> None:
+def create_metadata_tile(bbox: Iterable[int], frames: Iterable[Frame], tile_path: Path) -> Path | None:
     """Add frame information to a frame metadata tile
 
     Args:
@@ -262,7 +262,7 @@ def create_metadata_tile(bbox: Iterable[int], frames: Iterable[Frame], tile_path
     return tile_path
 
 
-def create_tile_for_bbox(bbox: Iterable[int], direction: str) -> Path:
+def create_tile_for_bbox(bbox: Iterable[int], direction: str) -> Path | None:
     """Create the frame metadata tile for a specific bounding box
 
     Args:
