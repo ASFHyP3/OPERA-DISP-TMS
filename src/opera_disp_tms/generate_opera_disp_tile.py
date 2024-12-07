@@ -58,7 +58,7 @@ def main():
     parser.add_argument('--bucket', help='AWS S3 bucket HyP3 for upload the final products')
     parser.add_argument('--bucket-prefix', default='', help='Add a bucket prefix to products')
     parser.add_argument(
-        'tile_type', type=str, choices=['displacement', 'secant_velocity', 'velocity'], help='Type of tile to produce'
+        'tile_type', type=str, choices=['displacement', 'secant_velocity'], help='Type of tile to produce'
     )
     parser.add_argument(
         'bbox',
