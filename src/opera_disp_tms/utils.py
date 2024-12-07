@@ -1,14 +1,15 @@
+import os
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Iterable, Tuple, Union
 
 import requests
+from hyp3lib.aws import upload_file_to_s3
 from osgeo import gdal, osr
 from pyproj import Transformer
 
 
 gdal.UseExceptions()
-
 
 DATE_FORMAT = '%Y%m%dT%H%M%SZ'
 
@@ -155,3 +156,18 @@ def create_tile_name(
     end_date = datetime.strftime(end_date, date_fmt)
     name = '_'.join([prod_type, begin_date, end_date, flight_direction, tile_coordinates])
     return name
+
+
+def upload_dir_to_s3(path_to_dir: Path, bucket: str, prefix: str = ''):
+    """Upload a local directory, subdirectory, and all contents to an S3 bucket
+
+    Args:
+        path_to_dir: The local path to directory
+        bucket: S3 bucket to which the directory should be uploaded
+        prefix: prefix in S3 bucket to upload the directory to. Defaults to ''
+    """
+    for branch in os.walk(path_to_dir, topdown=True):
+        for filename in branch[2]:
+            path_to_file = Path(branch[0]) / filename
+            file_prefix = str(prefix / path_to_file.relative_to(path_to_dir).parent)
+            upload_file_to_s3(path_to_file, bucket, file_prefix)

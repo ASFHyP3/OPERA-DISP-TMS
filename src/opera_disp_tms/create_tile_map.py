@@ -8,7 +8,6 @@ from typing import List
 
 from osgeo import gdal, gdalconst, osr
 
-
 gdal.UseExceptions()
 
 
@@ -24,6 +23,9 @@ def get_tile_extent(info: dict, output_folder: Path) -> None:
     maxx, maxy = info['cornerCoordinates']['upperRight']
     proj = osr.SpatialReference(info['coordinateSystem']['wkt'])
     extent = {'extent': [minx, miny, maxx, maxy], 'EPSG': int(proj.GetAttrValue('AUTHORITY', 1))}
+
+    if not output_folder.exists():
+        output_folder.mkdir()
 
     with open(output_folder / 'extent.json', 'w') as outfile:
         json.dump(extent, outfile)
@@ -78,8 +80,8 @@ def create_tile_map(output_folder: str, input_rasters: list[str], scale_range: L
 def main():
     parser = argparse.ArgumentParser(
         description='Generate a directory with small .png tiles from a list of rasters in a common projection, '
-        'following the OSGeo Tile Map Service Specification, using gdal2tiles: '
-        'https://gdal.org/en/latest/programs/gdal2tiles.html'
+                    'following the OSGeo Tile Map Service Specification, using gdal2tiles: '
+                    'https://gdal.org/en/latest/programs/gdal2tiles.html'
     )
     parser.add_argument('output_folder', type=str, help='Path of the output directory to create')
     parser.add_argument('input_rasters', type=str, nargs='+', help='List of gdal-compatible raster paths to mosaic')

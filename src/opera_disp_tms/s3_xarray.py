@@ -2,10 +2,10 @@ from datetime import datetime
 from typing import List, Tuple
 
 import rioxarray  # noqa
-import s3fs
 import xarray as xr
 from osgeo import osr
 
+from opera_disp_tms.tmp_s3_access import get_temporary_s3_fs
 from opera_disp_tms.utils import DATE_FORMAT
 
 
@@ -22,20 +22,21 @@ IO_PARAMS = {
         }
     },
 }
-S3_FS = s3fs.S3FileSystem()
 
 
-def open_s3_xarray_dataset(s3_uri: str, group: str = '/') -> xr.Dataset:
-    """Open an xarray hdf5/netcdf4 dataset from S3
+class s3_xarray_dataset:
+    def __init__(self, s3_uri: str, group: str = '/'):
+        self.s3_uri = s3_uri
+        self.group = group
 
-    Args:
-        s3_uri: URI of the dataset on S3
-        group: Group within the dataset to open
-    """
-    ds = xr.open_dataset(
-        S3_FS.open(s3_uri, **IO_PARAMS['fsspec_params']), group=group, engine='h5netcdf', **IO_PARAMS['h5py_params']
-    )
-    return ds
+    def __enter__(self) -> xr.Dataset:
+        self.s3_fs = get_temporary_s3_fs().open(self.s3_uri, **IO_PARAMS['fsspec_params'])
+        self.ds = xr.open_dataset(self.s3_fs, group=self.group, engine='h5netcdf', **IO_PARAMS['h5py_params'])
+        return self.ds
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.ds.close()
+        self.s3_fs.close()
 
 
 def get_opera_disp_granule_metadata(s3_uri) -> Tuple:
@@ -47,18 +48,17 @@ def get_opera_disp_granule_metadata(s3_uri) -> Tuple:
     Returns:
         Tuple of reference point array, reference point geo, reference date, secondary date, frame_id, and EPSG
     """
-    ds_metadata = open_s3_xarray_dataset(s3_uri, group='/corrections')
+    with s3_xarray_dataset(s3_uri, group='/corrections') as ds_metadata:
+        row = int(ds_metadata['reference_point'].attrs['rows'])
+        col = int(ds_metadata['reference_point'].attrs['cols'])
 
-    row = int(ds_metadata['reference_point'].attrs['rows'])
-    col = int(ds_metadata['reference_point'].attrs['cols'])
+        easting = int(ds_metadata.x.values[col])
+        northing = int(ds_metadata.y.values[row])
+        ref_point_eastingnorthing = (easting, northing)
 
-    easting = int(ds_metadata.x.values[col])
-    northing = int(ds_metadata.y.values[row])
-    ref_point_eastingnorthing = (easting, northing)
-
-    srs = osr.SpatialReference()
-    srs.ImportFromWkt(ds_metadata['spatial_ref'].attrs['crs_wkt'])
-    epsg = int(srs.GetAuthorityCode(None))
+        srs = osr.SpatialReference()
+        srs.ImportFromWkt(ds_metadata['spatial_ref'].attrs['crs_wkt'])
+        epsg = int(srs.GetAuthorityCode(None))
 
     reference_date = datetime.strptime(s3_uri.split('/')[-1].split('_')[6], DATE_FORMAT)
     secondary_date = datetime.strptime(s3_uri.split('/')[-1].split('_')[7], DATE_FORMAT)
@@ -67,7 +67,7 @@ def get_opera_disp_granule_metadata(s3_uri) -> Tuple:
     return ref_point_eastingnorthing, epsg, reference_date, secondary_date, frame_id
 
 
-def open_opera_disp_granule(s3_uri: str, data_vars=List[str]) -> xr.Dataset:
+def open_opera_disp_granule(ds: xr.Dataset, s3_uri: str, data_vars=List[str]) -> xr.Dataset:
     """Open an OPERA DISP granule from S3 and set important attributes
 
     Args:
@@ -77,7 +77,6 @@ def open_opera_disp_granule(s3_uri: str, data_vars=List[str]) -> xr.Dataset:
     Returns:
         Dataset of the granule
     """
-    ds = open_s3_xarray_dataset(s3_uri)
     data = ds[data_vars]
     data.rio.write_crs(ds['spatial_ref'].attrs['crs_wkt'], inplace=True)
 

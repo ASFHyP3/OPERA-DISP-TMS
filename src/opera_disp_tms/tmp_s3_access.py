@@ -2,6 +2,7 @@ import argparse
 
 import cachetools.func
 import requests
+import s3fs
 
 
 # Set TTL to number of seconds to cache.
@@ -20,6 +21,13 @@ def get_temporary_aws_credentials(endpoint: str = 'https://cumulus-test.asf.alas
     resp = requests.get(endpoint)
     resp.raise_for_status()
     return resp.json()
+
+
+@cachetools.func.ttl_cache(ttl=60 * 50)
+def get_temporary_s3_fs(endpoint: str = 'https://cumulus-test.asf.alaska.edu/s3credentials') -> s3fs.S3FileSystem:
+    creds = get_temporary_aws_credentials(endpoint=endpoint)
+    s3_fs = s3fs.S3FileSystem(key=creds['accessKeyId'], secret=creds['secretAccessKey'], token=creds['sessionToken'])
+    return s3_fs
 
 
 def main():

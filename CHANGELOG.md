@@ -10,6 +10,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 * Ability to update the reference date for OPERA DISP granule xarray objects
 * Integration with CMR metadata when searching for granules
+* Entrypoint and docker container generation capability for HyP3
 
 ### Changed
 * find_california_dataset.py to search.py and added functionality to search for granules in CMR

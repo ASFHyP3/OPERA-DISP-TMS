@@ -58,6 +58,9 @@ generate_sw_vel_tile = "opera_disp_tms.generate_sw_vel_tile:main"
 get_tmp_s3_creds = "opera_disp_tms.tmp_s3_access:main"
 create_tile_map = "opera_disp_tms.create_tile_map:main"
 
+[project.entry-points.hyp3]
+generate_opera_disp_tile = "opera_disp_tms.generate_opera_disp_tile:main"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 script_launch_mode = "subprocess"

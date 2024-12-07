@@ -223,7 +223,7 @@ def create_granule_metadata_dict(granule: Granule) -> dict:
     return frame_metadata
 
 
-def create_metadata_tile(bbox: Iterable[int], frames: Iterable[Frame], tile_path: Path) -> None:
+def create_metadata_tile(bbox: Iterable[int], frames: Iterable[Frame], tile_path: Path) -> Path | None:
     """Add frame information to a frame metadata tile
 
     Args:
@@ -259,9 +259,10 @@ def create_metadata_tile(bbox: Iterable[int], frames: Iterable[Frame], tile_path
     tile_ds.SetMetadata(metadata_dict)
     tile_ds.FlushCache()
     tile_ds = None
+    return tile_path
 
 
-def create_tile_for_bbox(bbox: Iterable[int], direction: str) -> Path:
+def create_tile_for_bbox(bbox: Iterable[int], direction: str) -> Path | None:
     """Create the frame metadata tile for a specific bounding box
 
     Args:
@@ -280,7 +281,7 @@ def create_tile_for_bbox(bbox: Iterable[int], direction: str) -> Path:
     # This ordering minimizes orbit-edge gaps in tilesets by prioritizing IW1 over IW3 data
     order_by = 'east_most' if direction == 'ASCENDING' else 'west_most'
     ordered_frames = reorder_frames(updated_frames, add_first=order_by)
-    create_metadata_tile(bbox, ordered_frames, out_path)
+    out_path = create_metadata_tile(bbox, ordered_frames, out_path)
     return out_path
 
 
