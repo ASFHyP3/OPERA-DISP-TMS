@@ -28,8 +28,6 @@ def generate_opera_disp_tile(
         out_path = create_sw_disp_tile(metadata_path, begin_date, end_date)
     elif tile_type == 'secant_velocity':
         out_path = create_sw_vel_tile(metadata_path, begin_date, end_date, minmax=True)
-    elif tile_type == 'velocity':
-        out_path = create_sw_vel_tile(metadata_path, begin_date, end_date, minmax=False)
     else:
         raise ValueError(f'Unsupported tile type: {tile_type}')
 
@@ -46,7 +44,6 @@ def generate_opera_disp_tiles(
     scale = {
         'displacement': None,
         'secant_velocity': [-0.05, 0.05],
-        'velocity': [-0.05, 0.05],
     }
     create_tile_map(tile_type, [str(x) for x in tiles], scale[tile_type])
     return Path(tile_type)
@@ -58,7 +55,7 @@ def main():
     parser.add_argument('--bucket', help='AWS S3 bucket HyP3 for upload the final products')
     parser.add_argument('--bucket-prefix', default='', help='Add a bucket prefix to products')
     parser.add_argument(
-        'tile_type', type=str, choices=['displacement', 'secant_velocity', 'velocity'], help='Type of tile to produce'
+        'tile_type', type=str, choices=['displacement', 'secant_velocity'], help='Type of tile to produce'
     )
     parser.add_argument(
         'bbox',
