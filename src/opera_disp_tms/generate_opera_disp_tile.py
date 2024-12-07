@@ -28,8 +28,6 @@ def generate_opera_disp_tile(
         out_path = create_sw_disp_tile(metadata_path, begin_date, end_date)
     elif tile_type == 'secant_velocity':
         out_path = create_sw_vel_tile(metadata_path, begin_date, end_date, minmax=True)
-    elif tile_type == 'velocity':
-        out_path = create_sw_vel_tile(metadata_path, begin_date, end_date, minmax=False)
     else:
         raise ValueError(f'Unsupported tile type: {tile_type}')
 
@@ -46,7 +44,6 @@ def generate_opera_disp_tiles(
     scale = {
         'displacement': None,
         'secant_velocity': [-0.05, 0.05],
-        'velocity': [-0.05, 0.05],
     }
     create_tile_map(tile_type, [str(x) for x in tiles], scale[tile_type])
     return Path(tile_type)
