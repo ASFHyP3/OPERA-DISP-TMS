@@ -11,7 +11,7 @@ from osgeo import gdal
 from rasterio.transform import Affine
 
 from opera_disp_tms import utils
-from opera_disp_tms.s3_xarray import open_opera_disp_granule
+from opera_disp_tms.s3_xarray import open_opera_disp_granule, s3_xarray_dataset
 from opera_disp_tms.search import Granule, find_california_granules_for_frame
 
 
@@ -117,12 +117,13 @@ def load_sw_disp_granule(granule: Granule, bbox: Iterable[int], frame: FrameMeta
         The short wavelength displacement data as an xarray DataArray
     """
     datasets = ['short_wavelength_displacement', 'recommended_mask']
-    granule_xr = open_opera_disp_granule(granule.s3_uri, datasets)
-    granule_xr = granule_xr.rio.clip_box(*bbox, crs='EPSG:3857')
-    granule_xr = granule_xr.load()
-    valid_data_mask = granule_xr['recommended_mask'] == 1
-    sw_cumul_disp_xr = granule_xr['short_wavelength_displacement'].where(valid_data_mask, np.nan)
-    sw_cumul_disp_xr.attrs = granule_xr.attrs
+    with s3_xarray_dataset(granule.s3_uri) as ds:
+        granule_xr = open_opera_disp_granule(ds, granule.s3_uri, datasets)
+        granule_xr = granule_xr.rio.clip_box(*bbox, crs='EPSG:3857')
+        granule_xr = granule_xr.load()
+        valid_data_mask = granule_xr['recommended_mask'] == 1
+        sw_cumul_disp_xr = granule_xr['short_wavelength_displacement'].where(valid_data_mask, np.nan)
+        sw_cumul_disp_xr.attrs = granule_xr.attrs
     sw_cumul_disp_xr.attrs['bbox'] = bbox
     return sw_cumul_disp_xr
 
