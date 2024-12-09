@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 from mimetypes import guess_type
 from pathlib import Path
@@ -175,7 +176,7 @@ def upload_dir_to_s3(path_to_dir: Path, bucket: str, prefix: str = ''):
         bucket: S3 bucket to which the directory should be uploaded
         prefix: prefix in S3 bucket to upload the directory to. Defaults to ''
     """
-    for branch in path_to_dir.walk():
+    for branch in os.walk(path_to_dir, topdown=True):
         for filename in branch[2]:
             path_to_file = Path(branch[0]) / filename
             key = str(prefix / path_to_file.relative_to(path_to_dir))
