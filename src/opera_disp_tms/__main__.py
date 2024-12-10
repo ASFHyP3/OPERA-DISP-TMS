@@ -13,7 +13,7 @@ from opera_disp_tms.utils import upload_dir_to_s3
 
 
 def main():
-    """CLI entrypoint"""
+    """CLI entrypoint for generating OPERA-DISP tiles"""
     parser = argparse.ArgumentParser(description='Create a short wavelength cumulative displacement tile')
     parser.add_argument('--bucket', help='AWS S3 bucket HyP3 for upload the final products')
     parser.add_argument('--bucket-prefix', default='', help='Add a bucket prefix to products')
