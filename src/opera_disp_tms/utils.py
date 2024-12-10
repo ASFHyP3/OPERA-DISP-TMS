@@ -1,16 +1,18 @@
 import os
 from datetime import datetime, timedelta
+from mimetypes import guess_type
 from pathlib import Path
 from typing import Iterable, Tuple, Union
 
+import boto3
 import requests
-from hyp3lib.aws import upload_file_to_s3
 from osgeo import gdal, osr
 from pyproj import Transformer
 
 
 gdal.UseExceptions()
 
+S3_CLIENT = boto3.client('s3')
 DATE_FORMAT = '%Y%m%dT%H%M%SZ'
 
 
@@ -158,6 +160,15 @@ def create_tile_name(
     return name
 
 
+def upload_file_to_s3(path_to_file: Path, bucket: str, key):
+    extra_args = {'ContentType': guess_type(path_to_file)[0]}
+    S3_CLIENT.upload_file(str(path_to_file), bucket, key, ExtraArgs=extra_args)
+
+    # tag files as 'product' so hyp3 doesn't treat the .png files as browse images
+    tag_set = {'TagSet': [{'Key': 'file_type', 'Value': 'product'}]}
+    S3_CLIENT.put_object_tagging(Bucket=bucket, Key=key, Tagging=tag_set)
+
+
 def upload_dir_to_s3(path_to_dir: Path, bucket: str, prefix: str = ''):
     """Upload a local directory, subdirectory, and all contents to an S3 bucket
 
@@ -169,5 +180,5 @@ def upload_dir_to_s3(path_to_dir: Path, bucket: str, prefix: str = ''):
     for branch in os.walk(path_to_dir, topdown=True):
         for filename in branch[2]:
             path_to_file = Path(branch[0]) / filename
-            file_prefix = str(prefix / path_to_file.relative_to(path_to_dir).parent)
-            upload_file_to_s3(path_to_file, bucket, file_prefix)
+            key = str(prefix / path_to_file.relative_to(path_to_dir))
+            upload_file_to_s3(path_to_file, bucket, key)

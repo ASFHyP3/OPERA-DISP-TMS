@@ -3,10 +3,7 @@ OPERA-DISP Tile Map Service Generator
 """
 
 import argparse
-import datetime
-import os
-
-from hyp3lib.fetch import write_credentials_to_netrc_file
+from datetime import datetime
 
 from opera_disp_tms.generate_opera_disp_tile import generate_opera_disp_tiles
 from opera_disp_tms.utils import upload_dir_to_s3
@@ -42,11 +39,6 @@ def main():
 
     args.begin_date = datetime.strptime(args.begin_date, '%Y%m%d')
     args.end_date = datetime.strptime(args.end_date, '%Y%m%d')
-
-    username = os.getenv('EARTHDATA_USERNAME')
-    password = os.getenv('EARTHDATA_PASSWORD')
-    if username and password:
-        write_credentials_to_netrc_file(username, password, domain='uat.urs.earthdata.nasa.gov', append=False)
 
     opera_disp_tiles = generate_opera_disp_tiles(
         args.tile_type, args.bbox, args.direction, args.begin_date, args.end_date
