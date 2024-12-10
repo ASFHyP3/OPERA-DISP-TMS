@@ -9,7 +9,7 @@ from opera_disp_tms.tmp_s3_access import get_temporary_s3_fs
 from opera_disp_tms.utils import DATE_FORMAT
 
 
-IO_PARAMS = {
+IO_PARAMS: dict[str, dict] = {
     'fsspec_params': {
         'skip_instance_cache': True,
         'cache_type': 'first',  # or "first" with enough space

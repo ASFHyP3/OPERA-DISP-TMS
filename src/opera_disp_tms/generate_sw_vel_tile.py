@@ -56,7 +56,7 @@ def linear_regression_leastsquares(x: np.ndarray, y: np.ndarray) -> tuple:
 
     xmean = np.mean(x)
     ymean = np.mean(y)
-    ssxm, ssxym, _, ssym = np.cov(x, y, bias=1).flat
+    ssxm, ssxym, _, ssym = np.cov(x, y, bias=True).flat
     slope = ssxym / ssxm
     intercept = ymean - slope * xmean
     return slope, intercept
