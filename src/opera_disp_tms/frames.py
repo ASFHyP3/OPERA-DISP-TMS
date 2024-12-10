@@ -2,7 +2,7 @@ import json
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Optional, Tuple
+from typing import Iterable, Tuple
 
 from shapely import from_wkt
 from shapely.geometry import Polygon, box
@@ -78,9 +78,9 @@ def download_frame_db(db_path: Path = DB_PATH) -> Path:
 
 def build_query(
     bbox: Iterable[int],
-    orbit_pass: Optional[str] = None,
-    is_north_america: Optional[bool] = None,
-    is_land: Optional[bool] = None,
+    orbit_pass: str | None = None,
+    is_north_america: bool | None = None,
+    is_land: bool | None = None,
 ) -> Tuple:
     """Build a query for identifying OPERA frames intersecting a given bounding box,
     optionally filtering by more fields.
@@ -140,9 +140,9 @@ def build_query(
 
 def intersect(
     bbox: Iterable[int],
-    orbit_pass: Optional[str] = None,
-    is_north_america: Optional[bool] = None,
-    is_land: Optional[bool] = None,
+    orbit_pass: str | None = None,
+    is_north_america: bool | None = None,
+    is_land: bool | None = None,
 ) -> Iterable[Frame]:
     """Query OPERA frame database to obtain frames intersecting a given bounding box,
     optionally filtering by more fields.

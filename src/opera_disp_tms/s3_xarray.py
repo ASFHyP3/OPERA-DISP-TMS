@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import List, Tuple
 
 import rioxarray  # noqa
 import xarray as xr
@@ -39,7 +38,7 @@ class s3_xarray_dataset:
         self.s3_fs.close()
 
 
-def get_opera_disp_granule_metadata(s3_uri) -> Tuple:
+def get_opera_disp_granule_metadata(s3_uri) -> tuple:
     """Get metadata from an OPERA DISP granule
 
     Args:
@@ -67,7 +66,7 @@ def get_opera_disp_granule_metadata(s3_uri) -> Tuple:
     return ref_point_eastingnorthing, epsg, reference_date, secondary_date, frame_id
 
 
-def open_opera_disp_granule(ds: xr.Dataset, s3_uri: str, data_vars=List[str]) -> xr.Dataset:
+def open_opera_disp_granule(ds: xr.Dataset, s3_uri: str, data_vars=list[str]) -> xr.Dataset:
     """Open an OPERA DISP granule from S3 and set important attributes
 
     Args:
