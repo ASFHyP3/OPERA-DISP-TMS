@@ -164,6 +164,7 @@ def upload_file_to_s3(path_to_file: Path, bucket: str, key):
     extra_args = {'ContentType': guess_type(path_to_file)[0]}
     S3_CLIENT.upload_file(str(path_to_file), bucket, key, ExtraArgs=extra_args)
 
+    # tag files as 'product' so hyp3 doesn't treat the .png files as browse images
     tag_set = {'TagSet': [{'Key': 'file_type', 'Value': 'product'}]}
     S3_CLIENT.put_object_tagging(Bucket=bucket, Key=key, Tagging=tag_set)
 
