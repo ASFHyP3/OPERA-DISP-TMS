@@ -228,7 +228,7 @@ def create_metadata_tile(bbox: tuple[int, int, int, int], frames: Iterable[Frame
         tile_path: The path to the frame metadata tile
 
     Returns:
-        The path to the metadata tile or `None` if no granules are found. 
+        The path to the metadata tile or `None` if no granules are found.
     """
     validate_bbox(bbox)
     create_empty_frame_tile(bbox, tile_path)
