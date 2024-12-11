@@ -10,7 +10,7 @@ from osgeo import gdal, gdalconst, osr
 gdal.UseExceptions()
 
 
-def get_tile_extent(info: dict, output_folder: Path):
+def get_tile_extent(info: dict, output_folder: Path) -> None:
     """Generate file with the bounds of the newly created vrt
         Will return a file with: {"extent": [minx, miny, maxx, maxy], "EPSG": %EPSG}
 
@@ -30,7 +30,7 @@ def get_tile_extent(info: dict, output_folder: Path):
         json.dump(extent, outfile)
 
 
-def create_tile_map(output_folder: str, input_rasters: list[str], scale_range: list[float] | None = None):
+def create_tile_map(output_folder: str, input_rasters: list[str], scale_range: list[float] | None = None) -> None:
     """Generate a directory with small .png tiles from a list of rasters in a common projection, following the OSGeo
     Tile Map Service Specification, using gdal2tiles: https://gdal.org/en/latest/programs/gdal2tiles.html
 
