@@ -18,25 +18,15 @@ python -m pip install -e .
 ```
 
 ## Credentials
-### Earthdata
-This repository assumes that you have credentials for `urs.earthdata.nasa.gov` (Earthdata login) and `uat.urs.earthdata.nasa.gov` (Earthdata login UAT) configured in your `netrc` file.
 
-For instructions on setting up your Earthdata login (and Earthdata login UAT) via a `.netrc` file, check out this [guide](https://harmony.earthdata.nasa.gov/docs#getting-started).
+This application requires Earthdata Login UAT credentials to download OPERA Displacement data. These credentials can be provided either via a `uat.urs.earthdata.nasa.gov` entry in your `.netrc` file, or via `EARTHDATA_USERNAME` and `EARTHDATA_PASSWORD` environment variables.
 
-### Temporary AWS credentials
-The `get_tmp_s3_creds` CLI command can be used to generate temporary S3 access credentials for a NASA Cumulus Thin Egress App (TEA):
-```bash
-get_tmp_s3_creds --endpoint https://cumulus-test.asf.alaska.edu/s3credentials
-```
-Where `--endpoint` is the TEA S3 endpoint you want to generate credentials for. When called with no arguments (`get_tmp_s3_creds`) the CLI commands defaults to the ASF Cumulus UAT's TEA endpoint.
+For instructions on setting up your Earthdata Login via a `.netrc` file, check out this [guide](https://harmony.earthdata.nasa.gov/docs#getting-started).
 
-This CLI command will print three bash `export` commands to the terminal. Run these commands to configure your new temporary AWS credentials
-
-**These temporary credentials expire every hour and will need to be regenerated accordingly.**
+> [!WARNING]
+> This application uses [S3 Direct Access](https://cumulus-test.asf.alaska.edu/s3credentialsREADME) to download OPERA Displacement data, and must be run in the `us-west-2` AWS region.
 
 ## Usage
-> [!WARNING]
-> Products in ASF's Cumulus UAT environment are not publicly accessible. To run this workflow using data hosted in ASF's Cumulus UAT environment you first need to generate temporary S3 access credentials while on the NASA or ASF DAAC VPN, then `export` the created credentials to an AWS us-west-2 compute environment. See [Temporary AWS Credentials](#temporary-aws-credentials) for more details.
 
 ### Create a frame metadata tile
 These tiles serve as the foundation for the creation of all other Tile Map Server datasets. More details on the structure of these datasets can be found in the [Design.md](https://github.com/ASFHyP3/OPERA-DISP-TMS/blob/develop/Design.md) document.
