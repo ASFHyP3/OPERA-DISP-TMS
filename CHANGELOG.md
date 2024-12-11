@@ -17,9 +17,14 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * find_california_dataset.py to search.py and added functionality to search for granules in CMR
 * Updated all scripts to use the new find_california_granules_for_frame function
 * `generate_sw_disp_tile.py` now masks using `recomended_mask`
+* Authentication now requires Earthdata Login UAT credentials provided via .netrc or environment variables
 
 ### Removed
 * CSV-based caching of granules in favor of CMR-based searching
+* Command line interface and entrypoint for get_tmp_s3_creds.py
+
+### Fixed
+* s3fs/xarray resources are now closed when no longer used, resolving an issue where attempting to open new resources could hang indefinitely
 
 ## [0.3.0]
 ### Added
