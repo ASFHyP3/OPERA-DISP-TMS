@@ -36,7 +36,7 @@ def download_file(
     url: str,
     download_path: Union[Path, str] = '.',
     chunk_size=10 * (2**20),
-):
+) -> None:
     """Download a file without authentication.
 
     Args:

@@ -25,7 +25,7 @@ class Date(argparse.Action):
 class Bbox(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         try:
-            bbox = [int(item) for sublist in values for item in sublist]
+            bbox = tuple(int(item) for sublist in values for item in sublist)
         except ValueError:
             parser.error(f'{self.dest} values must be integers ordered [min lon, min lat, max lon, max lat]')
         if len(bbox) != 4:
@@ -36,7 +36,7 @@ class Bbox(argparse.Action):
 
 
 def generate_mosaic_geotiff(
-    tile_type: str, bbox: list[int, int, int, int], direction: str, begin_date: datetime, end_date: datetime
+    tile_type: str, bbox: tuple[int, int, int, int], direction: str, begin_date: datetime, end_date: datetime
 ) -> Path:
     metadata_geotiff = create_tile_for_bbox(bbox, direction=direction)
     if not metadata_geotiff:
@@ -53,7 +53,7 @@ def generate_mosaic_geotiff(
 
 
 def generate_tile_map_service(
-    tile_type: str, bbox: list[int, int, int, int], direction: str, begin_date: datetime, end_date: datetime
+    tile_type: str, bbox: tuple[int, int, int, int], direction: str, begin_date: datetime, end_date: datetime
 ) -> Path:
     mosaic = generate_mosaic_geotiff(tile_type, bbox, direction, begin_date, end_date)
 

@@ -99,7 +99,7 @@ def reorder_frames(frame_list: Iterable[Frame], add_first: str) -> list[Frame]:
     return sorted_frames
 
 
-def create_empty_frame_tile(bbox: tuple[int, int, int, int], out_path: Path, resolution: int = 30):
+def create_empty_frame_tile(bbox: tuple[int, int, int, int], out_path: Path, resolution: int = 30) -> None:
     """Create an empty frame metadata tile in EPSG:3857 with a 30 m resolution
 
     Args:

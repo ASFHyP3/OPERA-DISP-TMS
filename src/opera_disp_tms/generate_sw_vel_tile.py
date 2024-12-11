@@ -120,7 +120,7 @@ def add_velocity_data_to_array(
     return out_array
 
 
-def create_sw_vel_tile(metadata_path: Path, begin_date: datetime, end_date: datetime, minmax: bool = True):
+def create_sw_vel_tile(metadata_path: Path, begin_date: datetime, end_date: datetime, minmax: bool = True) -> Path:
     if not metadata_path.exists():
         raise FileNotFoundError(f'{metadata_path} does not exist')
     if begin_date > end_date:
