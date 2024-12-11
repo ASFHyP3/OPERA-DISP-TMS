@@ -81,7 +81,6 @@ def parallel_linear_regression(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 
 def add_velocity_data_to_array(
     granules: Iterable[Granule],
-    frame: sw_disp.FrameMeta,
     geotransform: Affine,
     frame_map_array: np.ndarray,
     out_array: np.ndarray,
@@ -139,9 +138,8 @@ def create_sw_vel_tile(metadata_path: Path, begin_date: datetime, end_date: date
     frame_map, geotransform = get_raster_as_numpy(metadata_path)
     geotransform = Affine.from_gdal(*geotransform)
     sw_vel = np.full(frame_map.shape, np.nan, dtype=float)
-    for frame_id, granules in needed_granules.items():
-        frame = frames[frame_id]
-        sw_vel = add_velocity_data_to_array(granules, frame, geotransform, frame_map, sw_vel)
+    for granules in needed_granules.values():
+        sw_vel = add_velocity_data_to_array(granules, geotransform, frame_map, sw_vel)
 
     gdal.Translate(str(product_path), str(metadata_path), outputType=gdal.GDT_Float32, format='GTiff')
     ds = gdal.Open(str(product_path), gdal.GA_Update)
