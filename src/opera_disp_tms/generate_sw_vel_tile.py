@@ -56,7 +56,7 @@ def linear_regression_leastsquares(x: np.ndarray, y: np.ndarray) -> tuple:
 
     xmean = np.mean(x)
     ymean = np.mean(y)
-    ssxm, ssxym, _, ssym = np.cov(x, y, bias=1).flat
+    ssxm, ssxym, _, ssym = np.cov(x, y, bias=True).flat
     slope = ssxym / ssxm
     intercept = ymean - slope * xmean
     return slope, intercept
@@ -120,7 +120,7 @@ def add_velocity_data_to_array(
     return out_array
 
 
-def create_sw_vel_tile(metadata_path: Path, begin_date: datetime, end_date: datetime, minmax: bool = True):
+def create_sw_vel_tile(metadata_path: Path, begin_date: datetime, end_date: datetime, minmax: bool = True) -> Path:
     if not metadata_path.exists():
         raise FileNotFoundError(f'{metadata_path} does not exist')
     if begin_date > end_date:
