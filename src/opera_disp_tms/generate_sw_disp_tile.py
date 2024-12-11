@@ -105,7 +105,7 @@ def find_needed_granules(
     return needed_granules
 
 
-def load_sw_disp_granule(granule: Granule, bbox: Iterable[float]) -> xr.DataArray:
+def load_sw_disp_granule(granule: Granule, bbox: tuple[float, float, float, float]) -> xr.DataArray:
     """Load the short wavelength displacement data for and OPERA DISP granule.
     Clips to frame map and masks out invalid data.
 
