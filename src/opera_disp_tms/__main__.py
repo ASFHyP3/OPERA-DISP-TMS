@@ -67,7 +67,9 @@ def generate_tile_map_service(
 
 def main():
     """HyP3 CLI entrypoint to create a Tile Map Service (TMS) visualization of the OPERA Displacement data set"""
-    parser = argparse.ArgumentParser(description='Create a Tile Map Service (TMS) visualization of the OPERA Displacement data set')
+    parser = argparse.ArgumentParser(
+        description='Create a Tile Map Service (TMS) visualization of the OPERA Displacement data set'
+    )
     parser.add_argument('--bucket', help='AWS S3 bucket HyP3 for upload the final products')
     parser.add_argument('--bucket-prefix', default='', help='Add a bucket prefix to products')
     parser.add_argument(
