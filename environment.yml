@@ -16,6 +16,7 @@ dependencies:
   - pytest
   - pytest-console-scripts
   - pytest-cov
+  - responses
   # For Running
   - gdal
   - boto3
@@ -24,7 +25,6 @@ dependencies:
   - pyproj
   - h5py
   - h5netcdf
-  - hyp3lib
   - xarray
   - rioxarray
   - numba
