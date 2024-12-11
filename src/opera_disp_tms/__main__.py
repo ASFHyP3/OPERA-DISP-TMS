@@ -36,11 +36,11 @@ class Bbox(argparse.Action):
 
 
 def generate_mosaic_geotiff(
-    tile_type: str, bbox: list[int], direction: str, begin_date: datetime, end_date: datetime
-):
+    tile_type: str, bbox: list[int, int, int, int], direction: str, begin_date: datetime, end_date: datetime
+) -> Path:
     metadata_geotiff = create_tile_for_bbox(bbox, direction=direction)
     if not metadata_geotiff:
-        return
+        raise ValueError(f'No data found for bounding box {bbox} and direction {direction}')
 
     if tile_type == 'displacement':
         mosaic_geotiff = create_sw_disp_tile(metadata_geotiff, begin_date, end_date)
@@ -53,8 +53,8 @@ def generate_mosaic_geotiff(
 
 
 def generate_tile_map_service(
-    tile_type: str, bbox: list[int], direction: str, begin_date: datetime, end_date: datetime
-):
+    tile_type: str, bbox: list[int, int, int, int], direction: str, begin_date: datetime, end_date: datetime
+) -> Path:
     mosaic = generate_mosaic_geotiff(tile_type, bbox, direction, begin_date, end_date)
 
     scale = {
