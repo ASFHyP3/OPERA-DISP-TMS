@@ -16,6 +16,7 @@ dependencies:
   - pytest
   - pytest-console-scripts
   - pytest-cov
+  - responses
   # For Running
   - gdal
   - boto3

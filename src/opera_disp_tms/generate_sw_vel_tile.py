@@ -10,7 +10,7 @@ from osgeo import gdal
 from rasterio.transform import Affine
 
 from opera_disp_tms import generate_sw_disp_tile as sw_disp
-from opera_disp_tms.find_california_dataset import Granule
+from opera_disp_tms.search import Granule
 from opera_disp_tms.utils import create_buffered_bbox, create_tile_name, get_raster_as_numpy
 
 
@@ -56,7 +56,7 @@ def linear_regression_leastsquares(x: np.ndarray, y: np.ndarray) -> tuple:
 
     xmean = np.mean(x)
     ymean = np.mean(y)
-    ssxm, ssxym, _, ssym = np.cov(x, y, bias=1).flat
+    ssxm, ssxym, _, ssym = np.cov(x, y, bias=True).flat
     slope = ssxym / ssxm
     intercept = ymean - slope * xmean
     return slope, intercept
@@ -81,7 +81,6 @@ def parallel_linear_regression(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 
 def add_velocity_data_to_array(
     granules: Iterable[Granule],
-    frame: sw_disp.FrameMeta,
     geotransform: Affine,
     frame_map_array: np.ndarray,
     out_array: np.ndarray,
@@ -99,7 +98,7 @@ def add_velocity_data_to_array(
         np.ndarray: The updated array
     """
     bbox = create_buffered_bbox(geotransform.to_gdal(), frame_map_array.shape, 90)  # EPSG:3857 is in meters
-    granule_xrs = [sw_disp.load_sw_disp_granule(x, bbox, frame) for x in granules]
+    granule_xrs = [sw_disp.load_sw_disp_granule(x, bbox) for x in granules]
     cube = xr.concat(granule_xrs, dim='years_since_start')
 
     years_since_start = get_years_since_start([g.attrs['secondary_date'] for g in granule_xrs])
@@ -120,7 +119,7 @@ def add_velocity_data_to_array(
     return out_array
 
 
-def create_sw_vel_tile(metadata_path: Path, begin_date: datetime, end_date: datetime, minmax: bool = True):
+def create_sw_vel_tile(metadata_path: Path, begin_date: datetime, end_date: datetime, minmax: bool = True) -> Path:
     if not metadata_path.exists():
         raise FileNotFoundError(f'{metadata_path} does not exist')
     if begin_date > end_date:
@@ -139,9 +138,8 @@ def create_sw_vel_tile(metadata_path: Path, begin_date: datetime, end_date: date
     frame_map, geotransform = get_raster_as_numpy(metadata_path)
     geotransform = Affine.from_gdal(*geotransform)
     sw_vel = np.full(frame_map.shape, np.nan, dtype=float)
-    for frame_id, granules in needed_granules.items():
-        frame = frames[frame_id]
-        sw_vel = add_velocity_data_to_array(granules, frame, geotransform, frame_map, sw_vel)
+    for granules in needed_granules.values():
+        sw_vel = add_velocity_data_to_array(granules, geotransform, frame_map, sw_vel)
 
     gdal.Translate(str(product_path), str(metadata_path), outputType=gdal.GDT_Float32, format='GTiff')
     ds = gdal.Open(str(product_path), gdal.GA_Update)

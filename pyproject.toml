@@ -55,7 +55,6 @@ Documentation = "https://github.com/ASFHyP3/opera-disp-tms/tree/develop?tab=read
 generate_metadata_tile = "opera_disp_tms.generate_metadata_tile:main"
 generate_sw_disp_tile = "opera_disp_tms.generate_sw_disp_tile:main"
 generate_sw_vel_tile = "opera_disp_tms.generate_sw_vel_tile:main"
-get_tmp_s3_creds = "opera_disp_tms.tmp_s3_access:main"
 create_tile_map = "opera_disp_tms.create_tile_map:main"
 
 [tool.pytest.ini_options]

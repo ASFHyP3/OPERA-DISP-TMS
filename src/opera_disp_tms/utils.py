@@ -1,7 +1,10 @@
+import os
 from datetime import datetime, timedelta
+from mimetypes import guess_type
 from pathlib import Path
-from typing import Iterable, Tuple, Union
+from typing import Iterable, Union
 
+import boto3
 import requests
 from osgeo import gdal, osr
 from pyproj import Transformer
@@ -9,11 +12,11 @@ from pyproj import Transformer
 
 gdal.UseExceptions()
 
-
+S3_CLIENT = boto3.client('s3')
 DATE_FORMAT = '%Y%m%dT%H%M%SZ'
 
 
-def get_raster_as_numpy(raster_path: Path, band: int = 1) -> Tuple:
+def get_raster_as_numpy(raster_path: Path, band: int = 1) -> tuple:
     """Get data, geotransform, and shape of a raseter
 
     Args:
@@ -33,16 +36,13 @@ def download_file(
     url: str,
     download_path: Union[Path, str] = '.',
     chunk_size=10 * (2**20),
-) -> Path:
+) -> None:
     """Download a file without authentication.
 
     Args:
         url: URL of the file to download
         download_path: Path to save the downloaded file to
         chunk_size: Size to chunk the download into
-
-    Returns:
-        download_path: The path to the downloaded file
     """
     session = requests.Session()
 
@@ -55,16 +55,9 @@ def download_file(
     session.close()
 
 
-def round_to_day(dt: datetime) -> datetime:
-    """Round a datetime to the nearest day
-
-    Args:
-        dt: Datetime to round
-
-    Returns:
-        The rounded datetime
-    """
-    return (dt + timedelta(hours=12)).replace(hour=0, minute=0, second=0, microsecond=0)
+def within_one_day(date1: datetime, date2: datetime) -> bool:
+    """Check if two dates are within one day of each other"""
+    return abs(date1 - date2) <= timedelta(days=1)
 
 
 def wkt_from_epsg(epsg_code: int) -> str:
@@ -82,7 +75,7 @@ def wkt_from_epsg(epsg_code: int) -> str:
     return wkt
 
 
-def transform_point(x: float, y: float, source_wkt: str, target_wkt: str) -> Tuple[float]:
+def transform_point(x: float, y: float, source_wkt: str, target_wkt: str) -> tuple[float, float]:
     """Transform a point from one coordinate system to another
 
     Args:
@@ -100,7 +93,9 @@ def transform_point(x: float, y: float, source_wkt: str, target_wkt: str) -> Tup
     return x_transformed, y_transformed
 
 
-def create_buffered_bbox(geotransform: Iterable[int], shape: Iterable[int], buffer_size: float) -> Tuple[float]:
+def create_buffered_bbox(
+        geotransform: Iterable[int], shape: tuple[int, ...], buffer_size: int
+) -> tuple[int, int, int, int]:
     """Create a buffered bounding box from a geotransform and shape
 
     Args:
@@ -121,7 +116,7 @@ def create_buffered_bbox(geotransform: Iterable[int], shape: Iterable[int], buff
     return minx, miny, maxx, maxy
 
 
-def validate_bbox(bbox: Iterable[int]) -> None:
+def validate_bbox(bbox: tuple[int, int, int, int]) -> None:
     """Check that bounding box:
     - Has four elements
     - All elements are integers
@@ -158,7 +153,31 @@ def create_tile_name(
     """
     _, flight_direction, tile_coordinates = metadata_name.split('_')
     date_fmt = '%Y%m%d'
-    begin_date = datetime.strftime(begin_date, date_fmt)
-    end_date = datetime.strftime(end_date, date_fmt)
-    name = '_'.join([prod_type, begin_date, end_date, flight_direction, tile_coordinates])
+    begin_date_str = datetime.strftime(begin_date, date_fmt)
+    end_date_str = datetime.strftime(end_date, date_fmt)
+    name = '_'.join([prod_type, begin_date_str, end_date_str, flight_direction, tile_coordinates])
     return name
+
+
+def upload_file_to_s3(path_to_file: Path, bucket: str, key):
+    extra_args = {'ContentType': guess_type(path_to_file)[0]}
+    S3_CLIENT.upload_file(str(path_to_file), bucket, key, ExtraArgs=extra_args)
+
+    # tag files as 'product' so hyp3 doesn't treat the .png files as browse images
+    tag_set = {'TagSet': [{'Key': 'file_type', 'Value': 'product'}]}
+    S3_CLIENT.put_object_tagging(Bucket=bucket, Key=key, Tagging=tag_set)
+
+
+def upload_dir_to_s3(path_to_dir: Path, bucket: str, prefix: str = ''):
+    """Upload a local directory, subdirectory, and all contents to an S3 bucket
+
+    Args:
+        path_to_dir: The local path to directory
+        bucket: S3 bucket to which the directory should be uploaded
+        prefix: prefix in S3 bucket to upload the directory to. Defaults to ''
+    """
+    for branch in os.walk(path_to_dir, topdown=True):
+        for filename in branch[2]:
+            path_to_file = Path(branch[0]) / filename
+            key = str(prefix / path_to_file.relative_to(path_to_dir))
+            upload_file_to_s3(path_to_file, bucket, key)

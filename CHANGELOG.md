@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0]
+### Added
+* Ability to update the reference date for OPERA DISP granule xarray objects
+* Integration with CMR metadata when searching for granules
+* Entrypoint and docker container generation capability for HyP3
+* The docker container is built and pushed to the Github Container Registry via Github Actions
+
+### Changed
+* find_california_dataset.py to search.py and added functionality to search for granules in CMR
+* Updated all scripts to use the new find_california_granules_for_frame function
+* `generate_sw_disp_tile.py` now masks using `recomended_mask`
+* Authentication now requires Earthdata Login UAT credentials provided via .netrc or environment variables
+
+### Removed
+* CSV-based caching of granules in favor of CMR-based searching
+* Command line interface and entrypoint for get_tmp_s3_creds.py
+
+### Fixed
+* s3fs/xarray resources are now closed when no longer used, resolving an issue where attempting to open new resources could hang indefinitely
+
 ## [0.3.0]
 ### Added
 * Ability to generate SW velocity tiles in `generated_sw_vel_tile.py`
