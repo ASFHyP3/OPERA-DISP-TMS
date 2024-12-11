@@ -99,7 +99,7 @@ def add_velocity_data_to_array(
         np.ndarray: The updated array
     """
     bbox = create_buffered_bbox(geotransform.to_gdal(), frame_map_array.shape, 90)  # EPSG:3857 is in meters
-    granule_xrs = [sw_disp.load_sw_disp_granule(x, bbox, frame) for x in granules]
+    granule_xrs = [sw_disp.load_sw_disp_granule(x, bbox) for x in granules]
     cube = xr.concat(granule_xrs, dim='years_since_start')
 
     years_since_start = get_years_since_start([g.attrs['secondary_date'] for g in granule_xrs])
