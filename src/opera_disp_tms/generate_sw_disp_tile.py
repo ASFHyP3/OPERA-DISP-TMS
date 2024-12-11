@@ -3,7 +3,7 @@ import warnings
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Iterable, Tuple
+from typing import Iterable
 
 import numpy as np
 import xarray as xr
@@ -39,8 +39,9 @@ def extract_frame_metadata(frame_metadata: dict[str, str], frame_id: int) -> Fra
     """
     ref_date = datetime.strptime(frame_metadata[f'FRAME_{frame_id}_REF_TIME'], utils.DATE_FORMAT)
 
-    ref_point_eastingnorthing = frame_metadata[f'FRAME_{frame_id}_REF_POINT_EASTINGNORTHING'].split(', ')
-    ref_point_eastingnorthing = tuple(int(x) for x in ref_point_eastingnorthing)
+    ref_point_eastingnorthing = tuple(
+        int(x) for x in frame_metadata[f'FRAME_{frame_id}_REF_POINT_EASTINGNORTHING'].split(', ')
+    )
 
     return FrameMeta(frame_id, ref_date, ref_point_eastingnorthing)
 
@@ -63,7 +64,7 @@ def frames_from_metadata(metadata_path: Path) -> dict[int, FrameMeta]:
 
 def find_needed_granules(
     frame_ids: Iterable[int], begin_date: datetime, end_date: datetime, strategy: str, min_granules: int = 2
-) -> dict[int, Granule]:
+) -> dict[int, list[Granule]]:
     """Find the granules needed to generate a short wavelength displacement tile.
     For each `frame_id` the most recent granule whose secondary date is between
     `begin_date` and `end_date` is selected.
@@ -104,14 +105,13 @@ def find_needed_granules(
     return needed_granules
 
 
-def load_sw_disp_granule(granule: Granule, bbox: Iterable[int], frame: FrameMeta) -> xr.DataArray:
+def load_sw_disp_granule(granule: Granule, bbox: tuple[float, float, float, float]) -> xr.DataArray:
     """Load the short wavelength displacement data for and OPERA DISP granule.
     Clips to frame map and masks out invalid data.
 
     Args:
         granule: The granule to load
         bbox: The bounding box to clip to
-        frame: The frame metadata
 
     Returns:
         The short wavelength displacement data as an xarray DataArray
@@ -150,7 +150,7 @@ def update_reference_date(granule: xr.DataArray, frame: FrameMeta) -> xr.DataArr
             [frame.frame_id], prev_ref_date_min, prev_ref_date_max, strategy='max', min_granules=1
         )
         older_granule_meta = granule_dict[frame.frame_id][0]
-        older_granule = load_sw_disp_granule(older_granule_meta, granule.attrs['bbox'], frame)
+        older_granule = load_sw_disp_granule(older_granule_meta, granule.attrs['bbox'])
         granule += older_granule
         granule.attrs['reference_date'] = older_granule.attrs['reference_date']
         fully_updated = utils.within_one_day(granule.attrs['reference_date'], frame.reference_date)
@@ -160,7 +160,7 @@ def update_reference_date(granule: xr.DataArray, frame: FrameMeta) -> xr.DataArr
 
 def add_granule_data_to_array(
     granule: Granule, frame: FrameMeta, frame_map: np.ndarray, geotransform: Affine, sw_cumul_disp: np.ndarray
-) -> Tuple[np.ndarray, datetime]:
+) -> tuple[np.ndarray, str]:
     """Add granule data to the short wavelength cumulative displacement array
 
     Args:
@@ -174,7 +174,7 @@ def add_granule_data_to_array(
         The updated short wavelength cumulative displacement array and the secondary date of the granule
     """
     bbox = utils.create_buffered_bbox(geotransform.to_gdal(), frame_map.shape, 120)  # EPSG:3857 is in meters
-    sw_cumul_disp_xr = load_sw_disp_granule(granule, bbox, frame)
+    sw_cumul_disp_xr = load_sw_disp_granule(granule, bbox)
     update_reference_date(sw_cumul_disp_xr, frame)
 
     sw_cumul_disp_xr = sw_cumul_disp_xr.rio.reproject('EPSG:3857', transform=geotransform, shape=frame_map.shape)

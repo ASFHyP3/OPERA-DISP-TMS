@@ -2,7 +2,7 @@ import os
 from datetime import datetime, timedelta
 from mimetypes import guess_type
 from pathlib import Path
-from typing import Iterable, Tuple, Union
+from typing import Iterable, Union
 
 import boto3
 import requests
@@ -16,7 +16,7 @@ S3_CLIENT = boto3.client('s3')
 DATE_FORMAT = '%Y%m%dT%H%M%SZ'
 
 
-def get_raster_as_numpy(raster_path: Path, band: int = 1) -> Tuple:
+def get_raster_as_numpy(raster_path: Path, band: int = 1) -> tuple:
     """Get data, geotransform, and shape of a raseter
 
     Args:
@@ -36,16 +36,13 @@ def download_file(
     url: str,
     download_path: Union[Path, str] = '.',
     chunk_size=10 * (2**20),
-) -> Path:
+) -> None:
     """Download a file without authentication.
 
     Args:
         url: URL of the file to download
         download_path: Path to save the downloaded file to
         chunk_size: Size to chunk the download into
-
-    Returns:
-        download_path: The path to the downloaded file
     """
     session = requests.Session()
 
@@ -78,7 +75,7 @@ def wkt_from_epsg(epsg_code: int) -> str:
     return wkt
 
 
-def transform_point(x: float, y: float, source_wkt: str, target_wkt: str) -> Tuple[float]:
+def transform_point(x: float, y: float, source_wkt: str, target_wkt: str) -> tuple[float, float]:
     """Transform a point from one coordinate system to another
 
     Args:
@@ -96,7 +93,9 @@ def transform_point(x: float, y: float, source_wkt: str, target_wkt: str) -> Tup
     return x_transformed, y_transformed
 
 
-def create_buffered_bbox(geotransform: Iterable[int], shape: Iterable[int], buffer_size: float) -> Tuple[float]:
+def create_buffered_bbox(
+        geotransform: Iterable[int], shape: tuple[int, ...], buffer_size: int
+) -> tuple[int, int, int, int]:
     """Create a buffered bounding box from a geotransform and shape
 
     Args:
@@ -117,7 +116,7 @@ def create_buffered_bbox(geotransform: Iterable[int], shape: Iterable[int], buff
     return minx, miny, maxx, maxy
 
 
-def validate_bbox(bbox: Iterable[int]) -> None:
+def validate_bbox(bbox: tuple[int, int, int, int]) -> None:
     """Check that bounding box:
     - Has four elements
     - All elements are integers
@@ -154,9 +153,9 @@ def create_tile_name(
     """
     _, flight_direction, tile_coordinates = metadata_name.split('_')
     date_fmt = '%Y%m%d'
-    begin_date = datetime.strftime(begin_date, date_fmt)
-    end_date = datetime.strftime(end_date, date_fmt)
-    name = '_'.join([prod_type, begin_date, end_date, flight_direction, tile_coordinates])
+    begin_date_str = datetime.strftime(begin_date, date_fmt)
+    end_date_str = datetime.strftime(end_date, date_fmt)
+    name = '_'.join([prod_type, begin_date_str, end_date_str, flight_direction, tile_coordinates])
     return name
 
 

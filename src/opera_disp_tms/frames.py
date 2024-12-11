@@ -2,7 +2,7 @@ import json
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Optional, Tuple
+from typing import Iterable
 
 from shapely import from_wkt
 from shapely.geometry import Polygon, box
@@ -35,7 +35,7 @@ class Frame:
             geom=from_wkt(row[6]),
         )
 
-    def to_geojson(self, out_path: Path):
+    def to_geojson(self, out_path: Path) -> None:
         """Save frame geometry to a GeoJSON file.
         Keep all the attributes in the GeoJSON properties
 
@@ -73,15 +73,15 @@ def download_frame_db(db_path: Path = DB_PATH) -> Path:
 
     print('Downloading frame database...')
     url = f'https://opera-disp-tms-dev.s3.us-west-2.amazonaws.com/{db_path.name}'
-    download_file(url, db_path)
+    return download_file(url, db_path)
 
 
 def build_query(
-    bbox: Iterable[int],
-    orbit_pass: Optional[str] = None,
-    is_north_america: Optional[bool] = None,
-    is_land: Optional[bool] = None,
-) -> Tuple:
+    bbox: tuple[int, int, int, int],
+    orbit_pass: str | None = None,
+    is_north_america: bool | None = None,
+    is_land: bool | None = None,
+) -> tuple:
     """Build a query for identifying OPERA frames intersecting a given bounding box,
     optionally filtering by more fields.
 
@@ -139,10 +139,10 @@ def build_query(
 
 
 def intersect(
-    bbox: Iterable[int],
-    orbit_pass: Optional[str] = None,
-    is_north_america: Optional[bool] = None,
-    is_land: Optional[bool] = None,
+    bbox: tuple[int, int, int, int],
+    orbit_pass: str | None = None,
+    is_north_america: bool | None = None,
+    is_land: bool | None = None,
 ) -> Iterable[Frame]:
     """Query OPERA frame database to obtain frames intersecting a given bounding box,
     optionally filtering by more fields.

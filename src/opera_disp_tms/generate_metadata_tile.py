@@ -1,7 +1,7 @@
 import argparse
 import warnings
 from pathlib import Path
-from typing import Iterable, List
+from typing import Iterable
 
 import numpy as np
 import pyproj
@@ -17,7 +17,7 @@ from opera_disp_tms.utils import validate_bbox
 gdal.UseExceptions()
 
 
-def create_product_name(parts: Iterable[str], orbit_pass: str, bbox: Iterable[int]) -> str:
+def create_product_name(parts: Iterable[str], orbit_pass: str, bbox: tuple[int, int, int, int]) -> str:
     """Create a product name for a frame metadata tile
     Should be in the format: metadata_ascending_N02E001 where N02E001 is the upper left corner
 
@@ -65,7 +65,7 @@ def buffer_frame_geometry(frame: Frame, buffer_size_in_meters: int = -3500) -> F
     return frame
 
 
-def reorder_frames(frame_list: Iterable[Frame], add_first: str) -> List[Frame]:
+def reorder_frames(frame_list: Iterable[Frame], add_first: str) -> list[Frame]:
     """Reorder a set of frames so that they overlap correctly when rasterized.
     Frames within a relative orbit are stacked so that higher frame numbers are on top (so they are rasterized first).
     Relative orbits sets are orderd by either frame number, from west to east, or from east to west.
@@ -95,21 +95,17 @@ def reorder_frames(frame_list: Iterable[Frame], add_first: str) -> List[Frame]:
 
     reverse = add_first in ['east_most', 'min_frame_number']
     sorted_orbits = sorted(orbit_groups, key=lambda x: orbit_groups[x][0], reverse=reverse)
-    sorted_frames = [orbit_groups[orbit][1] for orbit in sorted_orbits]
-    sorted_frames = [frame for sublist in sorted_frames for frame in sublist]
+    sorted_frames = [frame for sublist in [orbit_groups[orbit][1] for orbit in sorted_orbits] for frame in sublist]
     return sorted_frames
 
 
-def create_empty_frame_tile(bbox: Iterable[int], out_path: Path, resolution: int = 30) -> Path:
+def create_empty_frame_tile(bbox: tuple[int, int, int, int], out_path: Path, resolution: int = 30) -> None:
     """Create an empty frame metadata tile in EPSG:3857 with a 30 m resolution
 
     Args:
         bbox: The bounding box to create the frame for in the
               (minx, miny, maxx, maxy) in EPSG:4326, integers only.
         out_path: The path to save the empty frame metadata tile to
-
-    Returns:
-        The path to the empty frame metadata tile
     """
     validate_bbox(bbox)
     min_lon, min_lat, max_lon, max_lat = bbox
@@ -223,13 +219,16 @@ def create_granule_metadata_dict(granule: Granule) -> dict:
     return frame_metadata
 
 
-def create_metadata_tile(bbox: Iterable[int], frames: Iterable[Frame], tile_path: Path) -> Path | None:
+def create_metadata_tile(bbox: tuple[int, int, int, int], frames: Iterable[Frame], tile_path: Path) -> Path | None:
     """Add frame information to a frame metadata tile
 
     Args:
         bbox: The bounding box to create the frame for in the (minx, miny, maxx, maxy) in EPSG:4326, integers only.
         frames: The frames to add to the tile
         tile_path: The path to the frame metadata tile
+
+    Returns:
+        The path to the metadata tile or `None` if no granules are found.
     """
     validate_bbox(bbox)
     create_empty_frame_tile(bbox, tile_path)
@@ -252,7 +251,7 @@ def create_metadata_tile(bbox: Iterable[int], frames: Iterable[Frame], tile_path
     if len(included_frames) == 0:
         warnings.warn('No granules are available for this tile. The tile will not be created.')
         tile_path.unlink()
-        return
+        return None
 
     metadata_dict = {'OPERA_FRAMES': ', '.join([str(x) for x in included_frames])}
     [metadata_dict.update(frame_metadata[str(x)]) for x in included_frames]
@@ -262,7 +261,7 @@ def create_metadata_tile(bbox: Iterable[int], frames: Iterable[Frame], tile_path
     return tile_path
 
 
-def create_tile_for_bbox(bbox: Iterable[int], direction: str) -> Path | None:
+def create_tile_for_bbox(bbox: tuple[int, int, int, int], direction: str) -> Path | None:
     """Create the frame metadata tile for a specific bounding box
 
     Args:
@@ -281,8 +280,7 @@ def create_tile_for_bbox(bbox: Iterable[int], direction: str) -> Path | None:
     # This ordering minimizes orbit-edge gaps in tilesets by prioritizing IW1 over IW3 data
     order_by = 'east_most' if direction == 'ASCENDING' else 'west_most'
     ordered_frames = reorder_frames(updated_frames, add_first=order_by)
-    out_path = create_metadata_tile(bbox, ordered_frames, out_path)
-    return out_path
+    return create_metadata_tile(bbox, ordered_frames, out_path)
 
 
 def main():
