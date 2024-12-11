@@ -31,19 +31,19 @@ def test_bbox():
     parser.add_argument('bbox', type=str.split, nargs='+', action=main.Bbox)
 
     args = parser.parse_args(['1 1 1 1'])
-    assert args.bbox == [1, 1, 1, 1]
+    assert args.bbox == (1, 1, 1, 1)
 
     args = parser.parse_args(['1 2 3 4'])
-    assert args.bbox == [1, 2, 3, 4]
+    assert args.bbox == (1, 2, 3, 4)
 
     args = parser.parse_args(['1', '2', '3', '4'])
-    assert args.bbox == [1, 2, 3, 4]
+    assert args.bbox == (1, 2, 3, 4)
 
     args = parser.parse_args(['1 2', '3', '4'])
-    assert args.bbox == [1, 2, 3, 4]
+    assert args.bbox == (1, 2, 3, 4)
 
     args = parser.parse_args(['-180 -90 180 90'])
-    assert args.bbox == [-180, -90, 180, 90]
+    assert args.bbox == (-180, -90, 180, 90)
 
     test_cases = [
         ['0 0 0'],
