@@ -22,6 +22,9 @@ def test_date():
     with pytest.raises(SystemExit):
         parser.parse_args(['2020-01-01'])
 
+    with pytest.raises(SystemExit):
+        parser.parse_args(['20201301'])
+
 
 def test_bbox():
     parser = argparse.ArgumentParser()
