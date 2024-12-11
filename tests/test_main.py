@@ -13,6 +13,9 @@ def test_date():
     args = parser.parse_args(['20200101'])
     assert args.date == datetime(2020, 1, 1)
 
+    args = parser.parse_args(['20241211'])
+    assert args.date == datetime(2024, 12, 11)
+
     with pytest.raises(SystemExit):
         parser.parse_args(['2020010'])
 
