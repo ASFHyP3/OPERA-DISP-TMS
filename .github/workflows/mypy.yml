@@ -17,4 +17,4 @@ jobs:
           python -m pip install mypy
 
       - name: mypy static type check
-        run: mypy --install-types --ignore-missing-imports --non-interactive src/
+        run: mypy --install-types --ignore-missing-imports --non-interactive --pretty src/
