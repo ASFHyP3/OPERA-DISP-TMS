@@ -11,7 +11,7 @@ from rasterio.transform import Affine
 
 from opera_disp_tms import generate_sw_disp_tile as sw_disp
 from opera_disp_tms.search import Granule
-from opera_disp_tms.utils import create_buffered_bbox, create_tile_name, get_raster_as_numpy
+from opera_disp_tms.utils import create_buffered_bbox, create_tile_name, get_raster_as_numpy, within_one_day
 
 
 gdal.UseExceptions()
@@ -79,6 +79,17 @@ def parallel_linear_regression(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     return slope_array
 
 
+def correct_granule_xrs(granule_xrs: list[xr.DataArray]) -> None:
+    previous_granule_xr = granule_xrs[0]
+    correction = np.zeros(previous_granule_xr.shape)
+
+    for granule_xr in granule_xrs:
+        if not within_one_day(granule_xr.attrs['reference_date'], previous_granule_xr.attrs['reference_date']):
+            correction = previous_granule_xr.data
+        granule_xr += correction
+        previous_granule_xr = granule_xr
+
+
 def add_velocity_data_to_array(
     granules: Iterable[Granule],
     geotransform: Affine,
@@ -97,8 +108,10 @@ def add_velocity_data_to_array(
     Returns:
         np.ndarray: The updated array
     """
+    sorted_granules = sorted(granules, key=lambda g: g.secondary_date)
     bbox = create_buffered_bbox(geotransform.to_gdal(), frame_map_array.shape, 90)  # EPSG:3857 is in meters
-    granule_xrs = [sw_disp.load_sw_disp_granule(x, bbox) for x in granules]
+    granule_xrs = [sw_disp.load_sw_disp_granule(x, bbox) for x in sorted_granules]
+    correct_granule_xrs(granule_xrs)
     cube = xr.concat(granule_xrs, dim='years_since_start')
 
     years_since_start = get_years_since_start([g.attrs['secondary_date'] for g in granule_xrs])
