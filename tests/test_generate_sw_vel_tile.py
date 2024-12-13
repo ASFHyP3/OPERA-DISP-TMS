@@ -59,19 +59,19 @@ def test_parallel_linear_regression():
 
 def test_correct_granule_xrs():
     xrs = [
-        xr.DataArray(data=[ 1., 0.], attrs={'reference_date': datetime(2024, 1, 1), 'secondary_date': datetime(2024, 1, 2)}),
-        xr.DataArray(data=[ 5., 0.], attrs={'reference_date': datetime(2024, 1, 1), 'secondary_date': datetime(2024, 1, 3)}),
-        xr.DataArray(data=[-1., 0.], attrs={'reference_date': datetime(2024, 1, 3), 'secondary_date': datetime(2024, 1, 4)}),
-        xr.DataArray(data=[ 7., 0.], attrs={'reference_date': datetime(2024, 1, 3), 'secondary_date': datetime(2024, 1, 5)}),
-        xr.DataArray(data=[-3., 1.], attrs={'reference_date': datetime(2024, 1, 5), 'secondary_date': datetime(2024, 1, 6)}),
+        xr.DataArray(data=[1., 0.], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 2)}),
+        xr.DataArray(data=[5., 0.], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 3)}),
+        xr.DataArray(data=[-1., 0.], attrs={'reference_date': datetime(1, 1, 3), 'secondary_date': datetime(1, 1, 4)}),
+        xr.DataArray(data=[7., 0.], attrs={'reference_date': datetime(1, 1, 3), 'secondary_date': datetime(1, 1, 5)}),
+        xr.DataArray(data=[-3., 1.], attrs={'reference_date': datetime(1, 1, 5), 'secondary_date': datetime(1, 1, 6)}),
     ]
 
     expected = [
-        xr.DataArray(data=[ 1., 0.], attrs={'reference_date': datetime(2024, 1, 1), 'secondary_date': datetime(2024, 1, 2)}),
-        xr.DataArray(data=[ 5., 0.], attrs={'reference_date': datetime(2024, 1, 1), 'secondary_date': datetime(2024, 1, 3)}),
-        xr.DataArray(data=[ 4., 0.], attrs={'reference_date': datetime(2024, 1, 3), 'secondary_date': datetime(2024, 1, 4)}),
-        xr.DataArray(data=[12., 0.], attrs={'reference_date': datetime(2024, 1, 3), 'secondary_date': datetime(2024, 1, 5)}),
-        xr.DataArray(data=[ 9., 1.], attrs={'reference_date': datetime(2024, 1, 5), 'secondary_date': datetime(2024, 1, 6)}),
+        xr.DataArray(data=[1., 0.], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 2)}),
+        xr.DataArray(data=[5., 0.], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 3)}),
+        xr.DataArray(data=[4., 0.], attrs={'reference_date': datetime(1, 1, 3), 'secondary_date': datetime(1, 1, 4)}),
+        xr.DataArray(data=[12., 0.], attrs={'reference_date': datetime(1, 1, 3), 'secondary_date': datetime(1, 1, 5)}),
+        xr.DataArray(data=[9., 1.], attrs={'reference_date': datetime(1, 1, 5), 'secondary_date': datetime(1, 1, 6)}),
     ]
 
     sw_vel.correct_granule_xrs(xrs)
