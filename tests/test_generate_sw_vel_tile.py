@@ -57,7 +57,7 @@ def test_parallel_linear_regression():
     assert np.all(np.isclose(slope, 1.0, atol=1e-6))
 
 
-def test_correct_granule_xrs():
+def test_align_to_common_reference_date():
     xrs = [
         xr.DataArray(data=[1., 0.], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 2)}),
         xr.DataArray(data=[5., 0.], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 3)}),
@@ -69,11 +69,11 @@ def test_correct_granule_xrs():
     expected = [
         xr.DataArray(data=[1., 0.], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 2)}),
         xr.DataArray(data=[5., 0.], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 3)}),
-        xr.DataArray(data=[4., 0.], attrs={'reference_date': datetime(1, 1, 3), 'secondary_date': datetime(1, 1, 4)}),
-        xr.DataArray(data=[12., 0.], attrs={'reference_date': datetime(1, 1, 3), 'secondary_date': datetime(1, 1, 5)}),
-        xr.DataArray(data=[9., 1.], attrs={'reference_date': datetime(1, 1, 5), 'secondary_date': datetime(1, 1, 6)}),
+        xr.DataArray(data=[4., 0.], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 4)}),
+        xr.DataArray(data=[12., 0.], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 5)}),
+        xr.DataArray(data=[9., 1.], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 6)}),
     ]
 
-    sw_vel.correct_granule_xrs(xrs)
+    sw_vel.align_to_common_reference_date(xrs)
 
     assert all(a.identical(b) for a, b, in zip(xrs, expected))
