@@ -156,19 +156,22 @@ def get_cmr_metadata(
         temporal_range: The temporal range to search for granules in.
         cmr_endpoint: The endpoint to query for granules.
     """
-    page_size = 2000
     cmr_parameters = {
-        'provider_short_name': 'ASF',
         'short_name': 'OPERA_L3_DISP-S1_PROVISIONAL_V0',
         'attribute[]': [f'int,FRAME_ID,{frame_id}', f'float,PRODUCT_VERSION,{version}'],
-        'temporal[]': ','.join([date.strftime(CMR_DATE_FORMAT) for date in temporal_range]),
-        'page_size': page_size,
+        'temporal': ','.join([date.strftime(CMR_DATE_FORMAT) for date in temporal_range]),
+        'page_size': 2000,
     }
-    response = requests.post(cmr_endpoint, data=cmr_parameters)
-    response.raise_for_status()
-    items = response.json()['items']
-    if len(items) == page_size:
-        raise NotImplementedError(f'Got full page of {page_size} items, please implement pagination')
+    headers = {}
+    items = []
+
+    while True:
+        response = requests.post(cmr_endpoint, data=cmr_parameters, headers=headers)
+        response.raise_for_status()
+        items.extend(response.json()['items'])
+        if 'CMR-Search-After' not in response.headers:
+            break
+        headers['CMR-Search-After'] = response.headers['CMR-Search-After']
     return items
 
 
