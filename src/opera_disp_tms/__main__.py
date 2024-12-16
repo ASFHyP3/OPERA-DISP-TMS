@@ -76,8 +76,11 @@ def main():
         'tile_type', type=str, choices=['displacement', 'secant_velocity'], help='Data value to visualize'
     )
     parser.add_argument(
-        'bbox', type=str.split, nargs='+', action=Bbox,
-        help='Integer bounds in EPSG:4326, formatted like [min lon, min lat, max lon, max lat]'
+        'bbox',
+        type=str.split,
+        nargs='+',
+        action=Bbox,
+        help='Integer bounds in EPSG:4326, formatted like [min lon, min lat, max lon, max lat]',
     )
     parser.add_argument('direction', type=str, choices=['ascending', 'descending'], help='Direction of the orbit pass')
     parser.add_argument(

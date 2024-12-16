@@ -81,7 +81,7 @@ def test_burn_frame(tmp_path):
     ds = None
 
     golden = np.zeros(data.shape)
-    golden[int(data.shape[0] / 2):, :] = 9999
+    golden[int(data.shape[0] / 2) :, :] = 9999
     assert np.all(data == golden)
 
     frame2 = Frame(10000, 1, 1, 'ASCENDING', 1, 1, box(1, 1, 1.5, 2))

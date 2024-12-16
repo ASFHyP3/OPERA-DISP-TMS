@@ -94,7 +94,7 @@ def transform_point(x: float, y: float, source_wkt: str, target_wkt: str) -> tup
 
 
 def create_buffered_bbox(
-        geotransform: Iterable[int], shape: tuple[int, ...], buffer_size: int
+    geotransform: Iterable[int], shape: tuple[int, ...], buffer_size: int
 ) -> tuple[int, int, int, int]:
     """Create a buffered bounding box from a geotransform and shape
 
