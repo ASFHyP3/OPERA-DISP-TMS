@@ -1,6 +1,4 @@
-"""
-OPERA-DISP Tile Map Service Generator
-"""
+"""OPERA-DISP Tile Map Service Generator"""
 
 import argparse
 from datetime import datetime

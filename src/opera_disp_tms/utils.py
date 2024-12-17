@@ -1,8 +1,9 @@
 import os
+from collections.abc import Iterable
 from datetime import datetime, timedelta
 from mimetypes import guess_type
 from pathlib import Path
-from typing import Iterable, Union
+from typing import Union
 
 import boto3
 import requests

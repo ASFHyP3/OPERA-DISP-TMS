@@ -6,7 +6,7 @@ from opera_disp_tms.generate_metadata_tile import create_product_name, create_ti
 
 def make_cal_meta_tiles(orbit_direction):
     script_dir = Path(__file__).parent
-    with open(script_dir / 'cal_corners.txt', 'r') as f:
+    with open(script_dir / 'cal_corners.txt') as f:
         corners = [[int(val) for val in corner.strip().split(' ')] for corner in f.readlines()]
 
     for corner in corners:
