@@ -1,7 +1,8 @@
 import argparse
+from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable, List
+from typing import List
 
 import numpy as np
 import xarray as xr
@@ -89,7 +90,6 @@ def add_velocity_data_to_array(
 
     Args:
         granules: A list of granule objects
-        frame: The frame metadata
         geotransform: The geotransform of the frame
         frame_map_array: The frame map as a numpy array
         out_array: The array to add the velocity data to

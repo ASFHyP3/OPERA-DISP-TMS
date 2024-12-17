@@ -21,7 +21,7 @@ def create_test_geotiff(output_file, geotransform, shape, epsg):
 def test_get_tile_extent(tmp_path):
     epsg = 3857
     minx, miny, maxx, maxy = [-113, 33, -112, 34]
-    geotransform = [minx, 0.1,  0, maxy, 0, -0.01]
+    geotransform = [minx, 0.1, 0, maxy, 0, -0.01]
     shape = (100, 10)
     frame_tile = tmp_path / 'test_tile.tif'
     create_test_geotiff(str(frame_tile), geotransform, shape, epsg)
@@ -30,4 +30,4 @@ def test_get_tile_extent(tmp_path):
     with open(f'{tmp_path}/extent.json') as f:
         extent_json = json.load(f)
         print(extent_json)
-    assert extent_json == {"extent": [minx, miny, maxx, maxy], "EPSG": epsg}
+    assert extent_json == {'extent': [minx, miny, maxx, maxy], 'EPSG': epsg}
