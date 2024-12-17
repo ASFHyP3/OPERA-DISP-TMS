@@ -19,7 +19,11 @@ def test_from_umm():
                 {
                     "Name": "FRAME_ID",
                     "Values": ["8882"]
-                }
+                },
+                {
+                    "Name": "ASCENDING_DESCENDING",
+                    "Values": ["ASCENDING"]
+                },
             ],
             "RelatedUrls": [
                 {
@@ -39,23 +43,6 @@ def test_from_umm():
     assert Granule.from_umm(umm) == Granule(
         scene_name='mock-scene-name',
         frame_id=8882,
-        orbit_pass='UNKNOWN',
-        url='mock-url',
-        s3_uri='mock-s3-uri',
-        reference_date=datetime(2019, 10, 6, 0, 26, 42),
-        secondary_date=datetime(2020, 9, 30, 0, 26, 48),
-        creation_date=datetime(2024, 10, 29, 21, 36, 46),
-    )
-
-    umm['umm']['AdditionalAttributes'] = [
-        {
-            "Name": "FRAME_ID",
-            "Values": ["9154"]
-        }
-    ]
-    assert Granule.from_umm(umm) == Granule(
-        scene_name='mock-scene-name',
-        frame_id=9154,
         orbit_pass='ASCENDING',
         url='mock-url',
         s3_uri='mock-s3-uri',
@@ -67,12 +54,16 @@ def test_from_umm():
     umm['umm']['AdditionalAttributes'] = [
         {
             "Name": "FRAME_ID",
-            "Values": ["3325"]
-        }
+            "Values": ["9154"]
+        },
+        {
+            "Name": "ASCENDING_DESCENDING",
+            "Values": ["DESCENDING"]
+        },
     ]
     assert Granule.from_umm(umm) == Granule(
         scene_name='mock-scene-name',
-        frame_id=3325,
+        frame_id=9154,
         orbit_pass='DESCENDING',
         url='mock-url',
         s3_uri='mock-s3-uri',

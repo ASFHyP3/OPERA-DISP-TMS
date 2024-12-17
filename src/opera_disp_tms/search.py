@@ -1,88 +1,10 @@
-"""Find all OPERA L3 DISP S1 PROVISIONAL V0.7 granules created for California test dataset.
-see https://github.com/nasa/opera-sds/issues/54 for dataset creation request.
-"""
-
 from dataclasses import dataclass
 from datetime import datetime
 
 import requests
 
 
-CAL_START = datetime(2016, 1, 1)
-CAL_END = datetime(2020, 1, 1)
-
 CMR_DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
-
-CAL_DES_FRAMES = [
-    3325,
-    3326,
-    3327,
-    3328,
-    11112,
-    11113,
-    11114,
-    11115,
-    11117,
-    18901,
-    18902,
-    18903,
-    18904,
-    18905,
-    26689,
-    26690,
-    26691,
-    30711,
-    30712,
-    30713,
-    30714,
-    30715,
-    30716,
-    38499,
-    38500,
-    38501,
-    38502,
-    38503,
-    38504,
-    46288,
-    46289,
-    46290,
-    46291,
-]
-CAL_ASC_FRAMES = [
-    9154,
-    9155,
-    9156,
-    9157,
-    9158,
-    9159,
-    9160,
-    16939,
-    16940,
-    16941,
-    16942,
-    16943,
-    16944,
-    16945,
-    16946,
-    24726,
-    24727,
-    24728,  # Data is not available for this frame
-    28757,
-    28758,
-    28759,
-    28760,
-    36539,
-    36540,
-    36541,
-    36544,
-    36545,
-    36546,
-    44325,
-    44326,
-    44327,
-    44328,
-    44329,
-]
 
 
 @dataclass(frozen=True)
@@ -110,14 +32,7 @@ class Granule:
 
         attributes = umm['umm']['AdditionalAttributes']
         frame_id = int(next(att['Values'][0] for att in attributes if att['Name'] == 'FRAME_ID'))
-
-        # TODO: get orbit from umm metadata when it becomes available
-        if frame_id in CAL_ASC_FRAMES:
-            orbit_pass = 'ASCENDING'
-        elif frame_id in CAL_DES_FRAMES:
-            orbit_pass = 'DESCENDING'
-        else:
-            orbit_pass = 'UNKNOWN'
+        orbit_pass = next(att['Values'][0] for att in attributes if att['Name'] == 'ASCENDING_DESCENDING')
 
         urls = umm['umm']['RelatedUrls']
         url = next(url['URL'] for url in urls if url['Type'] == 'GET DATA')
@@ -144,22 +59,22 @@ class Granule:
 
 def get_cmr_metadata(
     frame_id: int,
-    version: str = '0.7',
-    temporal_range=(CAL_START, CAL_END),
+    version: str = '0.9',
     cmr_endpoint='https://cmr.uat.earthdata.nasa.gov/search/granules.umm_json',
 ) -> list[dict]:
-    """Find all OPERA L3 DISP S1 granules created for a specific frame ID, product version, and temporal range.
+    """Find all OPERA L3 DISP S1 granules for a specific frame ID and minimum product version
 
     Args:
         frame_id: The frame ID to search for.
-        version: The version of the granules to search for.
-        temporal_range: The temporal range to search for granules in.
+        version: The minimum version of the granules to search for.
         cmr_endpoint: The endpoint to query for granules.
     """
     cmr_parameters = {
         'short_name': 'OPERA_L3_DISP-S1_PROVISIONAL_V0',
-        'attribute[]': [f'int,FRAME_ID,{frame_id}', f'float,PRODUCT_VERSION,{version}'],
-        'temporal': ','.join([date.strftime(CMR_DATE_FORMAT) for date in temporal_range]),
+        'attribute[]': [
+            f'int,FRAME_ID,{frame_id}',
+            f'float,PRODUCT_VERSION,{version},'
+        ],
         'page_size': 2000,
     }
     headers = {}
@@ -175,8 +90,8 @@ def get_cmr_metadata(
     return items
 
 
-def find_california_granules_for_frame(frame_id: int):
-    """Find all OPERA L3 DISP S1 PROVISIONAL V0.7 California dataset granules created for a specific frame ID."""
+def find_granules_for_frame(frame_id: int) -> list[Granule]:
+    """Find all OPERA L3 DISP S1 PROVISIONAL granules for a specific frame ID."""
     umms = get_cmr_metadata(frame_id)
     granules = [Granule.from_umm(umm) for umm in umms]
     return granules

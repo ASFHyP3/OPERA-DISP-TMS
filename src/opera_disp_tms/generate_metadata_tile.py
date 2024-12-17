@@ -10,7 +10,7 @@ from shapely.ops import transform
 
 from opera_disp_tms.frames import Frame, intersect
 from opera_disp_tms.s3_xarray import get_opera_disp_granule_metadata
-from opera_disp_tms.search import Granule, find_california_granules_for_frame
+from opera_disp_tms.search import Granule, find_granules_for_frame
 from opera_disp_tms.utils import validate_bbox
 
 
@@ -234,7 +234,7 @@ def create_metadata_tile(bbox: tuple[int, int, int, int], frames: Iterable[Frame
     create_empty_frame_tile(bbox, tile_path)
     frame_metadata = {}
     for frame in frames:
-        relevant_granules = find_california_granules_for_frame(frame.frame_id)
+        relevant_granules = find_granules_for_frame(frame.frame_id)
         if len(relevant_granules) == 0:
             warnings.warn(f'No granules found for frame {frame.frame_id}, this frame will not be added to the tile.')
         else:

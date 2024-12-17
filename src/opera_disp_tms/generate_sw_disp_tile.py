@@ -12,7 +12,7 @@ from rasterio.transform import Affine
 
 from opera_disp_tms import utils
 from opera_disp_tms.s3_xarray import open_opera_disp_granule, s3_xarray_dataset
-from opera_disp_tms.search import Granule, find_california_granules_for_frame
+from opera_disp_tms.search import Granule, find_granules_for_frame
 
 
 gdal.UseExceptions()
@@ -84,7 +84,7 @@ def find_needed_granules(
     """
     needed_granules = {}
     for frame_id in frame_ids:
-        granules_full_stack = find_california_granules_for_frame(frame_id)
+        granules_full_stack = find_granules_for_frame(frame_id)
         granules = [g for g in granules_full_stack if begin_date <= g.secondary_date <= end_date]
         if len(granules) < min_granules:
             warnings.warn(
