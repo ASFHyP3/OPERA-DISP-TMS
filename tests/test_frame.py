@@ -48,3 +48,8 @@ def test_build_query():
     query, params = frames.build_query(bbox, is_land=False)
     assert ' AND is_land = ?' in query.splitlines()[-1]
     assert params == [wkt_str, 0]
+
+
+def test_get_orbit_pass():
+    assert frames.get_orbit_pass(9154) == 'ASCENDING'
+    assert frames.get_orbit_pass(3325) == 'DESCENDING'
