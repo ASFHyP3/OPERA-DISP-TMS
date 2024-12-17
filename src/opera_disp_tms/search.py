@@ -3,6 +3,9 @@ from datetime import datetime
 
 import requests
 
+# FIXME: Remove when updating to OPERA DISP data v0.9
+from opera_disp_tms.frames import get_orbit_pass
+
 
 CMR_DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
@@ -32,7 +35,10 @@ class Granule:
 
         attributes = umm['umm']['AdditionalAttributes']
         frame_id = int(next(att['Values'][0] for att in attributes if att['Name'] == 'FRAME_ID'))
-        orbit_pass = next(att['Values'][0] for att in attributes if att['Name'] == 'ASCENDING_DESCENDING')
+
+        # FIXME: Use when updating to OPERA DISP data v0.9
+        # orbit_pass = next(att['Values'][0] for att in attributes if att['Name'] == 'ASCENDING_DESCENDING')
+        orbit_pass = get_orbit_pass(frame_id)
 
         urls = umm['umm']['RelatedUrls']
         url = next(url['URL'] for url in urls if url['Type'] == 'GET DATA')
@@ -71,10 +77,7 @@ def get_cmr_metadata(
     """
     cmr_parameters = {
         'short_name': 'OPERA_L3_DISP-S1_PROVISIONAL_V0',
-        'attribute[]': [
-            f'int,FRAME_ID,{frame_id}',
-            f'float,PRODUCT_VERSION,{version},'
-        ],
+        'attribute[]': [f'int,FRAME_ID,{frame_id}', f'float,PRODUCT_VERSION,{version},'],
         'page_size': 2000,
     }
     headers = {}

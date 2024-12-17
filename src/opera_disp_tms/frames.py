@@ -172,6 +172,7 @@ def intersect(
     return intersecting_frames
 
 
+# FIXME: Remove when updating to OPERA DISP data v0.9
 def get_orbit_pass(frame_id: int) -> str:
     """Get the orbit pass for an OPERA frame
 
@@ -179,7 +180,7 @@ def get_orbit_pass(frame_id: int) -> str:
         frame_id: OPERA frame ID to get orbit pass for
 
     Returns:
-        ASCENDING or DESCENDING
+        "ASCENDING" or "DESCENDING"
     """
     download_frame_db()
     query = (

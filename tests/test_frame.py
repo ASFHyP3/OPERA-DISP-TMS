@@ -50,6 +50,7 @@ def test_build_query():
     assert params == [wkt_str, 0]
 
 
+# FIXME: Remove when updating to OPERA DISP data v0.9
 def test_get_orbit_pass():
     assert frames.get_orbit_pass(9154) == 'ASCENDING'
     assert frames.get_orbit_pass(3325) == 'DESCENDING'
