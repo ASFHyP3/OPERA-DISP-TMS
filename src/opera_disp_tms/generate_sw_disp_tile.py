@@ -1,9 +1,9 @@
 import argparse
 import warnings
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Iterable
 
 import numpy as np
 import xarray as xr

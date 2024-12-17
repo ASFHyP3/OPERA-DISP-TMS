@@ -5,40 +5,21 @@ from opera_disp_tms.search import Granule
 
 def test_from_umm():
     umm = {
-        "meta": {
-            "native-id": "mock-scene-name"
-        },
-        "umm": {
-            "TemporalExtent": {
-                "RangeDateTime": {
-                    "BeginningDateTime": "2019-10-06T00:26:42Z",
-                    "EndingDateTime": "2020-09-30T00:26:48Z"
-                }
+        'meta': {'native-id': 'mock-scene-name'},
+        'umm': {
+            'TemporalExtent': {
+                'RangeDateTime': {'BeginningDateTime': '2019-10-06T00:26:42Z', 'EndingDateTime': '2020-09-30T00:26:48Z'}
             },
-            "AdditionalAttributes": [
-                {
-                    "Name": "FRAME_ID",
-                    "Values": ["8882"]
-                },
-                {
-                    "Name": "ASCENDING_DESCENDING",
-                    "Values": ["ASCENDING"]
-                },
+            'AdditionalAttributes': [
+                {'Name': 'FRAME_ID', 'Values': ['8882']},
+                {'Name': 'ASCENDING_DESCENDING', 'Values': ['ASCENDING']},
             ],
-            "RelatedUrls": [
-                {
-                    "URL": "mock-url",
-                    "Type": "GET DATA"
-                },
-                {
-                    "URL": "mock-s3-uri",
-                    "Type": "GET DATA VIA DIRECT ACCESS"
-                }
+            'RelatedUrls': [
+                {'URL': 'mock-url', 'Type': 'GET DATA'},
+                {'URL': 'mock-s3-uri', 'Type': 'GET DATA VIA DIRECT ACCESS'},
             ],
-            "DataGranule": {
-                "ProductionDateTime": "2024-10-29T21:36:46Z"
-            }
-        }
+            'DataGranule': {'ProductionDateTime': '2024-10-29T21:36:46Z'},
+        },
     }
     assert Granule.from_umm(umm) == Granule(
         scene_name='mock-scene-name',
@@ -52,14 +33,8 @@ def test_from_umm():
     )
 
     umm['umm']['AdditionalAttributes'] = [
-        {
-            "Name": "FRAME_ID",
-            "Values": ["9154"]
-        },
-        {
-            "Name": "ASCENDING_DESCENDING",
-            "Values": ["DESCENDING"]
-        },
+        {'Name': 'FRAME_ID', 'Values': ['9154']},
+        {'Name': 'ASCENDING_DESCENDING', 'Values': ['DESCENDING']},
     ]
     assert Granule.from_umm(umm) == Granule(
         scene_name='mock-scene-name',
