@@ -7,6 +7,9 @@ and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.4.1]
+### Added
+* `get_orbit_pass` for using OPERA frame DB for getting a frame's orbit direction
+
 ### Changed
 * Revised `search.py` to query all v0.9+ granules in CMR UAT, rather than California-specific v0.7 granules
 
