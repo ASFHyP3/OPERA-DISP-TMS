@@ -7,6 +7,7 @@ from pathlib import Path
 
 from osgeo import gdal, gdalconst, osr
 
+
 gdal.UseExceptions()
 
 
@@ -79,8 +80,8 @@ def create_tile_map(output_folder: str, input_rasters: list[str], scale_range: l
 def main():
     parser = argparse.ArgumentParser(
         description='Generate a directory with small .png tiles from a list of rasters in a common projection, '
-                    'following the OSGeo Tile Map Service Specification, using gdal2tiles: '
-                    'https://gdal.org/en/latest/programs/gdal2tiles.html'
+        'following the OSGeo Tile Map Service Specification, using gdal2tiles: '
+        'https://gdal.org/en/latest/programs/gdal2tiles.html'
     )
     parser.add_argument('output_folder', type=str, help='Path of the output directory to create')
     parser.add_argument('input_rasters', type=str, nargs='+', help='List of gdal-compatible raster paths to mosaic')
