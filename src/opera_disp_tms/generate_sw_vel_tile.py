@@ -114,7 +114,6 @@ def add_velocity_data_to_array(
 
     Args:
         granules: A list of granule objects
-        frame: The frame metadata
         geotransform: The geotransform of the frame
         frame_map_array: The frame map as a numpy array
         out_array: The array to add the velocity data to
