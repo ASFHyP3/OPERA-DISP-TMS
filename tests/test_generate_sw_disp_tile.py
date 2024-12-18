@@ -61,7 +61,7 @@ def test_find_needed_granules():
         GranuleStub(frame_id=1, secondary_date=datetime(2021, 1, 3)),
     ]
 
-    fn_name = 'opera_disp_tms.generate_sw_disp_tile.find_california_granules_for_frame'
+    fn_name = 'opera_disp_tms.generate_sw_disp_tile.find_granules_for_frame'
     with mock.patch(fn_name, return_value=granules):
         needed_granules = sw.find_needed_granules([1], datetime(2021, 1, 1), datetime(2021, 1, 3), strategy='max')
         assert len(needed_granules[1]) == 1
