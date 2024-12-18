@@ -6,9 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.1]
+## [0.4.2]
 ### Added
 * Support for generating velocity mosaics from granule stacks without a common reference date 
+
+## [0.4.1]
+### Changed
+* The [`static-analysis`](.github/workflows/static-analysis.yml) Github Actions workflow now uses `ruff` rather than `flake8` for linting.
 
 ## [0.4.0]
 ### Added

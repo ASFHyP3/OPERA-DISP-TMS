@@ -1,7 +1,8 @@
 import argparse
+from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable, List
+from typing import List
 
 import numpy as np
 import xarray as xr
