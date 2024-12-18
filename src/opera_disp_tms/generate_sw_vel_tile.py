@@ -79,18 +79,29 @@ def parallel_linear_regression(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     return slope_array
 
 
-def align_to_common_reference_date(granule_xrs: list[xr.DataArray]) -> None:
-    previous_granule_xr = granule_xrs[0]
-    correction = np.zeros(previous_granule_xr.shape)
+def align_to_common_reference_date(granule_xrs: list[xr.DataArray], start_date: datetime) -> None:
+    granule_xrs.sort(key=lambda x: x.secondary_date)
 
+    if start_date <= granule_xrs[0].reference_date:
+        zero_xr = xr.DataArray(
+            data=np.zeros(granule_xrs[0].shape),
+            attrs={
+                'reference_date': granule_xrs[0].reference_date,
+                'secondary_date': granule_xrs[0].reference_date,
+            },
+        )
+        granule_xrs.insert(0, zero_xr)
+
+    previous_granule_xr = granule_xrs[0]
+    correction = -previous_granule_xr.data
     for granule_xr in granule_xrs:
-        if not within_one_day(granule_xr.attrs['reference_date'], previous_granule_xr.attrs['reference_date']):
+        if not within_one_day(granule_xr.reference_date, previous_granule_xr.reference_date):
             correction = previous_granule_xr.data
         granule_xr += correction
         previous_granule_xr = granule_xr
 
     for granule_xr in granule_xrs:
-        granule_xr.attrs['reference_date'] = granule_xrs[0].attrs['reference_date']
+        granule_xr.attrs['reference_date'] = granule_xrs[0].secondary_date
 
 
 def add_velocity_data_to_array(
@@ -111,10 +122,9 @@ def add_velocity_data_to_array(
     Returns:
         np.ndarray: The updated array
     """
-    sorted_granules = sorted(granules, key=lambda g: g.secondary_date)
     bbox = create_buffered_bbox(geotransform.to_gdal(), frame_map_array.shape, 90)  # EPSG:3857 is in meters
-    granule_xrs = [sw_disp.load_sw_disp_granule(x, bbox) for x in sorted_granules]
-    align_to_common_reference_date(granule_xrs)
+    granule_xrs = [sw_disp.load_sw_disp_granule(x, bbox) for x in granules]
+    align_to_common_reference_date(granule_xrs, min(g.reference_date for g in granule_xrs))
     cube = xr.concat(granule_xrs, dim='years_since_start')
 
     years_since_start = get_years_since_start([g.attrs['secondary_date'] for g in granule_xrs])
