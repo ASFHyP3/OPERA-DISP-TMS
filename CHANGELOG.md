@@ -11,7 +11,11 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * Support for generating velocity mosaics from granule stacks without a common reference date 
 
 ## [0.4.1]
+### Added
+* `get_orbit_pass` for using OPERA frame DB for getting a frame's orbit direction
+
 ### Changed
+* Revised `search.py` to query all v0.7+ granules in CMR UAT, rather than California-specific v0.7 granules
 * The [`static-analysis`](.github/workflows/static-analysis.yml) Github Actions workflow now uses `ruff` rather than `flake8` for linting.
 
 ## [0.4.0]

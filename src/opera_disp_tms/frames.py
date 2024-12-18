@@ -170,3 +170,32 @@ def intersect(
 
     intersecting_frames = [Frame.from_row(row) for row in rows]
     return intersecting_frames
+
+
+# FIXME: Remove when updating to OPERA DISP data v0.9
+def get_orbit_pass(frame_id: int) -> str:
+    """Get the orbit pass for an OPERA frame
+
+    Args:
+        frame_id: OPERA frame ID to get orbit pass for
+
+    Returns:
+        "ASCENDING" or "DESCENDING"
+    """
+    download_frame_db()
+    query = (
+        'SELECT fid as frame_id, epsg, relative_orbit_number, orbit_pass, '
+        '       is_land, is_north_america, ASText(GeomFromGPB(geom)) AS wkt '
+        'FROM frames '
+        'WHERE fid = ?'
+    )
+    with sqlite3.connect(DB_PATH) as con:
+        con.enable_load_extension(True)
+        con.load_extension('mod_spatialite')
+        cursor = con.cursor()
+        cursor.execute(query, [int(frame_id)])
+        rows = cursor.fetchall()
+
+    assert len(rows) == 1
+    frame = Frame.from_row(rows[0])
+    return frame.orbit_pass
