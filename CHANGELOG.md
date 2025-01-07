@@ -13,6 +13,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 * Revised `search.py` to query all v0.9+ granules in CMR UAT, rather than California-specific v0.7 granules
 * Accommodate `FRAME_ID` CMR attribute being renamed to `FRAME_NUMBER`
+* HyP3 entrypoint now generates mosaic GeoTIFFs in 10 degree x 10 degree partitions to limit memory usage
 
 ## [0.4.1]
 ### Changed

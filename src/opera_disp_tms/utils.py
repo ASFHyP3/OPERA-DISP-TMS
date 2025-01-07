@@ -182,3 +182,12 @@ def upload_dir_to_s3(path_to_dir: Path, bucket: str, prefix: str = ''):
             path_to_file = Path(branch[0]) / filename
             key = str(prefix / path_to_file.relative_to(path_to_dir))
             upload_file_to_s3(path_to_file, bucket, key)
+
+
+def partition_bbox(bbox: tuple[int, int, int, int], width: int=10, height: int=10) -> list[tuple[int, int, int, int]]:
+    partitions = []
+    for lon in range(bbox[0], bbox[2], width):
+        for lat in range(bbox[1], bbox[3], height):
+            partition = (lon, lat, min(lon + width, bbox[2]), min(lat + height, bbox[3]))
+            partitions.append(partition)
+    return partitions
