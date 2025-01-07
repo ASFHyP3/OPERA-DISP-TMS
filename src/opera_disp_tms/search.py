@@ -31,7 +31,7 @@ class Granule:
         scene_name = umm['meta']['native-id']
 
         attributes = umm['umm']['AdditionalAttributes']
-        frame_id = int(next(att['Values'][0] for att in attributes if att['Name'] == 'FRAME_ID'))
+        frame_id = int(next(att['Values'][0] for att in attributes if att['Name'] == 'FRAME_NUMBER'))
         orbit_pass = next(att['Values'][0] for att in attributes if att['Name'] == 'ASCENDING_DESCENDING')
 
         urls = umm['umm']['RelatedUrls']
@@ -71,7 +71,7 @@ def get_cmr_metadata(
     """
     cmr_parameters = {
         'short_name': 'OPERA_L3_DISP-S1_V1',
-        'attribute[]': [f'int,FRAME_ID,{frame_id}', f'float,PRODUCT_VERSION,{version},'],
+        'attribute[]': [f'int,FRAME_NUMBER,{frame_id}', f'float,PRODUCT_VERSION,{version},'],
         'page_size': 2000,
     }
     headers = {}

@@ -12,6 +12,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 * Revised `search.py` to query all v0.9+ granules in CMR UAT, rather than California-specific v0.7 granules
+* Accommodate `FRAME_ID` CMR attribute being renamed to `FRAME_NUMBER`
 * The [`static-analysis`](.github/workflows/static-analysis.yml) Github Actions workflow now uses `ruff` rather than `flake8` for linting.
 
 ## [0.4.0]
