@@ -6,13 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.1]
+## [0.5.0]
 ### Added
 * Granule orbit directions are now taken from the ASCENDING_DESCENDING attribute in CMR, rather than the frame database
 
 ### Changed
 * Revised `search.py` to query all v0.9+ granules in CMR UAT, rather than California-specific v0.7 granules
 * Accommodate `FRAME_ID` CMR attribute being renamed to `FRAME_NUMBER`
+
+## [0.4.1]
+### Changed
 * The [`static-analysis`](.github/workflows/static-analysis.yml) Github Actions workflow now uses `ruff` rather than `flake8` for linting.
 
 ## [0.4.0]
