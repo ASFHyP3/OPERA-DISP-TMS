@@ -39,9 +39,7 @@ def test_from_umm():
     assert Granule.from_umm(umm) == Granule(
         scene_name='mock-scene-name',
         frame_id=9154,
-        # FIXME: Use when updating to OPERA DISP data v0.9
-        # orbit_pass='DESCENDING',
-        orbit_pass='ASCENDING',
+        orbit_pass='DESCENDING',
         url='mock-url',
         s3_uri='mock-s3-uri',
         reference_date=datetime(2019, 10, 6, 0, 26, 42),
