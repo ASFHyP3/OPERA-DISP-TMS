@@ -55,7 +55,11 @@ def generate_tile_map_service(
 ) -> Path:
     mosaic_geotiffs = []
     for partition in partition_bbox(bbox):
-        mosaic_geotiffs.append(generate_mosaic_geotiff(tile_type, partition, direction, begin_date, end_date).name)
+        try:
+            mosaic_geotiff = generate_mosaic_geotiff(tile_type, partition, direction, begin_date, end_date)
+            mosaic_geotiffs.append(mosaic_geotiff.name)
+        except ValueError as e:
+            print(e)
 
     scale = {
         'displacement': None,
