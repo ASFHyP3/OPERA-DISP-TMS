@@ -11,7 +11,7 @@ def test_from_umm():
                 'RangeDateTime': {'BeginningDateTime': '2019-10-06T00:26:42Z', 'EndingDateTime': '2020-09-30T00:26:48Z'}
             },
             'AdditionalAttributes': [
-                {'Name': 'FRAME_ID', 'Values': ['8882']},
+                {'Name': 'FRAME_NUMBER', 'Values': ['8882']},
                 {'Name': 'ASCENDING_DESCENDING', 'Values': ['ASCENDING']},
             ],
             'RelatedUrls': [
@@ -33,15 +33,13 @@ def test_from_umm():
     )
 
     umm['umm']['AdditionalAttributes'] = [
-        {'Name': 'FRAME_ID', 'Values': ['9154']},
+        {'Name': 'FRAME_NUMBER', 'Values': ['9154']},
         {'Name': 'ASCENDING_DESCENDING', 'Values': ['DESCENDING']},
     ]
     assert Granule.from_umm(umm) == Granule(
         scene_name='mock-scene-name',
         frame_id=9154,
-        # FIXME: Use when updating to OPERA DISP data v0.9
-        # orbit_pass='DESCENDING',
-        orbit_pass='ASCENDING',
+        orbit_pass='DESCENDING',
         url='mock-url',
         s3_uri='mock-s3-uri',
         reference_date=datetime(2019, 10, 6, 0, 26, 42),
