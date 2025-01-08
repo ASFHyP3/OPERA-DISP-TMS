@@ -9,6 +9,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [0.5.0]
 ### Added
 * Granule orbit directions are now taken from the ASCENDING_DESCENDING attribute in CMR, rather than the frame database
+* Support for generating velocity mosaics from granule stacks without a common reference date 
 
 ### Changed
 * Revised `search.py` to query all v0.9+ granules in CMR UAT, rather than California-specific v0.7 granules
