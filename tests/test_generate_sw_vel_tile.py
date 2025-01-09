@@ -58,104 +58,78 @@ def test_parallel_linear_regression():
 
 
 def test_align_to_common_reference_date():
+    def create_data_array(data, ref_date, sec_date):
+        coords = {'x': [1, 2]}
+        da = xr.DataArray(
+            data=data,
+            attrs={'reference_date': ref_date, 'secondary_date': sec_date, 'frame_id': 1},
+            coords=coords,
+        )
+        return da
+
     xrs = [
-        xr.DataArray(data=[1.0, 0.0], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 2)}),
-        xr.DataArray(data=[5.0, 0.0], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 3)}),
-        xr.DataArray(
-            data=[-1.0, 0.0], attrs={'reference_date': datetime(1, 1, 3), 'secondary_date': datetime(1, 1, 4)}
-        ),
-        xr.DataArray(data=[7.0, 0.0], attrs={'reference_date': datetime(1, 1, 3), 'secondary_date': datetime(1, 1, 5)}),
-        xr.DataArray(
-            data=[-3.0, 1.0], attrs={'reference_date': datetime(1, 1, 5), 'secondary_date': datetime(1, 1, 6)}
-        ),
+        create_data_array([1.0, 0.0], datetime(1, 1, 1), datetime(1, 1, 2)),
+        create_data_array([5.0, 0.0], datetime(1, 1, 1), datetime(1, 1, 3)),
+        create_data_array([-1.0, 0.0], datetime(1, 1, 3), datetime(1, 1, 4)),
+        create_data_array([7.0, 0.0], datetime(1, 1, 3), datetime(1, 1, 5)),
+        create_data_array([-3.0, 1.0], datetime(1, 1, 5), datetime(1, 1, 6)),
     ]
     expected = [
-        xr.DataArray(data=[0.0, 0.0], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 1)}),
-        xr.DataArray(data=[1.0, 0.0], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 2)}),
-        xr.DataArray(data=[5.0, 0.0], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 3)}),
-        xr.DataArray(data=[4.0, 0.0], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 4)}),
-        xr.DataArray(
-            data=[12.0, 0.0], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 5)}
-        ),
-        xr.DataArray(data=[9.0, 1.0], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 6)}),
+        create_data_array([0.0, 0.0], datetime(1, 1, 1), datetime(1, 1, 1)),
+        create_data_array([1.0, 0.0], datetime(1, 1, 1), datetime(1, 1, 2)),
+        create_data_array([5.0, 0.0], datetime(1, 1, 1), datetime(1, 1, 3)),
+        create_data_array([4.0, 0.0], datetime(1, 1, 1), datetime(1, 1, 4)),
+        create_data_array([12.0, 0.0], datetime(1, 1, 1), datetime(1, 1, 5)),
+        create_data_array([9.0, 1.0], datetime(1, 1, 1), datetime(1, 1, 6)),
     ]
     sw_vel.align_to_common_reference_date(xrs, start_date=datetime(1, 1, 1))
     assert all(a.identical(b) for a, b in zip(xrs, expected))
 
     xrs = [
-        xr.DataArray(data=[1.0, 0.0], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 2)}),
-        xr.DataArray(data=[5.0, 0.0], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 3)}),
-        xr.DataArray(
-            data=[-1.0, 0.0], attrs={'reference_date': datetime(1, 1, 3), 'secondary_date': datetime(1, 1, 4)}
-        ),
-        xr.DataArray(data=[7.0, 0.0], attrs={'reference_date': datetime(1, 1, 3), 'secondary_date': datetime(1, 1, 5)}),
-        xr.DataArray(
-            data=[-3.0, 1.0], attrs={'reference_date': datetime(1, 1, 5), 'secondary_date': datetime(1, 1, 6)}
-        ),
+        create_data_array([1.0, 0.0], datetime(1, 1, 1), datetime(1, 1, 2)),
+        create_data_array([5.0, 0.0], datetime(1, 1, 1), datetime(1, 1, 3)),
+        create_data_array([-1.0, 0.0], datetime(1, 1, 3), datetime(1, 1, 4)),
+        create_data_array([7.0, 0.0], datetime(1, 1, 3), datetime(1, 1, 5)),
+        create_data_array([-3.0, 1.0], datetime(1, 1, 5), datetime(1, 1, 6)),
     ]
     expected = [
-        xr.DataArray(data=[0.0, 0.0], attrs={'reference_date': datetime(1, 1, 2), 'secondary_date': datetime(1, 1, 2)}),
-        xr.DataArray(data=[4.0, 0.0], attrs={'reference_date': datetime(1, 1, 2), 'secondary_date': datetime(1, 1, 3)}),
-        xr.DataArray(data=[3.0, 0.0], attrs={'reference_date': datetime(1, 1, 2), 'secondary_date': datetime(1, 1, 4)}),
-        xr.DataArray(
-            data=[11.0, 0.0], attrs={'reference_date': datetime(1, 1, 2), 'secondary_date': datetime(1, 1, 5)}
-        ),
-        xr.DataArray(data=[8.0, 1.0], attrs={'reference_date': datetime(1, 1, 2), 'secondary_date': datetime(1, 1, 6)}),
+        create_data_array([0.0, 0.0], datetime(1, 1, 2), datetime(1, 1, 2)),
+        create_data_array([4.0, 0.0], datetime(1, 1, 2), datetime(1, 1, 3)),
+        create_data_array([3.0, 0.0], datetime(1, 1, 2), datetime(1, 1, 4)),
+        create_data_array([11.0, 0.0], datetime(1, 1, 2), datetime(1, 1, 5)),
+        create_data_array([8.0, 1.0], datetime(1, 1, 2), datetime(1, 1, 6)),
     ]
+
     sw_vel.align_to_common_reference_date(xrs, start_date=datetime(1, 1, 1, 12))
     assert all(a.identical(b) for a, b in zip(xrs, expected))
 
-    xrs = [
-        xr.DataArray(
-            data=[20.0, -5.0], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 2)}
-        ),
-    ]
+    xrs = [create_data_array([20.0, -5.0], datetime(1, 1, 1), datetime(1, 1, 2))]
     expected = [
-        xr.DataArray(data=[0.0, 0.0], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 1)}),
-        xr.DataArray(
-            data=[20.0, -5.0], attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 2)}
-        ),
+        create_data_array([0.0, 0.0], datetime(1, 1, 1), datetime(1, 1, 1)),
+        create_data_array([20.0, -5.0], datetime(1, 1, 1), datetime(1, 1, 2)),
     ]
     sw_vel.align_to_common_reference_date(xrs, start_date=datetime(1, 1, 1))
     assert all(a.identical(b) for a, b in zip(xrs, expected))
 
     xrs = [
-        xr.DataArray(
-            data=[17.0, 3.0], attrs={'reference_date': datetime(1, 1, 10), 'secondary_date': datetime(1, 1, 20)}
-        ),
-        xr.DataArray(
-            data=[21.0, -5.0], attrs={'reference_date': datetime(1, 1, 10), 'secondary_date': datetime(1, 1, 30)}
-        ),
+        create_data_array([17.0, 3.0], datetime(1, 1, 10), datetime(1, 1, 20)),
+        create_data_array([21.0, -5.0], datetime(1, 1, 10), datetime(1, 1, 30)),
     ]
     expected = [
-        xr.DataArray(
-            data=[0.0, 0.0], attrs={'reference_date': datetime(1, 1, 20), 'secondary_date': datetime(1, 1, 20)}
-        ),
-        xr.DataArray(
-            data=[4.0, -8.0], attrs={'reference_date': datetime(1, 1, 20), 'secondary_date': datetime(1, 1, 30)}
-        ),
+        create_data_array([0.0, 0.0], datetime(1, 1, 20), datetime(1, 1, 20)),
+        create_data_array([4.0, -8.0], datetime(1, 1, 20), datetime(1, 1, 30)),
     ]
     sw_vel.align_to_common_reference_date(xrs, start_date=datetime(1, 1, 19))
     assert all(a.identical(b) for a, b in zip(xrs, expected))
 
     xrs = [
-        xr.DataArray(
-            data=[17.0, 3.0], attrs={'reference_date': datetime(1, 1, 10), 'secondary_date': datetime(1, 1, 20)}
-        ),
-        xr.DataArray(
-            data=[21.0, -5.0], attrs={'reference_date': datetime(1, 1, 10), 'secondary_date': datetime(1, 1, 30)}
-        ),
+        create_data_array([17.0, 3.0], datetime(1, 1, 10), datetime(1, 1, 20)),
+        create_data_array([21.0, -5.0], datetime(1, 1, 10), datetime(1, 1, 30)),
     ]
     expected = [
-        xr.DataArray(
-            data=[0.0, 0.0], attrs={'reference_date': datetime(1, 1, 10), 'secondary_date': datetime(1, 1, 10)}
-        ),
-        xr.DataArray(
-            data=[17.0, 3.0], attrs={'reference_date': datetime(1, 1, 10), 'secondary_date': datetime(1, 1, 20)}
-        ),
-        xr.DataArray(
-            data=[21.0, -5.0], attrs={'reference_date': datetime(1, 1, 10), 'secondary_date': datetime(1, 1, 30)}
-        ),
+        create_data_array([0.0, 0.0], datetime(1, 1, 10), datetime(1, 1, 10)),
+        create_data_array([17.0, 3.0], datetime(1, 1, 10), datetime(1, 1, 20)),
+        create_data_array([21.0, -5.0], datetime(1, 1, 10), datetime(1, 1, 30)),
     ]
     sw_vel.align_to_common_reference_date(xrs, start_date=datetime(1, 1, 9))
     assert all(a.identical(b) for a, b in zip(xrs, expected))
