@@ -89,9 +89,9 @@ def align_to_common_reference_date(granule_xrs: list[xr.DataArray], start_date: 
             attrs={
                 'reference_date': granule_xrs[0].reference_date,
                 'secondary_date': granule_xrs[0].reference_date,
-                'frame_id': granule_xrs[0].frame_id
+                'frame_id': granule_xrs[0].frame_id,
             },
-            coords = granule_xrs[0].coords
+            coords=granule_xrs[0].coords,
         )
         granule_xrs.insert(0, zero_xr)
 
