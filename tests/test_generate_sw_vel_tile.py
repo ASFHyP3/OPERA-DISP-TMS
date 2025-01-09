@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import numpy as np
+import pytest
 import xarray as xr
 
 from opera_disp_tms import generate_sw_vel_tile as sw_vel
@@ -133,3 +134,24 @@ def test_align_to_common_reference_date():
     ]
     sw_vel.align_to_common_reference_date(xrs, start_date=datetime(1, 1, 9))
     assert all(a.identical(b) for a, b in zip(xrs, expected))
+
+
+def test_check_connected_network():
+    sw_vel.check_connected_network([])
+
+    sw_vel.check_connected_network([
+        xr.DataArray(attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 10)}),
+        xr.DataArray(attrs={'reference_date': datetime(1, 1, 10), 'secondary_date': datetime(1, 1, 20)}),
+    ])
+
+    sw_vel.check_connected_network([
+        xr.DataArray(attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 10)}),
+        xr.DataArray(attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 20)}),
+        xr.DataArray(attrs={'reference_date': datetime(1, 1, 20), 'secondary_date': datetime(1, 1, 30)}),
+    ])
+
+    with pytest.raises(ValueError):
+        sw_vel.check_connected_network([
+            xr.DataArray(attrs={'reference_date': datetime(1, 1, 1), 'secondary_date': datetime(1, 1, 10)}),
+            xr.DataArray(attrs={'reference_date': datetime(1, 1, 20), 'secondary_date': datetime(1, 1, 30)}),
+        ])
