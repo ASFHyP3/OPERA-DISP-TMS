@@ -1,6 +1,6 @@
 import argparse
 from collections.abc import Iterable
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List
 
@@ -80,8 +80,17 @@ def parallel_linear_regression(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     return slope_array
 
 
+def check_connected_network(granule_xrs: list[xr.DataArray]) -> None:
+    reference_dates = sorted(list({g.reference_date for g in granule_xrs}))
+    secondary_dates = sorted(list({g.secondary_date for g in granule_xrs}))
+    for reference_date in reference_dates[1:]:
+        if not any([within_one_day(reference_date, s) for s in secondary_dates]):
+            raise ValueError('Granule network is unconnected')
+
+
 def align_to_common_reference_date(granule_xrs: list[xr.DataArray], start_date: datetime) -> None:
     granule_xrs.sort(key=lambda x: x.secondary_date)
+    check_connected_network(granule_xrs)
 
     if start_date <= granule_xrs[0].reference_date:
         zero_xr = granule_xrs[0].copy()
@@ -91,6 +100,7 @@ def align_to_common_reference_date(granule_xrs: list[xr.DataArray], start_date: 
 
     previous_granule_xr = granule_xrs[0]
     correction = -previous_granule_xr.data
+
     for granule_xr in granule_xrs:
         if not within_one_day(granule_xr.reference_date, previous_granule_xr.reference_date):
             correction = previous_granule_xr.data
