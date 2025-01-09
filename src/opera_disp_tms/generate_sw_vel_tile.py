@@ -84,13 +84,9 @@ def align_to_common_reference_date(granule_xrs: list[xr.DataArray], start_date: 
     granule_xrs.sort(key=lambda x: x.secondary_date)
 
     if start_date <= granule_xrs[0].reference_date:
-        zero_xr = xr.DataArray(
-            data=np.zeros(granule_xrs[0].shape),
-            attrs={
-                'reference_date': granule_xrs[0].reference_date,
-                'secondary_date': granule_xrs[0].reference_date,
-            },
-        )
+        zero_xr = granule_xrs[0].copy()
+        zero_xr.attrs['secondary_date'] = zero_xr.attrs['reference_date']
+        zero_xr.data = np.zeros(zero_xr.shape)
         granule_xrs.insert(0, zero_xr)
 
     previous_granule_xr = granule_xrs[0]
