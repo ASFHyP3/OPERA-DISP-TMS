@@ -1,6 +1,6 @@
 import argparse
 from collections.abc import Iterable
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import List
 
