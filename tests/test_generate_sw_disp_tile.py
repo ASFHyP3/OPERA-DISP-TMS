@@ -3,6 +3,7 @@ from datetime import datetime
 from unittest import mock
 from unittest.mock import patch
 
+import pytest
 import rioxarray  # noqa
 import xarray as xr
 from osgeo import gdal
@@ -105,3 +106,23 @@ def test_update_reference_date():
         to_correct = sw.update_reference_date(to_correct, frame)
         assert to_correct.attrs['reference_date'] == datetime(2019, 1, 1)
         assert to_correct.values == 13
+
+
+def test_restrict_to_spanning_set():
+    GranuleStub = namedtuple('GranuleStub', ['frame_id', 'reference_date', 'secondary_date'])
+    granules = [
+        GranuleStub(1, datetime(2021, 1, 1), datetime(2021, 1, 4)),
+        GranuleStub(1, datetime(2021, 1, 4), datetime(2021, 1, 7)),
+        GranuleStub(1, datetime(2021, 1, 7), datetime(2021, 1, 10)),
+    ]
+    result = sw.restrict_to_spanning_set(granules)
+    assert len(result) == 3
+    assert result == granules
+
+    granules.append(GranuleStub(1, datetime(2021, 1, 7), datetime(2021, 1, 13)))
+    result = sw.restrict_to_spanning_set(granules)
+    assert len(result) == 3
+    assert result == [granules[0], granules[1], granules[3]]
+
+    with pytest.raises(ValueError, match='Granules do not form a spanning set.'):
+        sw.restrict_to_spanning_set([granules[0], granules[2], granules[3]])

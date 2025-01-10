@@ -62,6 +62,32 @@ def frames_from_metadata(metadata_path: Path) -> dict[int, FrameMeta]:
     return frames
 
 
+def restrict_to_spanning_set(granules: list[Granule]) -> list[Granule]:
+    """Restrict a list of granules to the minimum set needed to reconstruct the relative displacement
+
+    Args:
+        granules: List of granules to restrict
+
+    Returns:
+        List of granules that form the minimum set needed to reconstruct the relative displacement
+    """
+    assert len(set(g.frame_id for g in granules)) == 1, 'Spanning set granules must be from the same frame.'
+    granules = sorted(granules, key=lambda x: x.secondary_date)
+    first_reference_date = granules[0].reference_date
+    reference_date = granules[-1].reference_date
+    spanning_granules = [granules[-1]]
+    while not utils.within_one_day(reference_date, first_reference_date):
+        possible_connections = [g for g in granules if utils.within_one_day(g.secondary_date, reference_date)]
+        if len(possible_connections) == 0:
+            raise ValueError('Granules do not form a spanning set.')
+        # This could be improved by exploring every branch of the tree, instead of just the longest branch
+        next_granule = min(possible_connections, key=lambda x: x.reference_date)
+        spanning_granules.append(next_granule)
+        reference_date = next_granule.reference_date
+    spanning_granules = sorted(spanning_granules, key=lambda x: x.secondary_date)
+    return spanning_granules
+
+
 def find_needed_granules(
     frame_ids: Iterable[int], begin_date: datetime, end_date: datetime, strategy: str, min_granules: int = 2
 ) -> dict[int, list[Granule]]:
@@ -76,6 +102,7 @@ def find_needed_granules(
         strategy: Selection strategy for granules within search date range ("max", "minmax" or "all")
                   - Use "max" to get last granule
                   - Use "minmax" to get first and last granules
+                  - Use "spanning" to get the minimum set of granules needs to reconstruct the relative displacement
                   - Use "all" to get all granules
         min_granules: Minimum number of granules that need to be present in order to return a result
 
@@ -97,6 +124,8 @@ def find_needed_granules(
             youngest_granule = min(granules, key=lambda x: x.secondary_date)
             oldest_granule = max(granules, key=lambda x: x.secondary_date)
             needed_granules[frame_id] = [youngest_granule, oldest_granule]
+        elif strategy == 'spanning':
+            needed_granules[frame_id] = restrict_to_spanning_set(granules)
         elif strategy == 'all':
             needed_granules[frame_id] = granules
         else:
