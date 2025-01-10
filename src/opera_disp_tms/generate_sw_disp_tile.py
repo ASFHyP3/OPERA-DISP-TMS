@@ -1,6 +1,4 @@
 import argparse
-import warnings
-from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -11,8 +9,7 @@ from osgeo import gdal
 from rasterio.transform import Affine
 
 from opera_disp_tms import utils
-from opera_disp_tms.s3_xarray import open_opera_disp_granule, s3_xarray_dataset
-from opera_disp_tms.search import Granule, find_granules_for_frame
+from opera_disp_tms.search import Granule
 
 
 gdal.UseExceptions()
@@ -60,101 +57,6 @@ def frames_from_metadata(metadata_path: Path) -> dict[int, FrameMeta]:
     frame_ids = [int(x) for x in frame_metadata['OPERA_FRAMES'].split(', ')]
     frames = {frame_id: extract_frame_metadata(frame_metadata, frame_id) for frame_id in frame_ids}
     return frames
-
-
-def restrict_to_spanning_set(granules: list[Granule]) -> list[Granule]:
-    """Restrict a list of granules to the minimum set needed to reconstruct the relative displacement
-
-    Args:
-        granules: List of granules to restrict
-
-    Returns:
-        List of granules that form the minimum set needed to reconstruct the relative displacement
-    """
-    assert len(set(g.frame_id for g in granules)) == 1, 'Spanning set granules must be from the same frame.'
-    granules = sorted(granules, key=lambda x: x.secondary_date)
-    first_reference_date = granules[0].reference_date
-    reference_date = granules[-1].reference_date
-    spanning_granules = [granules[-1]]
-    while not utils.within_one_day(reference_date, first_reference_date):
-        possible_connections = [g for g in granules if utils.within_one_day(g.secondary_date, reference_date)]
-        if len(possible_connections) == 0:
-            raise ValueError('Granules do not form a spanning set.')
-        # This could be improved by exploring every branch of the tree, instead of just the longest branch
-        next_granule = min(possible_connections, key=lambda x: x.reference_date)
-        spanning_granules.append(next_granule)
-        reference_date = next_granule.reference_date
-    spanning_granules = sorted(spanning_granules, key=lambda x: x.secondary_date)
-    return spanning_granules
-
-
-def find_needed_granules(
-    frame_ids: Iterable[int], begin_date: datetime, end_date: datetime, strategy: str, min_granules: int = 2
-) -> dict[int, list[Granule]]:
-    """Find the granules needed to generate a short wavelength displacement tile.
-    For each `frame_id` the most recent granule whose secondary date is between
-    `begin_date` and `end_date` is selected.
-
-    Args:
-        frame_ids: The frame ids to generate the tile for
-        begin_date: Start of secondary date search range to generate tile for
-        end_date: End of secondary date search range to generate tile for
-        strategy: Selection strategy for granules within search date range ("max", "minmax" or "all")
-                  - Use "max" to get last granule
-                  - Use "minmax" to get first and last granules
-                  - Use "spanning" to get the minimum set of granules needed to reconstruct the relative displacement
-                  - Use "all" to get all granules
-        min_granules: Minimum number of granules that need to be present in order to return a result
-
-    Returns:
-        A dictionary with form {frame_id: [granules]}
-    """
-    needed_granules = {}
-    for frame_id in frame_ids:
-        granules_full_stack = find_granules_for_frame(frame_id)
-        granules = [g for g in granules_full_stack if begin_date <= g.secondary_date <= end_date]
-        if len(granules) < min_granules:
-            warnings.warn(
-                f'Less than {min_granules} granules found for frame {frame_id} between {begin_date} and {end_date}.'
-            )
-        elif strategy == 'max':
-            oldest_granule = max(granules, key=lambda x: x.secondary_date)
-            needed_granules[frame_id] = [oldest_granule]
-        elif strategy == 'minmax':
-            youngest_granule = min(granules, key=lambda x: x.secondary_date)
-            oldest_granule = max(granules, key=lambda x: x.secondary_date)
-            needed_granules[frame_id] = [youngest_granule, oldest_granule]
-        elif strategy == 'spanning':
-            needed_granules[frame_id] = restrict_to_spanning_set(granules)
-        elif strategy == 'all':
-            needed_granules[frame_id] = granules
-        else:
-            raise ValueError(f'Invalid strategy: {strategy}. Must be "seacant" or "all".')
-
-    return needed_granules
-
-
-def load_sw_disp_granule(granule: Granule, bbox: tuple[float, float, float, float]) -> xr.DataArray:
-    """Load the short wavelength displacement data for and OPERA DISP granule.
-    Clips to frame map and masks out invalid data.
-
-    Args:
-        granule: The granule to load
-        bbox: The bounding box to clip to
-
-    Returns:
-        The short wavelength displacement data as an xarray DataArray
-    """
-    datasets = ['short_wavelength_displacement', 'recommended_mask']
-    with s3_xarray_dataset(granule.s3_uri) as ds:
-        granule_xr = open_opera_disp_granule(ds, granule.s3_uri, datasets)
-        granule_xr = granule_xr.rio.clip_box(*bbox, crs='EPSG:3857')
-        granule_xr = granule_xr.load()
-        valid_data_mask = granule_xr['recommended_mask'] == 1
-        sw_cumul_disp_xr = granule_xr['short_wavelength_displacement'].where(valid_data_mask, np.nan)
-        sw_cumul_disp_xr.attrs = granule_xr.attrs
-    sw_cumul_disp_xr.attrs['bbox'] = bbox
-    return sw_cumul_disp_xr
 
 
 def update_reference_date(granule: xr.DataArray, frame: FrameMeta) -> xr.DataArray:
