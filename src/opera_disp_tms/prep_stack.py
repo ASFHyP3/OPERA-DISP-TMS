@@ -56,7 +56,7 @@ def find_needed_granules(frame_id: int, begin_date: datetime, end_date: datetime
     elif strategy == 'all':
         needed_granules = granules
     else:
-        raise ValueError(f'Invalid strategy: {strategy}. Must be "seacant" or "all".')
+        raise ValueError(f'Invalid strategy: {strategy}. Must be "spanning" or "all".')
     needed_granules = sorted(needed_granules, key=lambda x: x.secondary_date)
     print(f'Found {len(needed_granules)} granules for frame {frame_id} between {begin_date} and {end_date}')
     return needed_granules
