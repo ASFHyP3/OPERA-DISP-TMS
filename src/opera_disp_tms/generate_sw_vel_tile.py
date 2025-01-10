@@ -81,6 +81,11 @@ def parallel_linear_regression(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 
 
 def check_connected_network(granule_xrs: list[xr.DataArray]) -> None:
+    """Check that cumulative displacement can reconstructed using given granule set
+
+    Args:
+        granules_xr: A list of granule xarray DataArrays
+    """
     reference_dates = sorted(list({g.reference_date for g in granule_xrs}))
     secondary_dates = sorted(list({g.secondary_date for g in granule_xrs}))
     for reference_date in reference_dates[1:]:
@@ -151,7 +156,7 @@ def add_velocity_data_to_array(
     return out_array
 
 
-def create_sw_vel_tile(metadata_path: Path, begin_date: datetime, end_date: datetime, minmax: bool = True) -> Path:
+def create_sw_vel_tile(metadata_path: Path, begin_date: datetime, end_date: datetime, secant: bool = True) -> Path:
     if not metadata_path.exists():
         raise FileNotFoundError(f'{metadata_path} does not exist')
     if begin_date > end_date:
@@ -162,7 +167,7 @@ def create_sw_vel_tile(metadata_path: Path, begin_date: datetime, end_date: date
     print(f'Generating tile {product_name}')
 
     frames = sw_disp.frames_from_metadata(metadata_path)
-    strategy = 'minmax' if minmax else 'all'
+    strategy = 'spanning' if secant else 'all'
     needed_granules = sw_disp.find_needed_granules(list(frames.keys()), begin_date, end_date, strategy=strategy)
     len_str = [f'    {frame_id}: {len(needed_granules[frame_id])}' for frame_id in needed_granules]
     print('\n'.join(['N granules:'] + len_str))
@@ -207,7 +212,7 @@ def main():
     args.begin_date = datetime.strptime(args.begin_date, '%Y%m%d')
     args.end_date = datetime.strptime(args.end_date, '%Y%m%d')
 
-    create_sw_vel_tile(args.metadata_path, args.begin_date, args.end_date, minmax=args.full)
+    create_sw_vel_tile(args.metadata_path, args.begin_date, args.end_date, secant=args.full)
 
 
 if __name__ == '__main__':

@@ -102,7 +102,7 @@ def find_needed_granules(
         strategy: Selection strategy for granules within search date range ("max", "minmax" or "all")
                   - Use "max" to get last granule
                   - Use "minmax" to get first and last granules
-                  - Use "spanning" to get the minimum set of granules needs to reconstruct the relative displacement
+                  - Use "spanning" to get the minimum set of granules needed to reconstruct the relative displacement
                   - Use "all" to get all granules
         min_granules: Minimum number of granules that need to be present in order to return a result
 
