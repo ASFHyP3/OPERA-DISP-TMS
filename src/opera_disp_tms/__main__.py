@@ -43,7 +43,7 @@ def generate_mosaic_geotiff(
     if tile_type == 'displacement':
         mosaic_geotiff = create_sw_disp_tile(metadata_geotiff, begin_date, end_date)
     elif tile_type == 'secant_velocity':
-        mosaic_geotiff = create_sw_vel_tile(metadata_geotiff, begin_date, end_date, minmax=True)
+        mosaic_geotiff = create_sw_vel_tile(metadata_geotiff, begin_date, end_date, secant=True)
     else:
         raise ValueError(f'Unsupported tile type: {tile_type}')
 
