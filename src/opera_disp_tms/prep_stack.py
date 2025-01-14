@@ -68,7 +68,7 @@ def load_sw_disp_granule(granule: Granule, bbox: tuple[float, float, float, floa
 
     Args:
         granule: The granule to load
-        bbox: The bounding box to clip to
+        bbox: The bounding box to clip to in EPSG:3857
 
     Returns:
         The short wavelength displacement data as an xarray DataArray
@@ -135,7 +135,7 @@ def load_sw_disp_stack(
 
     Args:
         frame_id: The frame id to load
-        bbox: The bounding box to clip to
+        bbox: The bounding box to clip to in EPSG:3857
         begin_date: The start of the date range
         end_date: The end of the date range
         strategy: The strategy to use for selecting granules ("spanning" or "all")
