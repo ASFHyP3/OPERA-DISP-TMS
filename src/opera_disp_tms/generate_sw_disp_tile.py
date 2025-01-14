@@ -105,7 +105,8 @@ def create_sw_disp_tile(frame_id: int, begin_date: datetime, end_date: datetime)
     product_path = Path.cwd() / product_name
 
     data = load_sw_disp_stack(frame_id, begin_date, end_date, 'spanning')[-1]
-    data.rio.to_raster(product_path.name, nodata=np.nan)
+    data.rio.write_nodata(np.nan, inplace=True)
+    data.rio.to_raster(product_path.name)
     return product_path
 
 
