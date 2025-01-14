@@ -88,7 +88,7 @@ def add_granule_data_to_array(
     return sw_cumul_disp, secondary_date
 
 
-def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: datetime) -> Path:
+def create_sw_disp_tile(frame_id: int, begin_date: datetime, end_date: datetime) -> Path:
     """Create a short wavelength cumulative displacement tile.
     Tile is generated using a set of granules whose secondary date are between `begin_date` and
     `end_date`. For each frame, the most recent granule is selected for the tile.
@@ -101,35 +101,11 @@ def create_sw_disp_tile(metadata_path: Path, begin_date: datetime, end_date: dat
     Returns:
         Path to the generated tile
     """
-    if not metadata_path.exists():
-        raise FileNotFoundError(f'{metadata_path} does not exist')
-
-    product_name = utils.create_tile_name(metadata_path.name, begin_date, end_date)
+    product_name = utils.create_tile_name(frame_id, begin_date, end_date)
     product_path = Path.cwd() / product_name
-    print(f'Generating tile {product_name}')
 
-    frames = frames_from_metadata(metadata_path)
-    frame_map, geotransform = utils.get_raster_as_numpy(metadata_path)
-    geotransform = Affine.from_gdal(*geotransform)
-    sw_cumul_disp = np.full(frame_map.shape, np.nan, dtype=float)
-    secondary_dates = {}
-    for frame_id in frames.keys():
-        sw_cumul_disp, secondary_date = add_granule_data_to_array(
-            frame_id, frame_map, geotransform, begin_date, end_date, sw_cumul_disp
-        )
-        secondary_dates[f'FRAME_{frame_id}_SEC_TIME'] = secondary_date
-
-    gdal.Translate(str(product_path), str(metadata_path), outputType=gdal.GDT_Float32, format='GTiff')
-    ds = gdal.Open(str(product_path), gdal.GA_Update)
-    band = ds.GetRasterBand(1)
-    band.SetNoDataValue(np.nan)
-    band.WriteArray(sw_cumul_disp)
-    metadata = ds.GetMetadata()
-    metadata.update(secondary_dates)
-    ds.SetMetadata(metadata)
-    ds.FlushCache()
-    ds = None
-    print('Done!')
+    data = load_sw_disp_stack(frame_id, begin_date, end_date, 'spanning')[-1]
+    data.rio.to_raster(product_path.name)
     return product_path
 
 

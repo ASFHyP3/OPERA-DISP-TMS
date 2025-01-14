@@ -141,7 +141,7 @@ def validate_bbox(bbox: tuple[int, int, int, int]) -> None:
 
 
 def create_tile_name(
-    metadata_name: str, begin_date: datetime, end_date: datetime, prod_type: str = 'SW_CUMUL_DISP'
+    frame_id: int, begin_date: datetime, end_date: datetime, prod_type: str = 'SW_CUMUL_DISP'
 ) -> str:
     """Create a product name for a short wavelength cumulative displacement tile
     Takes the form: SW_CUMUL_DISP_YYYYMMDD_YYYYMMDD_DIRECTION_TILECOORDS.tif
@@ -152,11 +152,10 @@ def create_tile_name(
         end_date: End of secondary date search range to generate tile for
         prod_type: Product type prefix to use
     """
-    _, flight_direction, tile_coordinates = metadata_name.split('_')
     date_fmt = '%Y%m%d'
     begin_date_str = datetime.strftime(begin_date, date_fmt)
     end_date_str = datetime.strftime(end_date, date_fmt)
-    name = '_'.join([prod_type, begin_date_str, end_date_str, flight_direction, tile_coordinates])
+    name = '_'.join([prod_type, begin_date_str, end_date_str, str(frame_id)])
     return name
 
 

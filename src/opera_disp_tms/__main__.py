@@ -20,30 +20,25 @@ class Date(argparse.Action):
         setattr(namespace, self.dest, value)
 
 
-class Bbox(argparse.Action):
+class Frames(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         try:
-            bbox = tuple(int(item) for sublist in values for item in sublist)
+            frames = [int(item) for sublist in values for item in sublist]
         except ValueError:
-            parser.error(f'{self.dest} values must be integers ordered [min lon, min lat, max lon, max lat]')
-        if len(bbox) != 4:
-            parser.error(f'{self.dest} must have exactly 4 values ordered [min lon, min lat, max lon, max lat]')
-        if not (-180 <= bbox[0] <= bbox[2] <= 180 and -90 <= bbox[1] <= bbox[3] <= 90):
-            parser.error(f'{self.dest} must be ordered [min lon, min lat, max lon, max lat]')
-        setattr(namespace, self.dest, bbox)
+            parser.error(f'{self.dest} values must be integers between 0 and TBD')
+        for frame in frames:
+            if not (0 <= frame <= 99999): # FIXME find actual max
+                parser.error(f'{self.dest} value {frame} must be between 0 and 99999')
+        setattr(namespace, self.dest, frames)
 
 
 def generate_mosaic_geotiff(
-    tile_type: str, bbox: tuple[int, int, int, int], direction: str, begin_date: datetime, end_date: datetime
+    tile_type: str, frame: int, begin_date: datetime, end_date: datetime
 ) -> Path:
-    metadata_geotiff = create_tile_for_bbox(bbox, direction=direction)
-    if not metadata_geotiff:
-        raise ValueError(f'No data found for bounding box {bbox} and direction {direction}')
-
     if tile_type == 'displacement':
-        mosaic_geotiff = create_sw_disp_tile(metadata_geotiff, begin_date, end_date)
+        mosaic_geotiff = create_sw_disp_tile(frame, begin_date, end_date)
     elif tile_type == 'secant_velocity':
-        mosaic_geotiff = create_sw_vel_tile(metadata_geotiff, begin_date, end_date, secant=True)
+        mosaic_geotiff = create_sw_vel_tile(frame, begin_date, end_date, secant=True)
     else:
         raise ValueError(f'Unsupported tile type: {tile_type}')
 
@@ -51,15 +46,13 @@ def generate_mosaic_geotiff(
 
 
 def generate_tile_map_service(
-    tile_type: str, bbox: tuple[int, int, int, int], direction: str, begin_date: datetime, end_date: datetime
+    tile_type: str, frames: list[int], direction: str, begin_date: datetime, end_date: datetime
 ) -> Path:
     mosaic_geotiffs = []
-    for partition in partition_bbox(bbox):
-        try:
-            mosaic_geotiff = generate_mosaic_geotiff(tile_type, partition, direction, begin_date, end_date)
-            mosaic_geotiffs.append(mosaic_geotiff.name)
-        except ValueError as e:
-            print(e)
+    for frame in frames:
+        print(f'Processing frame {frame}')
+        mosaic_geotiff =generate_mosaic_geotiff(tile_type, frame, direction, begin_date, end_date)
+        mosaic_geotiffs.append(mosaic_geotiff.name)
 
     scale = {
         'displacement': None,
@@ -80,11 +73,11 @@ def main():
         'tile_type', type=str, choices=['displacement', 'secant_velocity'], help='Data value to visualize'
     )
     parser.add_argument(
-        'bbox',
+        'frames',
         type=str.split,
         nargs='+',
-        action=Bbox,
-        help='Integer bounds in EPSG:4326, formatted like [min lon, min lat, max lon, max lat]',
+        action=Frames,
+        help='List of frame ids to include in mosaic',
     )
     parser.add_argument('direction', type=str, choices=['ascending', 'descending'], help='Direction of the orbit pass')
     parser.add_argument(
@@ -96,7 +89,7 @@ def main():
     args = parser.parse_args()
 
     output_directory = generate_tile_map_service(
-        args.tile_type, args.bbox, args.direction, args.begin_date, args.end_date
+        args.tile_type, args.frames, args.direction, args.begin_date, args.end_date
     )
     if args.bucket:
         upload_dir_to_s3(output_directory, args.bucket, args.bucket_prefix)
