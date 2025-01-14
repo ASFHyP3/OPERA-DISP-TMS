@@ -155,7 +155,7 @@ def create_tile_name(
     date_fmt = '%Y%m%d'
     begin_date_str = datetime.strftime(begin_date, date_fmt)
     end_date_str = datetime.strftime(end_date, date_fmt)
-    name = '_'.join([prod_type, begin_date_str, end_date_str, str(frame_id), '.tif'])
+    name = f'{frame_id}_{prod_type}_{begin_date_str}_{end_date_str}.tif'
     return name
 
 

@@ -41,8 +41,13 @@ def create_tile_map(output_folder: str, input_rasters: list[str], scale_range: l
         scale_range: Optional list of two integers to scale the mosaic by
     """
     with tempfile.NamedTemporaryFile() as mosaic_vrt, tempfile.NamedTemporaryFile() as byte_vrt:
+        reprojected_rasters = []
+        for raster in input_rasters:
+            reprojected_raster = raster + '.vrt'
+            gdal.Translate(destName=reprojected_raster, srcDS=raster, format='VRT', outputSRS='EPSG:3857')
+            reprojected_rasters.append(reprojected_raster)
         # mosaic the input rasters
-        gdal.BuildVRT(mosaic_vrt.name, input_rasters, resampleAlg='nearest')
+        gdal.BuildVRT(mosaic_vrt.name, reprojected_rasters, resampleAlg='nearest')
 
         # scale the mosaic from Float to Byte
         vrt_info = gdal.Info(mosaic_vrt.name, stats=True, format='json')
