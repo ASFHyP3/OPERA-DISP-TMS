@@ -46,12 +46,12 @@ def generate_mosaic_geotiff(
 
 
 def generate_tile_map_service(
-    tile_type: str, frames: list[int], direction: str, begin_date: datetime, end_date: datetime
+    tile_type: str, frames: list[int], begin_date: datetime, end_date: datetime
 ) -> Path:
     mosaic_geotiffs = []
     for frame in frames:
         print(f'Processing frame {frame}')
-        mosaic_geotiff = generate_mosaic_geotiff(tile_type, frame, direction, begin_date, end_date)
+        mosaic_geotiff = generate_mosaic_geotiff(tile_type, frame, begin_date, end_date)
         mosaic_geotiffs.append(mosaic_geotiff.name)
 
     scale = {
