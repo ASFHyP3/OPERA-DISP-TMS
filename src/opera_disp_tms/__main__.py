@@ -79,7 +79,6 @@ def main():
         action=Frames,
         help='List of frame ids to include in mosaic',
     )
-    parser.add_argument('direction', type=str, choices=['ascending', 'descending'], help='Direction of the orbit pass')
     parser.add_argument(
         'begin_date', type=str, action=Date, help='Start of secondary date search range to visualize (e.g., 20211231)'
     )
@@ -89,7 +88,7 @@ def main():
     args = parser.parse_args()
 
     output_directory = generate_tile_map_service(
-        args.tile_type, args.frames, args.direction, args.begin_date, args.end_date
+        args.tile_type, args.frames, args.begin_date, args.end_date
     )
     if args.bucket:
         upload_dir_to_s3(output_directory, args.bucket, args.bucket_prefix)
