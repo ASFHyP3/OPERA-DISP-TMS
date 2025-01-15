@@ -1,5 +1,4 @@
 import argparse
-from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
 from typing import List
@@ -11,26 +10,11 @@ from osgeo import gdal
 from rasterio.transform import Affine
 
 from opera_disp_tms import generate_sw_disp_tile as sw_disp
-from opera_disp_tms.search import Granule
+from opera_disp_tms.prep_stack import load_sw_disp_stack
 from opera_disp_tms.utils import create_buffered_bbox, create_tile_name, get_raster_as_numpy
 
 
 gdal.UseExceptions()
-
-
-def get_years_since_start(datetimes: List[datetime]) -> np.ndarray:
-    """Get the number of years since the earliest date as an array of floats.
-    Order of the datetimes is preserved.
-
-    Args:
-        datetimes: A list of datetime objects
-
-    Returns:
-        np.ndarray: The number of years since the earliest date as a list of floats
-    """
-    start = min(datetimes)
-    yrs_since_start = np.array([(date - start).days / 365.25 for date in datetimes])
-    return yrs_since_start
 
 
 @njit
@@ -80,27 +64,34 @@ def parallel_linear_regression(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     return slope_array
 
 
-def add_velocity_data_to_array(
-    granules: Iterable[Granule],
-    geotransform: Affine,
-    frame_map_array: np.ndarray,
-    out_array: np.ndarray,
-) -> np.ndarray:
-    """Create and add velocity data to an array using granules source from a single frame.
+def get_years_since_start(datetimes: List[datetime]) -> np.ndarray:
+    """Get the number of years since the earliest date as an array of floats.
+    Order of the datetimes is preserved.
 
     Args:
-        granules: A list of granule objects
-        geotransform: The geotransform of the frame
-        frame_map_array: The frame map as a numpy array
-        out_array: The array to add the velocity data to
+        datetimes: A list of datetime objects
 
     Returns:
-        np.ndarray: The updated array
+        np.ndarray: The number of years since the earliest date as a list of floats
     """
-    bbox = create_buffered_bbox(geotransform.to_gdal(), frame_map_array.shape, 90)  # EPSG:3857 is in meters
-    granule_xrs = [sw_disp.load_sw_disp_granule(x, bbox) for x in granules]
-    cube = xr.concat(granule_xrs, dim='years_since_start')
+    start = min(datetimes)
+    yrs_since_start = np.array([(date - start).days / 365.25 for date in datetimes])
+    return yrs_since_start
 
+
+def compute_velocity(granule_xrs: List[xr.DataArray], secant: bool) -> xr.Dataset:
+    """Compute the velocity of a set of granules using a linear regression.
+
+    Args:
+        granule_xrs: A list of xarray DataArrays
+        secant: Use a secant fit instead of a full linear fit
+
+    Returns:
+        xr.Dataset: The velocity dataset
+    """
+    if secant:
+        granule_xrs = [granule_xrs[0], granule_xrs[-1]]
+    cube = xr.concat(granule_xrs, dim='years_since_start')
     years_since_start = get_years_since_start([g.attrs['secondary_date'] for g in granule_xrs])
     cube = cube.assign_coords(years_since_start=years_since_start)
     new_coords = {'x': cube.x, 'y': cube.y, 'spatial_ref': cube.spatial_ref}
@@ -110,7 +101,36 @@ def add_velocity_data_to_array(
     slope_da = xr.DataArray(slope, dims=('y', 'x'), coords=new_coords)
     velocity = xr.Dataset({'velocity': slope_da}, new_coords)
     velocity.attrs = cube.attrs
+    return velocity
 
+
+def add_velocity_data_to_array(
+    frame_id: int,
+    geotransform: Affine,
+    begin_date: datetime,
+    end_date: datetime,
+    secant: bool,
+    frame_map_array: np.ndarray,
+    out_array: np.ndarray,
+) -> np.ndarray:
+    """Create and add velocity data to an array using granules sourced from a single frame.
+
+    Args:
+        frame_id: The frame id to use
+        geotransform: The geotransform of the frame
+        begin_date: The start of the date range
+        end_date: The end of the date range
+        secant: Use a secant fit instead of a full linear fit
+        frame_map_array: The frame map as a numpy array
+        out_array: The array to add the velocity data to
+
+    Returns:
+        np.ndarray: The updated array
+    """
+    bbox = create_buffered_bbox(geotransform.to_gdal(), frame_map_array.shape, 90)  # EPSG:3857 is in meters
+    strategy = 'spanning' if secant else 'all'
+    granule_xrs = load_sw_disp_stack(frame_id, bbox, begin_date, end_date, strategy)
+    velocity = compute_velocity(granule_xrs, secant)
     velocity_reproj = velocity['velocity'].rio.reproject(
         'EPSG:3857', transform=geotransform, shape=frame_map_array.shape
     )
@@ -119,7 +139,7 @@ def add_velocity_data_to_array(
     return out_array
 
 
-def create_sw_vel_tile(metadata_path: Path, begin_date: datetime, end_date: datetime, minmax: bool = True) -> Path:
+def create_sw_vel_tile(metadata_path: Path, begin_date: datetime, end_date: datetime, secant: bool = True) -> Path:
     if not metadata_path.exists():
         raise FileNotFoundError(f'{metadata_path} does not exist')
     if begin_date > end_date:
@@ -130,16 +150,11 @@ def create_sw_vel_tile(metadata_path: Path, begin_date: datetime, end_date: date
     print(f'Generating tile {product_name}')
 
     frames = sw_disp.frames_from_metadata(metadata_path)
-    strategy = 'minmax' if minmax else 'all'
-    needed_granules = sw_disp.find_needed_granules(list(frames.keys()), begin_date, end_date, strategy=strategy)
-    len_str = [f'    {frame_id}: {len(needed_granules[frame_id])}' for frame_id in needed_granules]
-    print('\n'.join(['N granules:'] + len_str))
-
     frame_map, geotransform = get_raster_as_numpy(metadata_path)
     geotransform = Affine.from_gdal(*geotransform)
     sw_vel = np.full(frame_map.shape, np.nan, dtype=float)
-    for granules in needed_granules.values():
-        sw_vel = add_velocity_data_to_array(granules, geotransform, frame_map, sw_vel)
+    for frame_id in frames.keys():
+        sw_vel = add_velocity_data_to_array(frame_id, geotransform, begin_date, end_date, secant, frame_map, sw_vel)
 
     gdal.Translate(str(product_path), str(metadata_path), outputType=gdal.GDT_Float32, format='GTiff')
     ds = gdal.Open(str(product_path), gdal.GA_Update)
@@ -175,7 +190,7 @@ def main():
     args.begin_date = datetime.strptime(args.begin_date, '%Y%m%d')
     args.end_date = datetime.strptime(args.end_date, '%Y%m%d')
 
-    create_sw_vel_tile(args.metadata_path, args.begin_date, args.end_date, minmax=args.full)
+    create_sw_vel_tile(args.metadata_path, args.begin_date, args.end_date, secant=args.full)
 
 
 if __name__ == '__main__':

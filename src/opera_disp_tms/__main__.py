@@ -8,7 +8,7 @@ from opera_disp_tms.create_tile_map import create_tile_map
 from opera_disp_tms.generate_metadata_tile import create_tile_for_bbox
 from opera_disp_tms.generate_sw_disp_tile import create_sw_disp_tile
 from opera_disp_tms.generate_sw_vel_tile import create_sw_vel_tile
-from opera_disp_tms.utils import upload_dir_to_s3
+from opera_disp_tms.utils import partition_bbox, upload_dir_to_s3
 
 
 class Date(argparse.Action):
@@ -43,7 +43,7 @@ def generate_mosaic_geotiff(
     if tile_type == 'displacement':
         mosaic_geotiff = create_sw_disp_tile(metadata_geotiff, begin_date, end_date)
     elif tile_type == 'secant_velocity':
-        mosaic_geotiff = create_sw_vel_tile(metadata_geotiff, begin_date, end_date, minmax=True)
+        mosaic_geotiff = create_sw_vel_tile(metadata_geotiff, begin_date, end_date, secant=True)
     else:
         raise ValueError(f'Unsupported tile type: {tile_type}')
 
@@ -53,13 +53,19 @@ def generate_mosaic_geotiff(
 def generate_tile_map_service(
     tile_type: str, bbox: tuple[int, int, int, int], direction: str, begin_date: datetime, end_date: datetime
 ) -> Path:
-    mosaic = generate_mosaic_geotiff(tile_type, bbox, direction, begin_date, end_date)
+    mosaic_geotiffs = []
+    for partition in partition_bbox(bbox):
+        try:
+            mosaic_geotiff = generate_mosaic_geotiff(tile_type, partition, direction, begin_date, end_date)
+            mosaic_geotiffs.append(mosaic_geotiff.name)
+        except ValueError as e:
+            print(e)
 
     scale = {
         'displacement': None,
         'secant_velocity': [-0.05, 0.05],
     }
-    create_tile_map(tile_type, [mosaic], scale[tile_type])
+    create_tile_map(tile_type, mosaic_geotiffs, scale[tile_type])
     return Path(tile_type)
 
 

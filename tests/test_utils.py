@@ -94,3 +94,49 @@ def test_upload_dir_to_s3(tmp_path):
         mock_upload.return_value = []
         ut.upload_dir_to_s3(tmp_path, 'myBucket', 'myPrefix')
         mock_upload.assert_called_once_with(file_to_upload, 'myBucket', 'myPrefix/subdir1/subdir2/myFile.txt')
+
+
+def test_partition_bbox():
+    assert ut.partition_bbox((0, 0, 0, 0), 1, 1) == []
+    assert ut.partition_bbox((1, 1, 1, 1), 1, 1) == []
+    assert ut.partition_bbox((-120, 7, -119, 8), 1, 1) == [
+        (-120, 7, -119, 8),
+    ]
+    assert ut.partition_bbox((-120, 7, -119, 9), 1, 1) == [
+        (-120, 7, -119, 8),
+        (-120, 8, -119, 9),
+    ]
+    assert ut.partition_bbox((7, -20, 9, -18), 1, 1) == [
+        (7, -20, 8, -19),
+        (7, -19, 8, -18),
+        (8, -20, 9, -19),
+        (8, -19, 9, -18),
+    ]
+    assert ut.partition_bbox((-128, 31, -111, 44), 7, 6) == [
+        (-128, 31, -121, 37),
+        (-128, 37, -121, 43),
+        (-128, 43, -121, 44),
+        (-121, 31, -114, 37),
+        (-121, 37, -114, 43),
+        (-121, 43, -114, 44),
+        (-114, 31, -111, 37),
+        (-114, 37, -111, 43),
+        (-114, 43, -111, 44),
+    ]
+    assert ut.partition_bbox((-128, 31, -111, 44), 6, 7) == [
+        (-128, 31, -122, 38),
+        (-128, 38, -122, 44),
+        (-122, 31, -116, 38),
+        (-122, 38, -116, 44),
+        (-116, 31, -111, 38),
+        (-116, 38, -111, 44),
+    ]
+    assert ut.partition_bbox((-128, 31, -111, 44), 10, 10) == [
+        (-128, 31, -118, 41),
+        (-128, 41, -118, 44),
+        (-118, 31, -111, 41),
+        (-118, 41, -111, 44),
+    ]
+    assert ut.partition_bbox((-128, 31, -111, 44), 100, 100) == [
+        (-128, 31, -111, 44),
+    ]
