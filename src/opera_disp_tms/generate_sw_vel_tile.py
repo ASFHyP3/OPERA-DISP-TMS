@@ -100,8 +100,6 @@ def create_sw_vel_tile(frame_id: int, begin_date: datetime, end_date: datetime, 
     velocity = xr.Dataset({'velocity': slope_da}, new_coords)
     velocity.attrs = cube.attrs
 
-
-    velocity.rio.write_nodata(np.nan, inplace=True)
     velocity = velocity.rio.reproject('EPSG:3857')
     velocity.rio.to_raster(product_path.name)
     return product_path
