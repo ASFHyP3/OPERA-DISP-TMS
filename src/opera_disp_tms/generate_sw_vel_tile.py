@@ -84,9 +84,8 @@ def create_sw_vel_tile(frame_id: int, begin_date: datetime, end_date: datetime, 
         product_name = utils.create_tile_name(frame_id, begin_date, end_date, 'velocity')
     product_path = Path.cwd() / product_name
 
-    strategy = 'spanning' if secant else 'all'
-    granule_xrs = load_sw_disp_stack(frame_id, begin_date, end_date, strategy)
-    if strategy == 'secant':
+    granule_xrs = load_sw_disp_stack(frame_id, begin_date, end_date, 'spanning')
+    if secant:
         granule_xrs = [granule_xrs[0], granule_xrs[-1]]
     cube = xr.concat(granule_xrs, dim='years_since_start')
 
