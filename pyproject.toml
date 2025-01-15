@@ -54,6 +54,8 @@ generate_sw_vel_tile = "opera_disp_tms.generate_sw_vel_tile:main"
 create_tile_map = "opera_disp_tms.create_tile_map:main"
 
 [tool.pytest.ini_options]
+addopts = '-ra -m "not integration"'
+markers = ["integration"]
 testpaths = ["tests"]
 script_launch_mode = "subprocess"
 

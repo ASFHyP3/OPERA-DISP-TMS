@@ -79,6 +79,31 @@ def get_years_since_start(datetimes: List[datetime]) -> np.ndarray:
     return yrs_since_start
 
 
+def compute_velocity(granule_xrs: List[xr.DataArray], secant: bool) -> xr.Dataset:
+    """Compute the velocity of a set of granules using a linear regression.
+
+    Args:
+        granule_xrs: A list of xarray DataArrays
+        secant: Use a secant fit instead of a full linear fit
+
+    Returns:
+        xr.Dataset: The velocity dataset
+    """
+    if secant:
+        granule_xrs = [granule_xrs[0], granule_xrs[-1]]
+    cube = xr.concat(granule_xrs, dim='years_since_start')
+    years_since_start = get_years_since_start([g.attrs['secondary_date'] for g in granule_xrs])
+    cube = cube.assign_coords(years_since_start=years_since_start)
+    new_coords = {'x': cube.x, 'y': cube.y, 'spatial_ref': cube.spatial_ref}
+
+    # Using xarray's polyfit is 13x slower when running a regression for 44 time steps
+    slope = parallel_linear_regression(cube.years_since_start.data.astype('float64'), cube.data.astype('float64'))
+    slope_da = xr.DataArray(slope, dims=('y', 'x'), coords=new_coords)
+    velocity = xr.Dataset({'velocity': slope_da}, new_coords)
+    velocity.attrs = cube.attrs
+    return velocity
+
+
 def add_velocity_data_to_array(
     frame_id: int,
     geotransform: Affine,
@@ -105,20 +130,7 @@ def add_velocity_data_to_array(
     bbox = create_buffered_bbox(geotransform.to_gdal(), frame_map_array.shape, 90)  # EPSG:3857 is in meters
     strategy = 'spanning' if secant else 'all'
     granule_xrs = load_sw_disp_stack(frame_id, bbox, begin_date, end_date, strategy)
-    if strategy == 'secant':
-        granule_xrs = [granule_xrs[0], granule_xrs[-1]]
-    cube = xr.concat(granule_xrs, dim='years_since_start')
-
-    years_since_start = get_years_since_start([g.attrs['secondary_date'] for g in granule_xrs])
-    cube = cube.assign_coords(years_since_start=years_since_start)
-    new_coords = {'x': cube.x, 'y': cube.y, 'spatial_ref': cube.spatial_ref}
-
-    # Using xarray's polyfit is 13x slower when running a regression for 44 time steps
-    slope = parallel_linear_regression(cube.years_since_start.data.astype('float64'), cube.data.astype('float64'))
-    slope_da = xr.DataArray(slope, dims=('y', 'x'), coords=new_coords)
-    velocity = xr.Dataset({'velocity': slope_da}, new_coords)
-    velocity.attrs = cube.attrs
-
+    velocity = compute_velocity(granule_xrs, secant)
     velocity_reproj = velocity['velocity'].rio.reproject(
         'EPSG:3857', transform=geotransform, shape=frame_map_array.shape
     )
