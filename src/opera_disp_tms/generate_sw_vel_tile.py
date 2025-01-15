@@ -7,11 +7,9 @@ import numpy as np
 import xarray as xr
 from numba import njit, prange
 from osgeo import gdal
-from rasterio.transform import Affine
 
-from opera_disp_tms import generate_sw_disp_tile as sw_disp
 from opera_disp_tms.prep_stack import load_sw_disp_stack
-from opera_disp_tms.utils import create_buffered_bbox, create_tile_name, get_raster_as_numpy
+from opera_disp_tms import utils
 
 
 gdal.UseExceptions()
@@ -79,32 +77,15 @@ def get_years_since_start(datetimes: List[datetime]) -> np.ndarray:
     return yrs_since_start
 
 
-def add_velocity_data_to_array(
-    frame_id: int,
-    geotransform: Affine,
-    begin_date: datetime,
-    end_date: datetime,
-    secant: bool,
-    frame_map_array: np.ndarray,
-    out_array: np.ndarray,
-) -> np.ndarray:
-    """Create and add velocity data to an array using granules sourced from a single frame.
+def create_sw_vel_tile(frame_id: int, begin_date: datetime, end_date: datetime, secant: bool = True) -> Path:
+    if secant:
+        product_name = utils.create_tile_name(frame_id, begin_date, end_date, 'secant-velocity')
+    else:
+        product_name = utils.create_tile_name(frame_id, begin_date, end_date, 'velocity')
+    product_path = Path.cwd() / product_name
 
-    Args:
-        frame_id: The frame id to use
-        geotransform: The geotransform of the frame
-        begin_date: The start of the date range
-        end_date: The end of the date range
-        secant: Use a secant fit instead of a full linear fit
-        frame_map_array: The frame map as a numpy array
-        out_array: The array to add the velocity data to
-
-    Returns:
-        np.ndarray: The updated array
-    """
-    bbox = create_buffered_bbox(geotransform.to_gdal(), frame_map_array.shape, 90)  # EPSG:3857 is in meters
     strategy = 'spanning' if secant else 'all'
-    granule_xrs = load_sw_disp_stack(frame_id, bbox, begin_date, end_date, strategy)
+    granule_xrs = load_sw_disp_stack(frame_id, begin_date, end_date, strategy)
     if strategy == 'secant':
         granule_xrs = [granule_xrs[0], granule_xrs[-1]]
     cube = xr.concat(granule_xrs, dim='years_since_start')
@@ -119,40 +100,10 @@ def add_velocity_data_to_array(
     velocity = xr.Dataset({'velocity': slope_da}, new_coords)
     velocity.attrs = cube.attrs
 
-    velocity_reproj = velocity['velocity'].rio.reproject(
-        'EPSG:3857', transform=geotransform, shape=frame_map_array.shape
-    )
-    frame_locations = frame_map_array == velocity.attrs['frame_id']
-    out_array[frame_locations] = velocity_reproj.data[frame_locations].astype(float)
-    return out_array
 
-
-def create_sw_vel_tile(metadata_path: Path, begin_date: datetime, end_date: datetime, secant: bool = True) -> Path:
-    if not metadata_path.exists():
-        raise FileNotFoundError(f'{metadata_path} does not exist')
-    if begin_date > end_date:
-        raise ValueError('Begin date must be before end date')
-
-    product_name = create_tile_name(metadata_path.name, begin_date, end_date, 'SW_VELOCITY')
-    product_path = Path.cwd() / product_name
-    print(f'Generating tile {product_name}')
-
-    frames = sw_disp.frames_from_metadata(metadata_path)
-    frame_map, geotransform = get_raster_as_numpy(metadata_path)
-    geotransform = Affine.from_gdal(*geotransform)
-    sw_vel = np.full(frame_map.shape, np.nan, dtype=float)
-    for frame_id in frames.keys():
-        sw_vel = add_velocity_data_to_array(frame_id, geotransform, begin_date, end_date, secant, frame_map, sw_vel)
-
-    gdal.Translate(str(product_path), str(metadata_path), outputType=gdal.GDT_Float32, format='GTiff')
-    ds = gdal.Open(str(product_path), gdal.GA_Update)
-    band = ds.GetRasterBand(1)
-    band.SetNoDataValue(np.nan)
-    band.WriteArray(sw_vel)
-    ds.SetMetadata(ds.GetMetadata())
-    ds.FlushCache()
-    ds = None
-    print('Done!')
+    velocity.rio.write_nodata(np.nan, inplace=True)
+    velocity = velocity.rio.reproject('EPSG:3857')
+    velocity.rio.to_raster(product_path.name)
     return product_path
 
 
@@ -162,7 +113,7 @@ def main():
     generate_sw_disp_tile METADATA_ASCENDING_N42W124.tif 20160101 20190101
     """
     parser = argparse.ArgumentParser(description='Create a short wavelength cumulative displacement tile')
-    parser.add_argument('metadata_path', type=str, help='Path to the metadata tile')
+    parser.add_argument('frame_id', type=int)
     parser.add_argument(
         'begin_date', type=str, help='Start of secondary date search range to generate tile for (e.g., 20211231)'
     )
@@ -178,7 +129,7 @@ def main():
     args.begin_date = datetime.strptime(args.begin_date, '%Y%m%d')
     args.end_date = datetime.strptime(args.end_date, '%Y%m%d')
 
-    create_sw_vel_tile(args.metadata_path, args.begin_date, args.end_date, secant=args.full)
+    create_sw_vel_tile(args.frame_id, args.begin_date, args.end_date, secant=args.full)
 
 
 if __name__ == '__main__':

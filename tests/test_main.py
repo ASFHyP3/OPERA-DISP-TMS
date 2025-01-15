@@ -24,38 +24,3 @@ def test_date():
 
     with pytest.raises(SystemExit):
         parser.parse_args(['20201301'])
-
-
-def test_bbox():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('bbox', type=str.split, nargs='+', action=main.Bbox)
-
-    args = parser.parse_args(['1 1 1 1'])
-    assert args.bbox == (1, 1, 1, 1)
-
-    args = parser.parse_args(['1 2 3 4'])
-    assert args.bbox == (1, 2, 3, 4)
-
-    args = parser.parse_args(['1', '2', '3', '4'])
-    assert args.bbox == (1, 2, 3, 4)
-
-    args = parser.parse_args(['1 2', '3', '4'])
-    assert args.bbox == (1, 2, 3, 4)
-
-    args = parser.parse_args(['-180 -90 180 90'])
-    assert args.bbox == (-180, -90, 180, 90)
-
-    test_cases = [
-        ['0 0 0'],
-        ['0 0 0 0 0'],
-        ['0.1 1 1 1'],
-        ['1 0 0 0'],
-        ['0 1 0 0'],
-        ['-181 0 0 0'],
-        ['0 0 181 0'],
-        ['0 -91 0 0'],
-        ['0 0 0 91'],
-    ]
-    for test_case in test_cases:
-        with pytest.raises(SystemExit):
-            parser.parse_args(test_case)

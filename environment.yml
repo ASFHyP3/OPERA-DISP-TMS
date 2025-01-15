@@ -17,9 +17,6 @@ dependencies:
   # For Running
   - gdal
   - boto3
-  - asf_search
-  - shapely
-  - pyproj
   - h5py
   - h5netcdf
   - xarray
@@ -27,3 +24,5 @@ dependencies:
   - numba
   - s3fs
   - cachetools
+  - numpy
+  - requests

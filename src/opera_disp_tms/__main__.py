@@ -5,10 +5,9 @@ from datetime import datetime
 from pathlib import Path
 
 from opera_disp_tms.create_tile_map import create_tile_map
-from opera_disp_tms.generate_metadata_tile import create_tile_for_bbox
 from opera_disp_tms.generate_sw_disp_tile import create_sw_disp_tile
 from opera_disp_tms.generate_sw_vel_tile import create_sw_vel_tile
-from opera_disp_tms.utils import partition_bbox, upload_dir_to_s3
+from opera_disp_tms.utils import upload_dir_to_s3
 
 
 class Date(argparse.Action):
