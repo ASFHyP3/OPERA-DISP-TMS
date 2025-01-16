@@ -58,23 +58,17 @@ class Frame:
             json.dump(geojson, f)
 
 
-def download_frame_db(db_path: Path = DB_PATH) -> Path:
+def download_frame_db(db_path: Path = DB_PATH) -> None:
     """Download the OPERA burst database.
     Currently using a version created using opera-adt/burst_db v0.5.0, but hope to switch to ASF-provide source.
 
     Args:
         db_path: Path to save the database file to
-
-    Returns:
-        Path to the downloaded database
     """
-    if db_path.exists():
-        return db_path
-
-    print('Downloading frame database...')
-    url = f'https://opera-disp-tms-dev.s3.us-west-2.amazonaws.com/{db_path.name}'
-    download_file(url, db_path)
-    return db_path
+    if not db_path.exists():
+        print('Downloading frame database...')
+        url = f'https://opera-disp-tms-dev.s3.us-west-2.amazonaws.com/{db_path.name}'
+        download_file(url, db_path)
 
 
 def build_query(
