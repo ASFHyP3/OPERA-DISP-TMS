@@ -59,7 +59,7 @@ def frames_from_metadata(metadata_path: Path) -> dict[int, FrameMeta]:
 
 
 def add_granule_data_to_array(
-    frame_id: FrameMeta,
+    frame_id: int,
     frame_map: np.ndarray,
     geotransform: Affine,
     begin_date: datetime,

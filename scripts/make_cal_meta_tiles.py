@@ -10,7 +10,7 @@ def make_cal_meta_tiles(orbit_direction):
         corners = [[int(val) for val in corner.strip().split(' ')] for corner in f.readlines()]
 
     for corner in corners:
-        bbox = [corner[0], corner[1] - 1, corner[0] + 1, corner[1]]
+        bbox = (corner[0], corner[1] - 1, corner[0] + 1, corner[1])
         product_name = Path(create_product_name(['metadata'], orbit_direction, bbox) + '.tif')
         if product_name.exists():
             print(f'{product_name} already exists. Skipping.')
