@@ -37,7 +37,8 @@ def test_reorder_frames():
     frame_2_4 = StubFrame(2, 4, Geom([2, 2, 4, 4]), 'ASC')
 
     result = generate_metadata_tile.reorder_frames(
-        [frame_2_4, frame_1_2, frame_2_3, frame_1_1], add_first='min_frame_number'  # type: ignore[list-item]
+        [frame_2_4, frame_1_2, frame_2_3, frame_1_1],  # type: ignore[list-item]
+        add_first='min_frame_number',
     )
     assert result == [frame_2_4, frame_2_3, frame_1_2, frame_1_1]  # type: ignore[comparison-overlap]
 
