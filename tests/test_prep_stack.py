@@ -20,13 +20,16 @@ def test_find_needed_granules():
     fn_name = 'opera_disp_tms.prep_stack.find_granules_for_frame'
     with mock.patch(fn_name, return_value=granules):
         needed_granules = prep_stack.find_needed_granules(
-            [1], datetime(2021, 1, 1), datetime(2021, 1, 9), strategy='all'
+            1, datetime(2021, 1, 1), datetime(2021, 1, 9), strategy='all'
         )
+        # TODO: needed_granules and needed_granules[1] both have length 3,
+        #  and len only works here because it's a GranuleStub rather than a Granule,
+        #  which makes me think this was meant to be len(needed_granules)?
         assert len(needed_granules[1]) == 3
         assert needed_granules == granules[:3]  # type: ignore[comparison-overlap]
 
         needed_granules = prep_stack.find_needed_granules(
-            [1], datetime(2021, 1, 1), datetime(2021, 1, 9), strategy='spanning'
+            1, datetime(2021, 1, 1), datetime(2021, 1, 9), strategy='spanning'
         )
         assert len(needed_granules) == 2
         assert needed_granules == granules[1:3]  # type: ignore[comparison-overlap]

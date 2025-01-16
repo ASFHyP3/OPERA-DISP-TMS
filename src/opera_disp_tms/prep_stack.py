@@ -34,13 +34,14 @@ def restrict_to_spanning_set(granules: list[Granule]) -> list[Granule]:
     return spanning_granules
 
 
+# TODO: confirm that this is meant to be a single `frame_id`, update docstring description
 def find_needed_granules(frame_id: int, begin_date: datetime, end_date: datetime, strategy: str) -> list[Granule]:
     """Find the granules needed to generate a short wavelength displacement tile.
     For each `frame_id` the most recent granule whose secondary date is between
     `begin_date` and `end_date` is selected.
 
     Args:
-        frame_ids: The frame ids to generate the tile for
+        frame_id: The frame id to generate the tile for
         begin_date: Start of secondary date search range to generate tile for
         end_date: End of secondary date search range to generate tile for
         strategy: Selection strategy for granules within search date range ("max", "minmax" or "all")
