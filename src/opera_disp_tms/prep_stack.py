@@ -34,11 +34,8 @@ def restrict_to_spanning_set(granules: list[Granule]) -> list[Granule]:
     return spanning_granules
 
 
-# TODO: confirm that this is meant to be a single `frame_id`, update docstring description
 def find_needed_granules(frame_id: int, begin_date: datetime, end_date: datetime, strategy: str) -> list[Granule]:
     """Find the granules needed to generate a short wavelength displacement tile.
-    For each `frame_id` the most recent granule whose secondary date is between
-    `begin_date` and `end_date` is selected.
 
     Args:
         frame_id: The frame id to generate the tile for
@@ -48,7 +45,7 @@ def find_needed_granules(frame_id: int, begin_date: datetime, end_date: datetime
                   - Use "spanning" to get the minimum set of granules needed to reconstruct the relative displacement
                   - Use "all" to get all granules
     Returns:
-        A dictionary with form {frame_id: [granules]}
+        List of granules.
     """
     granules_full_stack = find_granules_for_frame(frame_id)
     granules = [g for g in granules_full_stack if begin_date <= g.secondary_date <= end_date]
