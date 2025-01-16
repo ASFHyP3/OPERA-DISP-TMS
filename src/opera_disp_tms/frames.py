@@ -73,7 +73,8 @@ def download_frame_db(db_path: Path = DB_PATH) -> Path:
 
     print('Downloading frame database...')
     url = f'https://opera-disp-tms-dev.s3.us-west-2.amazonaws.com/{db_path.name}'
-    return download_file(url, db_path)
+    download_file(url, db_path)
+    return db_path
 
 
 def build_query(

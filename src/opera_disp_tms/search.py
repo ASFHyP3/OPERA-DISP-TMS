@@ -74,7 +74,7 @@ def get_cmr_metadata(
         'attribute[]': [f'int,FRAME_NUMBER,{frame_id}', f'float,PRODUCT_VERSION,{version},'],
         'page_size': 2000,
     }
-    headers = {}
+    headers: dict = {}
     items = []
 
     while True:

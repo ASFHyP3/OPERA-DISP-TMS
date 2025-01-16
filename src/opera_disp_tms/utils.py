@@ -18,19 +18,20 @@ DATE_FORMAT = '%Y%m%dT%H%M%SZ'
 
 
 def get_raster_as_numpy(raster_path: Path, band: int = 1) -> tuple:
-    """Get data, geotransform, and shape of a raseter
+    """Get data and geotransform of a raster
 
     Args:
         raster_path: Path to the raster file
+        band: Band to get
 
     Returns:
-        raster's numpy array and geostransform
+        raster's numpy array and geotransform
     """
     raster = gdal.Open(str(raster_path))
-    band = raster.GetRasterBand(band)
-    data = band.ReadAsArray()
-    geostransform = raster.GetGeoTransform()
-    return data, geostransform
+    raster_band = raster.GetRasterBand(band)
+    data = raster_band.ReadAsArray()
+    geotransform = raster.GetGeoTransform()
+    return data, geotransform
 
 
 def download_file(

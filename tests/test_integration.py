@@ -9,7 +9,7 @@ from opera_disp_tms import generate_sw_vel_tile, prep_stack
 
 @pytest.fixture(scope='module')
 def frame_9156_xrs():
-    bbox = [-13578500, 4496000, -13577500, 4497000]  # 1x1 km EPSG:3857 box near San Jose, CA
+    bbox = (-13578500, 4496000, -13577500, 4497000)  # 1x1 km EPSG:3857 box near San Jose, CA
     granules = prep_stack.find_needed_granules(9156, datetime(2020, 1, 1), datetime(2025, 1, 1), 'spanning')
     granule_xrs = [prep_stack.load_sw_disp_granule(x, bbox) for x in granules]
     return granule_xrs

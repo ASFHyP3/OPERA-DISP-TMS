@@ -44,18 +44,18 @@ def test_create_buffered_bbox():
 
 def test_validate_bbox():
     with pytest.raises(ValueError, match='Bounding box must have 4 elements'):
-        ut.validate_bbox([1, 2, 3])
+        ut.validate_bbox((1, 2, 3))  # type: ignore[arg-type]
 
     with pytest.raises(ValueError, match='Bounding box must be integers'):
-        ut.validate_bbox([1, 2.0, 3, 4])
+        ut.validate_bbox((1, 2.0, 3, 4))  # type: ignore[arg-type]
 
     with pytest.raises(ValueError, match='Bounding box minx is greater than maxx'):
-        ut.validate_bbox([2, 2, 1, 4])
+        ut.validate_bbox((2, 2, 1, 4))
 
     with pytest.raises(ValueError, match='Bounding box miny is greater than maxy'):
-        ut.validate_bbox([1, 4, 3, 2])
+        ut.validate_bbox((1, 4, 3, 2))
 
-    ut.validate_bbox([1, 2, 3, 4])
+    ut.validate_bbox((1, 2, 3, 4))
 
 
 def test_create_product_name():
