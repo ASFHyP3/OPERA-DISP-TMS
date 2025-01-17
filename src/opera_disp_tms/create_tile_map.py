@@ -11,18 +11,22 @@ from osgeo import gdal, gdalconst, osr
 gdal.UseExceptions()
 
 
-def get_tile_extent(info: dict, output_folder: Path) -> None:
-    """Generate file with the bounds of the newly created vrt
-        Will return a file with: {"extent": [minx, miny, maxx, maxy], "EPSG": %EPSG}
+def create_bounds_file(info: dict, scale_range: list, output_folder: Path) -> None:
+    """Generate file with the bounds and scale ranges of the newly created vrt
 
     Args:
         info: gdalinfo dict from vrt file
+        scale_range: list with min and max of tile map
         output_folder: folder to write "extent.json"
     """
     minx, miny = info['cornerCoordinates']['lowerLeft']
     maxx, maxy = info['cornerCoordinates']['upperRight']
     proj = osr.SpatialReference(info['coordinateSystem']['wkt'])
-    extent = {'extent': [minx, miny, maxx, maxy], 'EPSG': int(proj.GetAttrValue('AUTHORITY', 1))}
+    extent = {
+        'extent': [minx, miny, maxx, maxy],
+        'EPSG': int(proj.GetAttrValue('AUTHORITY', 1)),
+        'scale_range': {'range': scale_range, 'units': 'm/yr'},
+    }
 
     if not output_folder.exists():
         output_folder.mkdir()
@@ -74,7 +78,7 @@ def create_tile_map(output_folder: str, input_rasters: list[str], scale_range: l
         subprocess.run(command)
 
         # get bounds of VRT and write to file
-        get_tile_extent(vrt_info, Path(output_folder))
+        create_bounds_file(vrt_info, scale_range, Path(output_folder))
 
 
 def main():
