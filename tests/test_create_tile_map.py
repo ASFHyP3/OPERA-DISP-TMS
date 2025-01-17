@@ -18,16 +18,25 @@ def create_test_geotiff(output_file, geotransform, shape, epsg):
     dataset = None
 
 
-def test_get_tile_extent(tmp_path):
+def test_create_bounds_file(tmp_path):
     epsg = 3857
     minx, miny, maxx, maxy = [-113, 33, -112, 34]
     geotransform = [minx, 0.1, 0, maxy, 0, -0.01]
     shape = (100, 10)
     frame_tile = tmp_path / 'test_tile.tif'
+    scale_range = [-1, 1]
+
     create_test_geotiff(str(frame_tile), geotransform, shape, epsg)
+
     info = gdal.Info(str(frame_tile), format='json')
-    create_tile_map.get_tile_extent(info, tmp_path)
+    create_tile_map.create_bounds_file(info, scale_range, tmp_path)
+
     with open(f'{tmp_path}/extent.json') as f:
         extent_json = json.load(f)
         print(extent_json)
-    assert extent_json == {'extent': [minx, miny, maxx, maxy], 'EPSG': epsg}
+
+    assert extent_json == {
+        'extent': [minx, miny, maxx, maxy],
+        'scale_range': {'range': [-1, 1], 'units': 'm/yr'},
+        'EPSG': epsg,
+    }
