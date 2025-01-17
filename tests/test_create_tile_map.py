@@ -38,5 +38,5 @@ def test_create_bounds_file(tmp_path):
     assert extent_json == {
         'extent': [minx, miny, maxx, maxy],
         'scale_range': {'range': [-1, 1], 'units': 'm/yr'},
-        'EPSG': epsg
+        'EPSG': epsg,
     }
