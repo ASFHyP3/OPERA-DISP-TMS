@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.2]
+## [0.6.0]
 ### Added
 * Add scale range value and units to extent.json output file
 
@@ -18,7 +18,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [0.5.0]
 ### Added
 * Granule orbit directions are now taken from the ASCENDING_DESCENDING attribute in CMR, rather than the frame database
-* Support for generating velocity mosaics from granule stacks without a common reference date 
+* Support for generating velocity mosaics from granule stacks without a common reference date
 
 ### Changed
 * Revised `search.py` to query all v0.9+ granules in CMR UAT, rather than California-specific v0.7 granules
