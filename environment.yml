@@ -17,7 +17,8 @@ dependencies:
   - responses
   # For Running
   - gdal
-  - boto3
+  # FIXME check if boto3 S3 stub functonality is fixed in the future
+  - boto3<1.36.0
   - asf_search
   - shapely
   - pyproj
