@@ -10,7 +10,6 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 * Add scale range value and units to extent.json output file
 
-
 ## [0.5.1]
 ### Added
 * Add `mypy` to [`static-analysis`](.github/workflows/static-analysis.yml).
