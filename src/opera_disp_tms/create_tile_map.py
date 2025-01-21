@@ -59,7 +59,7 @@ def create_tile_map(output_folder: str, input_rasters: list[str], scale_range: l
         stats = vrt_info['bands'][0]['metadata']['']
 
         if scale_range is None:
-            scale_range = [stats['STATISTICS_MINIMUM'], stats['STATISTICS_MAXIMUM']]
+            scale_range = [float(stats['STATISTICS_MINIMUM']), float(stats['STATISTICS_MAXIMUM'])]
 
         gdal.Translate(
             destName=byte_vrt.name,
