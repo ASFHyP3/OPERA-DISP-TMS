@@ -32,7 +32,7 @@ def test_bounds_file_scale_is_rounded(tmp_path, geotiff_info):
         extent_json = json.load(f)
         print(extent_json)
 
-    assert extent_json['scale_range']['range'] == [-0.0644, 0.0510]
+    assert extent_json['scale_range']['range'] == [-0.064, 0.051]
 
 
 @pytest.fixture
