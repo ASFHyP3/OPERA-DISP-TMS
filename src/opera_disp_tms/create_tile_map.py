@@ -22,10 +22,16 @@ def create_bounds_file(info: dict, scale_range: list, output_folder: Path) -> No
     minx, miny = info['cornerCoordinates']['lowerLeft']
     maxx, maxy = info['cornerCoordinates']['upperRight']
     proj = osr.SpatialReference(info['coordinateSystem']['wkt'])
+
+    sig_figs = 3
+
     extent = {
         'extent': [minx, miny, maxx, maxy],
         'EPSG': int(proj.GetAttrValue('AUTHORITY', 1)),
-        'scale_range': {'range': scale_range, 'units': 'm/yr'},
+        'scale_range': {
+            'range': [round(scale, sig_figs) for scale in scale_range],
+            'units': 'm/yr',
+        },
     }
 
     if not output_folder.exists():
