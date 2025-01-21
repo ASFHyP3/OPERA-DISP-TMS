@@ -59,8 +59,7 @@ def create_tile_map(output_folder: str, input_rasters: list[str], scale_range: l
         stats = vrt_info['bands'][0]['metadata']['']
 
         if scale_range is None:
-            scale_range = [stats['STATISTICS_MINIMUM'],
-                           stats['STATISTICS_MAXIMUM']]
+            scale_range = [stats['STATISTICS_MINIMUM'], stats['STATISTICS_MAXIMUM']]
 
         gdal.Translate(
             destName=byte_vrt.name,
@@ -94,10 +93,8 @@ def main():
         'following the OSGeo Tile Map Service Specification, using gdal2tiles: '
         'https://gdal.org/en/latest/programs/gdal2tiles.html'
     )
-    parser.add_argument('output_folder', type=str,
-                        help='Path of the output directory to create')
-    parser.add_argument('input_rasters', type=str, nargs='+',
-                        help='List of gdal-compatible raster paths to mosaic')
+    parser.add_argument('output_folder', type=str, help='Path of the output directory to create')
+    parser.add_argument('input_rasters', type=str, nargs='+', help='List of gdal-compatible raster paths to mosaic')
     args = parser.parse_args()
 
     create_tile_map(args.output_folder, args.input_rasters)
