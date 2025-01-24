@@ -2,7 +2,14 @@ from datetime import datetime
 
 import numpy as np
 
-from opera_disp_tms import generate_sw_vel_tile as sw_vel
+from opera_disp_tms import create_measurement_geotiff as sw_vel
+
+
+def test_create_product_name():
+    begin_date = datetime(2021, 1, 1)
+    end_date = datetime(2021, 1, 2)
+    product_name = sw_vel.create_geotiff_name('displacement', 123, begin_date, end_date)
+    assert product_name == 'displacement_00123_20210101_20210102.tif'
 
 
 def test_get_years_since_start():

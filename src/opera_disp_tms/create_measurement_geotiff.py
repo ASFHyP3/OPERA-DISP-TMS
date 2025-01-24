@@ -1,18 +1,36 @@
 import argparse
 from datetime import datetime
 from pathlib import Path
-from typing import List
 
 import numpy as np
 import xarray as xr
 from numba import njit, prange
 from osgeo import gdal
 
-from opera_disp_tms import utils
 from opera_disp_tms.prep_stack import load_sw_disp_stack
 
 
 gdal.UseExceptions()
+
+
+def create_geotiff_name(
+    measurement_type: str, frame_id: int, begin_date: datetime, end_date: datetime,
+) -> str:
+    """Create a product name for a geotiff
+    Takes the form: MEAUREMENTTYPE_FRAMEID_YYYYMMDD_YYYYMMDD.tif
+    e.g.: displacement_012345_20140101_20260101.tif
+
+    Args:
+        measurement_type: The data measurement type of the geotiff
+        frame_id: The frame id of the geotiff
+        begin_date: Start of secondary date search range to generate geotiff for
+        end_date: End of secondary date search range to generate geotiff for
+    """
+    date_fmt = '%Y%m%d'
+    begin_date_str = datetime.strftime(begin_date, date_fmt)
+    end_date_str = datetime.strftime(end_date, date_fmt)
+    name = f'{measurement_type}_{frame_id:05}_{begin_date_str}_{end_date_str}.tif'
+    return name
 
 
 @njit
@@ -62,7 +80,7 @@ def parallel_linear_regression(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     return slope_array
 
 
-def get_years_since_start(datetimes: List[datetime]) -> np.ndarray:
+def get_years_since_start(datetimes: list[datetime]) -> np.ndarray:
     """Get the number of years since the earliest date as an array of floats.
     Order of the datetimes is preserved.
 
@@ -77,18 +95,19 @@ def get_years_since_start(datetimes: List[datetime]) -> np.ndarray:
     return yrs_since_start
 
 
-def create_sw_vel_tile(frame_id: int, begin_date: datetime, end_date: datetime, secant: bool = True) -> Path:
-    if secant:
-        product_name = utils.create_tile_name(frame_id, begin_date, end_date, 'secant-velocity')
-    else:
-        product_name = utils.create_tile_name(frame_id, begin_date, end_date, 'velocity')
-    product_path = Path.cwd() / product_name
+def get_data(measurement_type, frame_id: int, begin_date: datetime, end_date: datetime) -> xr.Dataset:
+    if measurement_type not in ['displacement', 'velocity', 'secant_velocity']:
+        raise ValueError(f'Invalid measurement type: {measurement_type}')
 
     granule_xrs = load_sw_disp_stack(frame_id, begin_date, end_date, 'spanning')
-    if secant:
-        granule_xrs = [granule_xrs[0], granule_xrs[-1]]
-    cube = xr.concat(granule_xrs, dim='years_since_start')
 
+    if measurement_type == 'displacement':
+        return granule_xrs[-1]
+
+    if measurement_type == 'secant_velocity':
+        granule_xrs = [granule_xrs[0], granule_xrs[-1]]
+
+    cube = xr.concat(granule_xrs, dim='years_since_start')
     years_since_start = get_years_since_start([g.attrs['secondary_date'] for g in granule_xrs])
     cube = cube.assign_coords(years_since_start=years_since_start)
     new_coords = {'x': cube.x, 'y': cube.y, 'spatial_ref': cube.spatial_ref}
@@ -98,9 +117,20 @@ def create_sw_vel_tile(frame_id: int, begin_date: datetime, end_date: datetime, 
     slope_da = xr.DataArray(slope, dims=('y', 'x'), coords=new_coords)
     velocity = xr.Dataset({'velocity': slope_da}, new_coords)
     velocity.attrs = cube.attrs
+    return velocity
 
-    velocity = velocity.rio.reproject('EPSG:3857')
-    velocity.rio.to_raster(product_path.name)
+
+def create_measurement_geotiff(
+    measurement_type: str, frame: int, begin_date: datetime, end_date: datetime
+) -> Path:
+    data = get_data(measurement_type, frame, begin_date, end_date)
+
+    data.rio.write_nodata(np.nan, inplace=True)
+    data = data.rio.reproject('EPSG:3857')
+
+    product_name = create_geotiff_name(measurement_type, frame, begin_date, end_date)
+    product_path = Path.cwd() / product_name
+    data.rio.to_raster(product_path.name)
     return product_path
 
 
@@ -110,6 +140,12 @@ def main():
     generate_sw_disp_tile METADATA_ASCENDING_N42W124.tif 20160101 20190101
     """
     parser = argparse.ArgumentParser(description='Create a short wavelength cumulative displacement tile')
+    parser.add_argument(
+        'measurement_type',
+        type=str,
+        choices=['displacement', 'secant_velocity', 'velocity'],
+        help='Data measurement to visualize'
+    )
     parser.add_argument('frame_id', type=int)
     parser.add_argument(
         'begin_date', type=str, help='Start of secondary date search range to generate tile for (e.g., 20211231)'
@@ -117,16 +153,13 @@ def main():
     parser.add_argument(
         'end_date', type=str, help='End of secondary date search range to generate tile for (e.g., 20211231)'
     )
-    parser.add_argument(
-        '--full', action='store_false', help='Use a full linear fit instead of a secant fit (first/last date only)'
-    )
 
     args = parser.parse_args()
     args.metadata_path = Path(args.metadata_path)
     args.begin_date = datetime.strptime(args.begin_date, '%Y%m%d')
     args.end_date = datetime.strptime(args.end_date, '%Y%m%d')
 
-    create_sw_vel_tile(args.frame_id, args.begin_date, args.end_date, secant=args.full)
+    create_measurement_geotiff(args.measurement_type, args.frame_id, args.begin_date, args.end_date)
 
 
 if __name__ == '__main__':

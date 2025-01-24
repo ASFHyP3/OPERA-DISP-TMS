@@ -4,7 +4,7 @@ from datetime import datetime
 import numpy as np
 import pytest
 
-from opera_disp_tms import generate_sw_vel_tile, prep_stack
+from opera_disp_tms import create_measurement_geotiff, prep_stack
 
 
 @pytest.fixture(scope='module')

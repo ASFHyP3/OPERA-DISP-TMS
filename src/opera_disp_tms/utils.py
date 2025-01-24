@@ -43,25 +43,6 @@ def within_one_day(date1: datetime, date2: datetime) -> bool:
     return abs(date1 - date2) <= timedelta(days=1)
 
 
-def create_tile_name(
-    frame_id: int, begin_date: datetime, end_date: datetime, prod_type: str = 'SW_CUMUL_DISP'
-) -> str:
-    """Create a product name for a short wavelength cumulative displacement tile
-    Takes the form: SW_CUMUL_DISP_YYYYMMDD_YYYYMMDD_DIRECTION_TILECOORDS.tif
-
-    Args:
-        metadata_name: The name of the metadata file
-        begin_date: Start of secondary date search range to generate tile for
-        end_date: End of secondary date search range to generate tile for
-        prod_type: Product type prefix to use
-    """
-    date_fmt = '%Y%m%d'
-    begin_date_str = datetime.strftime(begin_date, date_fmt)
-    end_date_str = datetime.strftime(end_date, date_fmt)
-    name = f'{frame_id}_{prod_type}_{begin_date_str}_{end_date_str}.tif'
-    return name
-
-
 def upload_file_to_s3(path_to_file: Path, bucket: str, key):
     extra_args = {'ContentType': guess_type(path_to_file)[0]}
     S3_CLIENT.upload_file(str(path_to_file), bucket, key, ExtraArgs=extra_args)

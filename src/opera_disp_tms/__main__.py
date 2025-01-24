@@ -5,8 +5,7 @@ from datetime import datetime
 from pathlib import Path
 
 from opera_disp_tms.create_tile_map import create_tile_map
-from opera_disp_tms.generate_sw_disp_tile import create_sw_disp_tile
-from opera_disp_tms.generate_sw_vel_tile import create_sw_vel_tile
+from opera_disp_tms.create_measurement_geotiff import create_measurement_geotiff
 from opera_disp_tms.utils import upload_dir_to_s3
 
 
@@ -31,37 +30,22 @@ class Frames(argparse.Action):
         setattr(namespace, self.dest, frames)
 
 
-def generate_mosaic_geotiff(
-    tile_type: str, frame: int, begin_date: datetime, end_date: datetime
-) -> Path:
-    if tile_type == 'displacement':
-        mosaic_geotiff = create_sw_disp_tile(frame, begin_date, end_date)
-    elif tile_type == 'secant_velocity':
-        mosaic_geotiff = create_sw_vel_tile(frame, begin_date, end_date, secant=True)
-    elif tile_type == 'velocity':
-        mosaic_geotiff = create_sw_vel_tile(frame, begin_date, end_date, secant=False)
-    else:
-        raise ValueError(f'Unsupported tile type: {tile_type}')
-
-    return mosaic_geotiff
-
-
 def generate_tile_map_service(
-    tile_type: str, frames: list[int], begin_date: datetime, end_date: datetime
+    measurement_type: str, frames: list[int], begin_date: datetime, end_date: datetime
 ) -> Path:
-    mosaic_geotiffs = []
+    measurement_geotiffs = []
     for frame in frames:
         print(f'Processing frame {frame}')
-        mosaic_geotiff = generate_mosaic_geotiff(tile_type, frame, begin_date, end_date)
-        mosaic_geotiffs.append(mosaic_geotiff.name)
+        measurement_geotiff = create_measurement_geotiff(measurement_type, frame, begin_date, end_date)
+        measurement_geotiffs.append(measurement_geotiff.name)
 
     scale = {
         'displacement': None,
         'secant_velocity': [-0.05, 0.05],
         'velocity': [-0.05, 0.05],
     }
-    create_tile_map(tile_type, mosaic_geotiffs, scale[tile_type])
-    return Path(tile_type)
+    create_tile_map(measurement_type, measurement_geotiffs, scale[measurement_type])
+    return Path(measurement_type)
 
 
 def main():
@@ -72,7 +56,10 @@ def main():
     parser.add_argument('--bucket', help='AWS S3 bucket HyP3 for upload the final products')
     parser.add_argument('--bucket-prefix', default='', help='Add a bucket prefix to products')
     parser.add_argument(
-        'tile_type', type=str, choices=['displacement', 'secant_velocity', 'velocity'], help='Data value to visualize'
+        'measurement_type',
+        type=str,
+        choices=['displacement', 'secant_velocity', 'velocity'],
+        help='Data measurement to visualize'
     )
     parser.add_argument(
         'frames',
@@ -90,7 +77,7 @@ def main():
     args = parser.parse_args()
 
     output_directory = generate_tile_map_service(
-        args.tile_type, args.frames, args.begin_date, args.end_date
+        args.measurement_type, args.frames, args.begin_date, args.end_date
     )
     if args.bucket:
         upload_dir_to_s3(output_directory, args.bucket, args.bucket_prefix)

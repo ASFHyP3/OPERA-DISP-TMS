@@ -20,13 +20,6 @@ def test_within_in_day():
     assert not ut.within_one_day(datetime(2021, 1, 1, 12, 1, 1), datetime(2021, 1, 2, 12, 1, 2))
 
 
-def test_create_product_name():
-    begin_date = datetime(2021, 1, 1)
-    end_date = datetime(2021, 1, 2)
-    product_name = ut.create_tile_name(123, begin_date, end_date, 'foo')
-    assert product_name == '123_foo_20210101_20210102.tif'
-
-
 def test_upload_file_to_s3(tmp_path, s3_stubber):
     expected_params = {
         'Body': ANY,
