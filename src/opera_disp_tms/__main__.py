@@ -4,8 +4,8 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 
-from opera_disp_tms.create_tile_map import create_tile_map
 from opera_disp_tms.create_measurement_geotiff import create_measurement_geotiff
+from opera_disp_tms.create_tile_map import create_tile_map
 from opera_disp_tms.utils import upload_dir_to_s3
 
 
