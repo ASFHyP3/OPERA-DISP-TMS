@@ -8,8 +8,8 @@ import xarray as xr
 from numba import njit, prange
 from osgeo import gdal
 
-from opera_disp_tms.prep_stack import load_sw_disp_stack
 from opera_disp_tms import utils
+from opera_disp_tms.prep_stack import load_sw_disp_stack
 
 
 gdal.UseExceptions()
