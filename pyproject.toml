@@ -52,6 +52,8 @@ generate_sw_vel_tile = "opera_disp_tms.generate_sw_vel_tile:main"
 create_tile_map = "opera_disp_tms.create_tile_map:main"
 
 [tool.pytest.ini_options]
+addopts = '-ra -m "not integration"'
+markers = ["integration"]
 testpaths = ["tests"]
 script_launch_mode = "subprocess"
 
@@ -93,3 +95,15 @@ convention = "google"
 [tool.ruff.lint.isort]
 case-sensitive = true
 lines-after-imports = 2
+
+[tool.mypy]
+python_version = "3.10"
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unreachable = true
+strict_equality = true
+check_untyped_defs = true
+install_types = true
+non_interactive = true
+pretty = true
+disable_error_code = ["import-untyped"]

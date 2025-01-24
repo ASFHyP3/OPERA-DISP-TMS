@@ -7,6 +7,7 @@ dependencies:
   - pip
   # For packaging, and testing
   - ruff
+  - mypy
   - setuptools
   - setuptools_scm
   - wheel
@@ -16,7 +17,8 @@ dependencies:
   - responses
   # For Running
   - gdal
-  - boto3
+  # FIXME check if boto3 S3 stub functonality is fixed in the future
+  - boto3<1.36.0
   - h5py
   - h5netcdf
   - xarray

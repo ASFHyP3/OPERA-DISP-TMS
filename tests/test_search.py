@@ -4,7 +4,7 @@ from opera_disp_tms.search import Granule
 
 
 def test_from_umm():
-    umm = {
+    umm: dict = {
         'meta': {'native-id': 'mock-scene-name'},
         'umm': {
             'TemporalExtent': {
