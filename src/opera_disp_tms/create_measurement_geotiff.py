@@ -102,7 +102,9 @@ def get_data(measurement_type, frame_id: int, begin_date: datetime, end_date: da
     granule_xrs = load_sw_disp_stack(frame_id, begin_date, end_date, 'spanning')
 
     if measurement_type == 'displacement':
-        return granule_xrs[-1]
+        data = granule_xrs[-1]
+        data.rio.write_nodata(np.nan, inplace=True)
+        return data
 
     if measurement_type == 'secant_velocity':
         granule_xrs = [granule_xrs[0], granule_xrs[-1]]
@@ -124,8 +126,6 @@ def create_measurement_geotiff(
     measurement_type: str, frame: int, begin_date: datetime, end_date: datetime
 ) -> Path:
     data = get_data(measurement_type, frame, begin_date, end_date)
-
-    data.rio.write_nodata(np.nan, inplace=True)
     data = data.rio.reproject('EPSG:3857')
 
     product_name = create_geotiff_name(measurement_type, frame, begin_date, end_date)
