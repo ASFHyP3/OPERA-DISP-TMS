@@ -122,9 +122,7 @@ def get_data(measurement_type, frame_id: int, begin_date: datetime, end_date: da
     return velocity
 
 
-def create_measurement_geotiff(
-    measurement_type: str, frame: int, begin_date: datetime, end_date: datetime
-) -> Path:
+def create_measurement_geotiff(measurement_type: str, frame: int, begin_date: datetime, end_date: datetime) -> Path:
     data = get_data(measurement_type, frame, begin_date, end_date)
     data = data.rio.reproject('EPSG:3857')
 
@@ -137,16 +135,16 @@ def create_measurement_geotiff(
 def main():
     """CLI entry point
     Example:
-    generate_sw_disp_tile METADATA_ASCENDING_N42W124.tif 20160101 20190101
+    create_measurement_geotiff displacement 11114 20140101 20260101
     """
-    parser = argparse.ArgumentParser(description='Create a short wavelength cumulative displacement tile')
+    parser = argparse.ArgumentParser(description='Create a short wavelength displacement or velocity geotiff')
     parser.add_argument(
         'measurement_type',
         type=str,
         choices=['displacement', 'secant_velocity', 'velocity'],
-        help='Data measurement to visualize'
+        help='Data measurement to compute'
     )
-    parser.add_argument('frame_id', type=int)
+    parser.add_argument('frame_id', type=int, help='Frame id of the OPERA DISP granule stack to process')
     parser.add_argument(
         'begin_date', type=str, help='Start of secondary date search range to generate tile for (e.g., 20211231)'
     )
@@ -155,7 +153,6 @@ def main():
     )
 
     args = parser.parse_args()
-    args.metadata_path = Path(args.metadata_path)
     args.begin_date = datetime.strptime(args.begin_date, '%Y%m%d')
     args.end_date = datetime.strptime(args.end_date, '%Y%m%d')
 
