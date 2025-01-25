@@ -39,6 +39,8 @@ def generate_tile_map_service(
         measurement_geotiff = create_measurement_geotiff(measurement_type, frame, begin_date, end_date)
         measurement_geotiffs.append(measurement_geotiff.name)
 
+    # FIXME sort geotiffs to give the layering we want
+
     scale = {
         'displacement': None,
         'secant_velocity': [-0.05, 0.05],
@@ -62,11 +64,7 @@ def main():
         help='Data measurement to visualize'
     )
     parser.add_argument(
-        'frames',
-        type=str.split,
-        nargs='+',
-        action=Frames,
-        help='List of frame ids to include in mosaic',
+        'frames', type=str.split, nargs='+', action=Frames, help='List of frame ids to include in mosaic',
     )
     parser.add_argument(
         'begin_date', type=str, action=Date, help='Start of secondary date search range to visualize (e.g., 20211231)'
