@@ -23,10 +23,10 @@ class Frames(argparse.Action):
         try:
             frames = [int(item) for sublist in values for item in sublist]
         except ValueError:
-            parser.error(f'{self.dest} values must be integers between 0 and TBD')
+            parser.error(f'{self.dest} values must be integers between 1 and 46986')
         for frame in frames:
-            if not (0 <= frame <= 99999): # FIXME find actual max
-                parser.error(f'{self.dest} value {frame} must be between 0 and 99999')
+            if not (1 <= frame <= 46986):
+                parser.error(f'{self.dest} value {frame} must be between 1 and 46986')
         setattr(namespace, self.dest, frames)
 
 
