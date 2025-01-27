@@ -1,5 +1,4 @@
 from datetime import datetime
-from unittest import mock
 
 import numpy as np
 import xarray as xr
