@@ -7,7 +7,7 @@ import xarray as xr
 from numba import njit, prange
 from osgeo import gdal
 
-from opera_disp_tms.prep_stack import load_sw_disp_stack
+import opera_disp_tms
 
 
 gdal.UseExceptions()
@@ -95,16 +95,14 @@ def get_years_since_start(datetimes: list[datetime]) -> np.ndarray:
     return yrs_since_start
 
 
-def get_data(measurement_type, frame_id: int, begin_date: datetime, end_date: datetime) -> xr.Dataset:
+def get_data(measurement_type, frame_id: int, begin_date: datetime, end_date: datetime) -> xr.DataArray:
     if measurement_type not in ['displacement', 'velocity', 'secant_velocity']:
         raise ValueError(f'Invalid measurement type: {measurement_type}')
 
-    granule_xrs = load_sw_disp_stack(frame_id, begin_date, end_date, 'spanning')
+    granule_xrs = opera_disp_tms.prep_stack.load_sw_disp_stack(frame_id, begin_date, end_date, 'spanning')
 
     if measurement_type == 'displacement':
-        data = granule_xrs[-1]
-        data.rio.write_nodata(np.nan, inplace=True)
-        return data
+        return granule_xrs[-1]
 
     if measurement_type == 'secant_velocity':
         granule_xrs = [granule_xrs[0], granule_xrs[-1]]
@@ -112,18 +110,18 @@ def get_data(measurement_type, frame_id: int, begin_date: datetime, end_date: da
     cube = xr.concat(granule_xrs, dim='years_since_start')
     years_since_start = get_years_since_start([g.attrs['secondary_date'] for g in granule_xrs])
     cube = cube.assign_coords(years_since_start=years_since_start)
-    new_coords = {'x': cube.x, 'y': cube.y, 'spatial_ref': cube.spatial_ref}
 
     # Using xarray's polyfit is 13x slower when running a regression for 44 time steps
     slope = parallel_linear_regression(cube.years_since_start.data.astype('float64'), cube.data.astype('float64'))
-    slope_da = xr.DataArray(slope, dims=('y', 'x'), coords=new_coords)
-    velocity = xr.Dataset({'velocity': slope_da}, new_coords)
-    velocity.attrs = cube.attrs
-    return velocity
+
+    new_coords = {'x': cube.x, 'y': cube.y, 'spatial_ref': cube.spatial_ref}
+    slope_da = xr.DataArray(slope, dims=('y', 'x'), coords=new_coords, attrs=granule_xrs[-1].attrs)
+    return slope_da
 
 
 def create_measurement_geotiff(measurement_type: str, frame: int, begin_date: datetime, end_date: datetime) -> Path:
     data = get_data(measurement_type, frame, begin_date, end_date)
+    data.rio.write_nodata(np.nan, inplace=True)
     data = data.rio.reproject('EPSG:3857')
 
     product_name = create_geotiff_name(measurement_type, frame, begin_date, end_date)
