@@ -70,7 +70,7 @@ def test_parallel_linear_regression():
     assert np.all(np.isclose(slope, 1.0, atol=1e-6))
 
 
-def test_get_data():
+def test_compute_measurement():
     def create_data_array(data, ref_date, sec_date):
         da = xr.DataArray(
             data=data,
@@ -94,62 +94,53 @@ def test_get_data():
         create_data_array([[3.0, 0.0], [0.0, 0.0]], datetime(1, 1, 1), datetime(1, 1, 6)),
     ]
 
-    with mock.patch('opera_disp_tms.prep_stack.load_sw_disp_stack', return_value=stack) as mock_load_sw_disp_stack:
-        expected = xr.DataArray(
-            data=[[3.0, 0.0], [0.0, 0.0]],
-            attrs={
-                'reference_date': datetime(1, 1, 1),
-                'secondary_date': datetime(1, 1, 6),
-                'frame_id': 1,
-            },
-            coords={
-                'x': [1, 2],
-                'y': [1, 2],
-                'spatial_ref': 'foo',
-            },
-            dims=['y', 'x'],
-        )
-        actual = geo.get_data('displacement', 1, datetime(1, 1, 1), datetime(1, 1, 2))
-        xr.testing.assert_identical(actual, expected)
+    expected = xr.DataArray(
+        data=[[3.0, 0.0], [0.0, 0.0]],
+        attrs={
+            'reference_date': datetime(1, 1, 1),
+            'secondary_date': datetime(1, 1, 6),
+            'frame_id': 1,
+        },
+        coords={
+            'x': [1, 2],
+            'y': [1, 2],
+            'spatial_ref': 'foo',
+        },
+        dims=['y', 'x'],
+    )
+    actual = geo.compute_measurement('displacement', stack)
+    xr.testing.assert_identical(actual, expected)
 
-        expected = xr.DataArray(
-            data=[[219.15, 0.0], [0.0, 0.0]],
-            attrs={
-                'reference_date': datetime(1, 1, 1),
-                'secondary_date': datetime(1, 1, 6),
-                'frame_id': 1,
-            },
-            coords={
-                'x': [1, 2],
-                'y': [1, 2],
-                'spatial_ref': 'foo',
-            },
-            dims=['y', 'x'],
-        )
-        actual = geo.get_data('secant_velocity', 2, datetime(1, 1, 2), datetime(1, 1, 3))
-        xr.testing.assert_identical(actual, expected)
+    expected = xr.DataArray(
+        data=[[219.15, 0.0], [0.0, 0.0]],
+        attrs={
+            'reference_date': datetime(1, 1, 1),
+            'secondary_date': datetime(1, 1, 6),
+            'frame_id': 1,
+        },
+        coords={
+            'x': [1, 2],
+            'y': [1, 2],
+            'spatial_ref': 'foo',
+        },
+        dims=['y', 'x'],
+    )
+    actual = geo.compute_measurement('secant_velocity', stack)
+    xr.testing.assert_identical(actual, expected)
 
-        expected = xr.DataArray(
-            data=[[365.25, 0.0], [0.0, 0.0]],
-            attrs={
-                'reference_date': datetime(1, 1, 1),
-                'secondary_date': datetime(1, 1, 6),
-                'frame_id': 1,
-            },
-            coords={
-                'x': [1, 2],
-                'y': [1, 2],
-                'spatial_ref': 'foo',
-            },
-            dims=['y', 'x'],
-        )
-        actual = geo.get_data('velocity', 3, datetime(1, 1, 3), datetime(1, 1, 4))
-        xr.testing.assert_identical(actual, expected)
-
-        mock_load_sw_disp_stack.assert_has_calls(
-            [
-                mock.call.load_sw_disp_stack(1, datetime(1, 1, 1), datetime(1, 1, 2), 'spanning'),
-                mock.call.load_sw_disp_stack(2, datetime(1, 1, 2), datetime(1, 1, 3), 'spanning'),
-                mock.call.load_sw_disp_stack(3, datetime(1, 1, 3), datetime(1, 1, 4), 'spanning'),
-            ]
-        )
+    expected = xr.DataArray(
+        data=[[365.25, 0.0], [0.0, 0.0]],
+        attrs={
+            'reference_date': datetime(1, 1, 1),
+            'secondary_date': datetime(1, 1, 6),
+            'frame_id': 1,
+        },
+        coords={
+            'x': [1, 2],
+            'y': [1, 2],
+            'spatial_ref': 'foo',
+        },
+        dims=['y', 'x'],
+    )
+    actual = geo.compute_measurement('velocity', stack)
+    xr.testing.assert_identical(actual, expected)
