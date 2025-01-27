@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import numpy as np
+import pytest
 import xarray as xr
 
 from opera_disp_tms import create_measurement_geotiff as geo
@@ -143,3 +144,6 @@ def test_compute_measurement():
     )
     actual = geo.compute_measurement('velocity', stack)
     xr.testing.assert_identical(actual, expected)
+
+    with pytest.raises(ValueError):
+        geo.compute_measurement('foo', stack)
