@@ -7,7 +7,7 @@ import xarray as xr
 from numba import njit, prange
 from osgeo import gdal
 
-import opera_disp_tms
+from opera_disp_tms import prep_stack
 
 
 gdal.UseExceptions()
@@ -99,7 +99,7 @@ def get_data(measurement_type, frame_id: int, begin_date: datetime, end_date: da
     if measurement_type not in ['displacement', 'velocity', 'secant_velocity']:
         raise ValueError(f'Invalid measurement type: {measurement_type}')
 
-    granule_xrs = opera_disp_tms.prep_stack.load_sw_disp_stack(frame_id, begin_date, end_date, 'spanning')
+    granule_xrs = prep_stack.load_sw_disp_stack(frame_id, begin_date, end_date, 'spanning')
 
     if measurement_type == 'displacement':
         return granule_xrs[-1]
