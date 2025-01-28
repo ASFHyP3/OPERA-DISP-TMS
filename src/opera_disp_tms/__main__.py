@@ -6,6 +6,7 @@ from pathlib import Path
 
 from opera_disp_tms.create_measurement_geotiff import create_measurement_geotiff
 from opera_disp_tms.create_tile_map import create_tile_map
+from opera_disp_tms.frames import sort_geotiffs
 from opera_disp_tms.utils import upload_dir_to_s3
 
 
@@ -39,7 +40,7 @@ def generate_tile_map_service(
         measurement_geotiff = create_measurement_geotiff(measurement_type, frame, begin_date, end_date)
         measurement_geotiffs.append(measurement_geotiff.name)
 
-    # FIXME sort geotiffs to give the layering we want
+    measurement_geotiffs = sort_geotiffs(measurement_geotiffs)
 
     scale = {
         'displacement': None,

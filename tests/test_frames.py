@@ -47,3 +47,20 @@ def test_reorder_frames():
     # Descending anit-meridian
     frame_ids = frames.reorder_frames([39075, 11688, 39074, 11689])
     assert frame_ids == [11688, 11689, 39074, 39075]
+
+
+def test_sort_geotiffs():
+    geotiffs = [
+        'displacement_05900_20220101_20220131.tif',
+        'displacement_25499_20220101_20220131.tif',
+        'displacement_05901_20220101_20220131.tif',
+        'displacement_25500_20220101_20220131.tif',
+    ]
+    golden_sorted_geotiffs = [
+        'displacement_05900_20220101_20220131.tif',
+        'displacement_05901_20220101_20220131.tif',
+        'displacement_25499_20220101_20220131.tif',
+        'displacement_25500_20220101_20220131.tif',
+    ]
+    sorted_geotiffs = frames.sort_geotiffs(geotiffs)
+    assert sorted_geotiffs == golden_sorted_geotiffs

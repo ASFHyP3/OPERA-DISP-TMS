@@ -165,3 +165,21 @@ def reorder_frames(frame_ids: list[int]) -> list[int]:
     sorted_frames = [frame for sublist in [orbit_groups[orbit][1] for orbit in sorted_orbits] for frame in sublist]
     sorted_frame_ids = [frame.frame_id for frame in sorted_frames]
     return sorted_frame_ids
+
+
+def sort_geotiffs(geotiff_names: list[str]) -> list[str]:
+    """Sort geotiffs by frame number
+
+    Args:
+        geotiff_names: List of geotiff file names
+
+    Returns:
+        List of geotiff file names sorted by frame number
+    """
+    frame_ids = [int(name.split('_')[1]) for name in geotiff_names]
+    assert len(frame_ids) == len(set(frame_ids)), 'Duplicate frame numbers found'
+    sorted_frame_ids = reorder_frames(frame_ids)
+    sorted_geotiffs = []
+    for frame_id in sorted_frame_ids:
+        sorted_geotiffs.append([name for name in geotiff_names if int(name.split('_')[1]) == frame_id][0])
+    return sorted_geotiffs
