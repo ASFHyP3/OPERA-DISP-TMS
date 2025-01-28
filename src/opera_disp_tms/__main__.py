@@ -4,11 +4,9 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 
+from opera_disp_tms.create_measurement_geotiff import create_measurement_geotiff
 from opera_disp_tms.create_tile_map import create_tile_map
-from opera_disp_tms.generate_metadata_tile import create_tile_for_bbox
-from opera_disp_tms.generate_sw_disp_tile import create_sw_disp_tile
-from opera_disp_tms.generate_sw_vel_tile import create_sw_vel_tile
-from opera_disp_tms.utils import partition_bbox, upload_dir_to_s3
+from opera_disp_tms.utils import upload_dir_to_s3
 
 
 class Date(argparse.Action):
@@ -20,53 +18,36 @@ class Date(argparse.Action):
         setattr(namespace, self.dest, value)
 
 
-class Bbox(argparse.Action):
+class Frames(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         try:
-            bbox = tuple(int(item) for sublist in values for item in sublist)
+            frames = [int(item) for sublist in values for item in sublist]
         except ValueError:
-            parser.error(f'{self.dest} values must be integers ordered [min lon, min lat, max lon, max lat]')
-        if len(bbox) != 4:
-            parser.error(f'{self.dest} must have exactly 4 values ordered [min lon, min lat, max lon, max lat]')
-        if not (-180 <= bbox[0] <= bbox[2] <= 180 and -90 <= bbox[1] <= bbox[3] <= 90):
-            parser.error(f'{self.dest} must be ordered [min lon, min lat, max lon, max lat]')
-        setattr(namespace, self.dest, bbox)
-
-
-def generate_mosaic_geotiff(
-    tile_type: str, bbox: tuple[int, int, int, int], direction: str, begin_date: datetime, end_date: datetime
-) -> Path:
-    metadata_geotiff = create_tile_for_bbox(bbox, direction=direction)
-    if not metadata_geotiff:
-        raise ValueError(f'No data found for bounding box {bbox} and direction {direction}')
-
-    if tile_type == 'displacement':
-        mosaic_geotiff = create_sw_disp_tile(metadata_geotiff, begin_date, end_date)
-    elif tile_type == 'secant_velocity':
-        mosaic_geotiff = create_sw_vel_tile(metadata_geotiff, begin_date, end_date, secant=True)
-    else:
-        raise ValueError(f'Unsupported tile type: {tile_type}')
-
-    return mosaic_geotiff
+            parser.error(f'{self.dest} values must be integers between 1 and 46986')
+        for frame in frames:
+            if not (1 <= frame <= 46986):
+                parser.error(f'{self.dest} value {frame} must be between 1 and 46986')
+        setattr(namespace, self.dest, frames)
 
 
 def generate_tile_map_service(
-    tile_type: str, bbox: tuple[int, int, int, int], direction: str, begin_date: datetime, end_date: datetime
+    measurement_type: str, frames: list[int], begin_date: datetime, end_date: datetime
 ) -> Path:
-    mosaic_geotiffs = []
-    for partition in partition_bbox(bbox):
-        try:
-            mosaic_geotiff = generate_mosaic_geotiff(tile_type, partition, direction, begin_date, end_date)
-            mosaic_geotiffs.append(mosaic_geotiff.name)
-        except ValueError as e:
-            print(e)
+    measurement_geotiffs = []
+    for frame in frames:
+        print(f'Processing frame {frame}')
+        measurement_geotiff = create_measurement_geotiff(measurement_type, frame, begin_date, end_date)
+        measurement_geotiffs.append(measurement_geotiff.name)
+
+    # FIXME sort geotiffs to give the layering we want
 
     scale = {
         'displacement': None,
         'secant_velocity': [-0.05, 0.05],
+        'velocity': [-0.05, 0.05],
     }
-    create_tile_map(tile_type, mosaic_geotiffs, scale[tile_type])
-    return Path(tile_type)
+    create_tile_map(measurement_type, measurement_geotiffs, scale[measurement_type])
+    return Path(measurement_type)
 
 
 def main():
@@ -77,16 +58,14 @@ def main():
     parser.add_argument('--bucket', help='AWS S3 bucket HyP3 for upload the final products')
     parser.add_argument('--bucket-prefix', default='', help='Add a bucket prefix to products')
     parser.add_argument(
-        'tile_type', type=str, choices=['displacement', 'secant_velocity'], help='Data value to visualize'
+        'measurement_type',
+        type=str,
+        choices=['displacement', 'secant_velocity', 'velocity'],
+        help='Data measurement to visualize',
     )
     parser.add_argument(
-        'bbox',
-        type=str.split,
-        nargs='+',
-        action=Bbox,
-        help='Integer bounds in EPSG:4326, formatted like [min lon, min lat, max lon, max lat]',
+        'frames', type=str.split, nargs='+', action=Frames, help='List of frame ids to include in mosaic'
     )
-    parser.add_argument('direction', type=str, choices=['ascending', 'descending'], help='Direction of the orbit pass')
     parser.add_argument(
         'begin_date', type=str, action=Date, help='Start of secondary date search range to visualize (e.g., 20211231)'
     )
@@ -95,9 +74,7 @@ def main():
     )
     args = parser.parse_args()
 
-    output_directory = generate_tile_map_service(
-        args.tile_type, args.bbox, args.direction, args.begin_date, args.end_date
-    )
+    output_directory = generate_tile_map_service(args.measurement_type, args.frames, args.begin_date, args.end_date)
     if args.bucket:
         upload_dir_to_s3(output_directory, args.bucket, args.bucket_prefix)
 

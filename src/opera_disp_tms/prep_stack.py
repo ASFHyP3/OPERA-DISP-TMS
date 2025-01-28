@@ -60,13 +60,12 @@ def find_needed_granules(frame_id: int, begin_date: datetime, end_date: datetime
     return needed_granules
 
 
-def load_sw_disp_granule(granule: Granule, bbox: tuple[float, float, float, float]) -> xr.DataArray:
+def load_sw_disp_granule(granule: Granule) -> xr.DataArray:
     """Load the short wavelength displacement data for and OPERA DISP granule.
     Clips to frame map and masks out invalid data.
 
     Args:
         granule: The granule to load
-        bbox: The bounding box to clip to in EPSG:3857
 
     Returns:
         The short wavelength displacement data as an xarray DataArray
@@ -74,12 +73,10 @@ def load_sw_disp_granule(granule: Granule, bbox: tuple[float, float, float, floa
     datasets = ['short_wavelength_displacement', 'recommended_mask']
     with s3_xarray_dataset(granule.s3_uri) as ds:
         granule_xr = open_opera_disp_granule(ds, granule.s3_uri, datasets)
-        granule_xr = granule_xr.rio.clip_box(*bbox, crs='EPSG:3857')
         granule_xr = granule_xr.load()
         valid_data_mask = granule_xr['recommended_mask'] == 1
         sw_cumul_disp_xr = granule_xr['short_wavelength_displacement'].where(valid_data_mask, np.nan)
         sw_cumul_disp_xr.attrs = granule_xr.attrs
-    sw_cumul_disp_xr.attrs['bbox'] = bbox
     return sw_cumul_disp_xr
 
 
@@ -125,20 +122,17 @@ def align_to_common_reference_date(granule_xrs: list[xr.DataArray], start_date: 
         granule_xr.attrs['reference_date'] = granule_xrs[0].secondary_date
 
 
-def load_sw_disp_stack(
-    frame_id: int, bbox: tuple[float, float, float, float], begin_date: datetime, end_date: datetime, strategy: str
-):
+def load_sw_disp_stack(frame_id: int, begin_date: datetime, end_date: datetime, strategy: str):
     """Load the short wavelength displacement data for a frame and date range.
     Update the reference date of all granules to the earliest reference date.
 
     Args:
         frame_id: The frame id to load
-        bbox: The bounding box to clip to in EPSG:3857
         begin_date: The start of the date range
         end_date: The end of the date range
         strategy: The strategy to use for selecting granules ("spanning" or "all")
     """
     granules = find_needed_granules(frame_id, begin_date, end_date, strategy)
-    granule_xrs = [load_sw_disp_granule(x, bbox) for x in granules]
+    granule_xrs = [load_sw_disp_granule(x) for x in granules]
     align_to_common_reference_date(granule_xrs, min(g.reference_date for g in granule_xrs))
     return granule_xrs

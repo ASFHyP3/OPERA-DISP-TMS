@@ -26,35 +26,29 @@ def test_date():
         parser.parse_args(['20201301'])
 
 
-def test_bbox():
+def test_frame():
     parser = argparse.ArgumentParser()
-    parser.add_argument('bbox', type=str.split, nargs='+', action=main.Bbox)
-
-    args = parser.parse_args(['1 1 1 1'])
-    assert args.bbox == (1, 1, 1, 1)
+    parser.add_argument('frames', type=str.split, nargs='+', action=main.Frames)
 
     args = parser.parse_args(['1 2 3 4'])
-    assert args.bbox == (1, 2, 3, 4)
+    assert args.frames == [1, 2, 3, 4]
 
     args = parser.parse_args(['1', '2', '3', '4'])
-    assert args.bbox == (1, 2, 3, 4)
+    assert args.frames == [1, 2, 3, 4]
 
     args = parser.parse_args(['1 2', '3', '4'])
-    assert args.bbox == (1, 2, 3, 4)
+    assert args.frames == [1, 2, 3, 4]
 
-    args = parser.parse_args(['-180 -90 180 90'])
-    assert args.bbox == (-180, -90, 180, 90)
+    args = parser.parse_args(['1 46986'])
+    assert args.frames == [1, 46986]
 
     test_cases = [
-        ['0 0 0'],
-        ['0 0 0 0 0'],
-        ['0.1 1 1 1'],
-        ['1 0 0 0'],
-        ['0 1 0 0'],
-        ['-181 0 0 0'],
-        ['0 0 181 0'],
-        ['0 -91 0 0'],
-        ['0 0 0 91'],
+        ['0'],
+        ['0 1 2'],
+        ['46987'],
+        ['46985 46986 46987'],
+        ['foo'],
+        ['1.1'],
     ]
     for test_case in test_cases:
         with pytest.raises(SystemExit):

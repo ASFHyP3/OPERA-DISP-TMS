@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0]
+Strategy to create the Tile Map Service has been updated to create measurement geotiffs for each OPERA frame, rather
+than creating measurement geotiffs for each 1x1 degree tile.
+
+### Changed
+* `main.__main__` now accepts a list of frames rather than a bounding box and flight direction.
+* `create_measurement_geotiff` replaces both `generate_sw_disp_tile` and `generate_sw_vel_tile`. This script takes a
+  measurement type, frame id, start date, and end date, computes the requested measurement value (displacement,
+  secant_velocity, velocity) for the given frame and date range, and outputs a geotiff in EPSG:3857.
+
+### Removed
+* `generate_metadata_tile.py` has been removed, as creation of metadata tiles is no longer necessary
+* `frames.py` has been removed. The user is now expected to provide the list of OPERA frames for which to create a
+  visualization. All necessary data and metadata are available in CMR, so we no longer depend on the OPERA frame
+  database.
+* The `scripts/` directory has been removed. These helper scripts provided commands for generating a visualization of
+  the California data set delivered by the project for initial testing. This application can now act on arbitrary v0.9+
+  data in CMR UAT, so the California-specific scripts are no longer necessary.
+* Outdated `Design.md` describing the previous tile-by-tile strategy.
+
 ## [0.6.0]
 ### Added
 * Add scale range value and units to extent.json output file
