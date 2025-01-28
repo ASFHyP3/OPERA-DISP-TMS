@@ -11,7 +11,7 @@ from shapely.geometry import Polygon
 DB_PATH = Path(__file__).parent / 'opera-s1-disp-0.5.0.post1.dev20-2d.gpkg'
 
 
-def download_file(url: str, download_path: Union[Path, str] = '.', chunk_size=10 * (2**20)) -> None:
+def download_file(url: str, download_path: Union[Path, str] = '.', chunk_size=10 * (2**20)):
     """Download a file without authentication.
 
     Args:
@@ -33,6 +33,7 @@ def download_file(url: str, download_path: Union[Path, str] = '.', chunk_size=10
 @dataclass
 class Frame:
     frame_id: int
+    relative_orbit_number: int
     orbit_pass: str
     geom: Polygon
 
@@ -40,8 +41,9 @@ class Frame:
     def from_row(cls, row):
         return cls(
             frame_id=row[0],
-            orbit_pass=row[3],
-            geom=from_wkt(row[6]),
+            relative_orbit_number=row[1],
+            orbit_pass=row[2],
+            geom=from_wkt(row[3]),
         )
 
 
@@ -63,7 +65,7 @@ def download_frame_db(db_path: Path = DB_PATH) -> Path:
     return download_file(url, db_path)
 
 
-def get_frames(frame_ids: list[int]) -> list[str]:
+def get_frames(frame_ids: list[int]) -> list[Frame]:
     """Get a list of frame objects for given frame IDs.
 
     Args:
@@ -74,8 +76,7 @@ def get_frames(frame_ids: list[int]) -> list[str]:
     """
     download_frame_db()
     query = (
-        'SELECT fid as frame_id, epsg, relative_orbit_number, orbit_pass, '
-        '       is_land, is_north_america, ASText(GeomFromGPB(geom)) AS wkt '
+        'SELECT fid as frame_id, relative_orbit_number, orbit_pass, ASText(GeomFromGPB(geom)) AS wkt '
         'FROM frames '
         'WHERE fid IN ({})'
     ).format(','.join('?' for _ in frame_ids))

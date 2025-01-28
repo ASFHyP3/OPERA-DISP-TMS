@@ -6,14 +6,11 @@ from opera_disp_tms import frames
 
 
 def test_frame_from_row():
-    row = (1, 32610, 123, 'ASCENDING', True, False, 'POLYGON ((0 0, 0 1, 1 1, 1 0, 0 0))')
+    row = (1, 123, 'ASCENDING', 'POLYGON ((0 0, 0 1, 1 1, 1 0, 0 0))')
     frame = frames.Frame.from_row(row)
     assert frame.frame_id == 1
-    assert frame.epsg == 32610
     assert frame.relative_orbit_number == 123
     assert frame.orbit_pass == 'ASCENDING'
-    assert frame.is_land is True
-    assert frame.is_north_america is False
     assert frame.geom.bounds == box(0, 0, 1, 1).bounds
 
 
