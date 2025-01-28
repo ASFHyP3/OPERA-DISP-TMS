@@ -11,11 +11,7 @@ from shapely.geometry import Polygon
 DB_PATH = Path(__file__).parent / 'opera-s1-disp-0.5.0.post1.dev20-2d.gpkg'
 
 
-def download_file(
-    url: str,
-    download_path: Union[Path, str] = '.',
-    chunk_size=10 * (2**20),
-) -> None:
+def download_file(url: str, download_path: Union[Path, str] = '.', chunk_size=10 * (2**20)) -> None:
     """Download a file without authentication.
 
     Args:
@@ -37,22 +33,14 @@ def download_file(
 @dataclass
 class Frame:
     frame_id: int
-    epsg: int
-    relative_orbit_number: int
     orbit_pass: str
-    is_land: bool
-    is_north_america: bool
     geom: Polygon
 
     @classmethod
     def from_row(cls, row):
         return cls(
             frame_id=row[0],
-            epsg=row[1],
-            relative_orbit_number=row[2],
             orbit_pass=row[3],
-            is_land=row[4],
-            is_north_america=row[5],
             geom=from_wkt(row[6]),
         )
 
@@ -73,34 +61,6 @@ def download_frame_db(db_path: Path = DB_PATH) -> Path:
     print('Downloading frame database...')
     url = f'https://opera-disp-tms-dev.s3.us-west-2.amazonaws.com/{db_path.name}'
     return download_file(url, db_path)
-
-
-# def get_frame(frame_id: int) -> str:
-#     """Get the a frame object for a given frame id.
-#
-#     Args:
-#         frame_id: OPERA frame ID to get orbit pass for
-#
-#     Returns:
-#         A Frame object for the frame id
-#     """
-#     download_frame_db()
-#     query = (
-#         'SELECT fid as frame_id, epsg, relative_orbit_number, orbit_pass, '
-#         '       is_land, is_north_america, ASText(GeomFromGPB(geom)) AS wkt '
-#         'FROM frames '
-#         'WHERE fid = ?'
-#     )
-#     with sqlite3.connect(DB_PATH) as con:
-#         con.enable_load_extension(True)
-#         con.load_extension('mod_spatialite')
-#         cursor = con.cursor()
-#         cursor.execute(query, [int(frame_id)])
-#         rows = cursor.fetchall()
-#
-#     assert len(rows) == 1
-#     frame = Frame.from_row(rows[0])
-#     return frame.orbit_pass
 
 
 def get_frames(frame_ids: list[int]) -> list[str]:
