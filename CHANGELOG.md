@@ -24,6 +24,7 @@ than creating measurement geotiffs for each 1x1 degree tile.
 * The `scripts/` directory has been removed. These helper scripts provided commands for generating a visualization of
   the California data set delivered by the project for initial testing. This application can now act on arbitrary v0.9+
   data in CMR UAT, so the California-specific scripts are no longer necessary.
+* Outdated `Design.md` describing the previous tile-by-tile strategy.
 
 ## [0.6.0]
 ### Added
