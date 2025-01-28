@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1]
+
+### Added
+* Re-added ability to layer frames so that later collected frames are over earlier collected frames, and near range data is over far range data
+
 ## [0.7.0]
 Strategy to create the Tile Map Service has been updated to create measurement geotiffs for each OPERA frame, rather
 than creating measurement geotiffs for each 1x1 degree tile.
