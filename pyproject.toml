@@ -32,6 +32,7 @@ dependencies = [
     "cachetools",
     "numpy",
     "requests",
+    "shapely",
 ]
 dynamic = ["version", "readme"]
 

@@ -15,6 +15,7 @@ dependencies:
   - pytest-console-scripts
   - pytest-cov
   - responses
+  - shapely
   # For Running
   - gdal
   # FIXME check if boto3 S3 stub functonality is fixed in the future
