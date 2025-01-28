@@ -13,9 +13,7 @@ from opera_disp_tms import prep_stack
 gdal.UseExceptions()
 
 
-def create_geotiff_name(
-    measurement_type: str, frame_id: int, begin_date: datetime, end_date: datetime,
-) -> str:
+def create_geotiff_name(measurement_type: str, frame_id: int, begin_date: datetime, end_date: datetime) -> str:
     """Create a product name for a geotiff
     Takes the form: MEAUREMENTTYPE_FRAMEID_YYYYMMDD_YYYYMMDD.tif
     e.g.: displacement_012345_20140101_20260101.tif

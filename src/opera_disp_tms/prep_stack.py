@@ -122,9 +122,7 @@ def align_to_common_reference_date(granule_xrs: list[xr.DataArray], start_date: 
         granule_xr.attrs['reference_date'] = granule_xrs[0].secondary_date
 
 
-def load_sw_disp_stack(
-    frame_id: int, begin_date: datetime, end_date: datetime, strategy: str
-):
+def load_sw_disp_stack(frame_id: int, begin_date: datetime, end_date: datetime, strategy: str):
     """Load the short wavelength displacement data for a frame and date range.
     Update the reference date of all granules to the earliest reference date.
 

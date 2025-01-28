@@ -61,10 +61,10 @@ def main():
         'measurement_type',
         type=str,
         choices=['displacement', 'secant_velocity', 'velocity'],
-        help='Data measurement to visualize'
+        help='Data measurement to visualize',
     )
     parser.add_argument(
-        'frames', type=str.split, nargs='+', action=Frames, help='List of frame ids to include in mosaic',
+        'frames', type=str.split, nargs='+', action=Frames, help='List of frame ids to include in mosaic'
     )
     parser.add_argument(
         'begin_date', type=str, action=Date, help='Start of secondary date search range to visualize (e.g., 20211231)'
@@ -74,9 +74,7 @@ def main():
     )
     args = parser.parse_args()
 
-    output_directory = generate_tile_map_service(
-        args.measurement_type, args.frames, args.begin_date, args.end_date
-    )
+    output_directory = generate_tile_map_service(args.measurement_type, args.frames, args.begin_date, args.end_date)
     if args.bucket:
         upload_dir_to_s3(output_directory, args.bucket, args.bucket_prefix)
 
