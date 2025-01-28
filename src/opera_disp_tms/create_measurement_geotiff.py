@@ -138,7 +138,7 @@ def main():
         'measurement_type',
         type=str,
         choices=['displacement', 'secant_velocity', 'velocity'],
-        help='Data measurement to compute'
+        help='Data measurement to compute',
     )
     parser.add_argument('frame_id', type=int, help='Frame id of the OPERA DISP granule stack to process')
     parser.add_argument(
