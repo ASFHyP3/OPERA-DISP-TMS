@@ -50,6 +50,10 @@ Documentation = "https://github.com/ASFHyP3/opera-disp-tms/tree/develop?tab=read
 create_measurement_geotiff = "opera_disp_tms.create_measurement_geotiff:main"
 create_tile_map = "opera_disp_tms.create_tile_map:main"
 
+[project.entry-points.hyp3]
+create_measurement_geotiff  = "opera_disp_tms.create_measurement_geotiff:main"
+create_tile_map  = "opera_disp_tms.create_tile_map:main"
+
 [tool.pytest.ini_options]
 addopts = '-ra -m "not integration"'
 markers = ["integration"]

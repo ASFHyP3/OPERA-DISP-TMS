@@ -8,6 +8,7 @@ from numba import njit, prange
 from osgeo import gdal
 
 from opera_disp_tms import prep_stack
+from opera_disp_tms.utils import upload_file_to_s3
 
 
 gdal.UseExceptions()
@@ -125,7 +126,31 @@ def create_measurement_geotiff(measurement_type: str, frame_id: int, begin_date:
     product_name = create_geotiff_name(measurement_type, frame_id, begin_date, end_date)
     product_path = Path.cwd() / product_name
     data.rio.to_raster(product_path.name)
+
     return product_path
+
+
+def make_parser():
+    parser = argparse.ArgumentParser(description='Create a short wavelength displacement or velocity geotiff')
+
+    parser.add_argument(
+        '--measurement_type',
+        type=str,
+        choices=['displacement', 'secant_velocity', 'velocity'],
+        help='Data measurement to compute',
+    )
+    parser.add_argument('--frame_id', type=int, help='Frame id of the OPERA DISP granule stack to process')
+    parser.add_argument(
+        '--begin_date', type=str, help='Start of secondary date search range to generate tile for (e.g., 20211231)'
+    )
+    parser.add_argument(
+        '--end_date', type=str, help='End of secondary date search range to generate tile for (e.g., 20211231)'
+    )
+
+    parser.add_argument('--bucket', help='AWS S3 bucket HyP3 for upload the final products')
+    parser.add_argument('--bucket-prefix', default='', help='Add a bucket prefix to products')
+
+    return parser
 
 
 def main():
@@ -133,26 +158,18 @@ def main():
     Example:
     create_measurement_geotiff displacement 11114 20140101 20260101
     """
-    parser = argparse.ArgumentParser(description='Create a short wavelength displacement or velocity geotiff')
-    parser.add_argument(
-        'measurement_type',
-        type=str,
-        choices=['displacement', 'secant_velocity', 'velocity'],
-        help='Data measurement to compute',
-    )
-    parser.add_argument('frame_id', type=int, help='Frame id of the OPERA DISP granule stack to process')
-    parser.add_argument(
-        'begin_date', type=str, help='Start of secondary date search range to generate tile for (e.g., 20211231)'
-    )
-    parser.add_argument(
-        'end_date', type=str, help='End of secondary date search range to generate tile for (e.g., 20211231)'
-    )
+    parser = make_parser()
 
     args = parser.parse_args()
     args.begin_date = datetime.strptime(args.begin_date, '%Y%m%d')
     args.end_date = datetime.strptime(args.end_date, '%Y%m%d')
 
-    create_measurement_geotiff(args.measurement_type, args.frame_id, args.begin_date, args.end_date)
+    measurement_geotiff_path = create_measurement_geotiff(
+        args.measurement_type, args.frame_id, args.begin_date, args.end_date
+    )
+
+    if args.bucket:
+        upload_file_to_s3(Path(measurement_geotiff_path), args.bucket, args.bucket_prefix)
 
 
 if __name__ == '__main__':
