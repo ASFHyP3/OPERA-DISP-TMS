@@ -15,6 +15,7 @@ than creating measurement geotiffs for each 1x1 degree tile.
 * `create_measurement_geotiff` replaces both `generate_sw_disp_tile` and `generate_sw_vel_tile`. This script takes a
   measurement type, frame id, start date, and end date, computes the requested measurement value (displacement,
   secant_velocity, velocity) for the given frame and date range, and outputs a geotiff in EPSG:3857.
+* `create_tile_map.py` now excludes entirely NoData .pngs from the result tile set.
 
 ### Removed
 * `generate_metadata_tile.py` has been removed, as creation of metadata tiles is no longer necessary

@@ -75,6 +75,7 @@ def create_tile_map(output_folder: str, input_rasters: list[str], scale_range: l
             'gdal2tiles',
             '--xyz',
             '--zoom=2-11',
+            '--exclude',
             f'--processes={multiprocessing.cpu_count()}',
             '--webviewer=openlayers',
             '--resampling=near',
