@@ -6,9 +6,6 @@ def test_create_tile_map_parser():
 
     args = parser.parse_args(
         [
-            '--frame_id',
-            '11113',
-            '--measurement_type',
             'displacement',
             '--bucket',
             'myBucket',
@@ -17,7 +14,6 @@ def test_create_tile_map_parser():
         ]
     )
 
-    assert args.frame_id == 11113
     assert args.measurement_type == 'displacement'
     assert args.bucket == 'myBucket'
     assert args.bucket_prefix == 'myPrefix'
@@ -28,13 +24,9 @@ def test_create_measurement_geotiff_parser():
 
     args = parser.parse_args(
         [
-            '--frame_id',
             '11113',
-            '--measurement_type',
             'secant_velocity',
-            '--begin_date',
             '20140101',
-            '--end_date',
             '20260101',
             '--bucket',
             'myBucket',

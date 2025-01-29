@@ -116,12 +116,11 @@ def make_parser():
     )
 
     parser.add_argument(
-        '--measurement_type',
+        'measurement_type',
         type=str,
         choices=['displacement', 'secant_velocity', 'velocity'],
         help='Data measurement to compute',
     )
-    parser.add_argument('--frame_id', type=int, help='Frame id of the OPERA DISP granule stack to process')
 
     parser.add_argument('--bucket', help='AWS S3 bucket HyP3 for upload the final products')
     parser.add_argument('--bucket-prefix', default='', help='Add a bucket prefix to products')

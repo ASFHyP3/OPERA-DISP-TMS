@@ -133,18 +133,18 @@ def create_measurement_geotiff(measurement_type: str, frame_id: int, begin_date:
 def make_parser():
     parser = argparse.ArgumentParser(description='Create a short wavelength displacement or velocity geotiff')
 
+    parser.add_argument('frame_id', type=int, help='Frame id of the OPERA DISP granule stack to process')
     parser.add_argument(
-        '--measurement_type',
+        'measurement_type',
         type=str,
         choices=['displacement', 'secant_velocity', 'velocity'],
         help='Data measurement to compute',
     )
-    parser.add_argument('--frame_id', type=int, help='Frame id of the OPERA DISP granule stack to process')
     parser.add_argument(
-        '--begin_date', type=str, help='Start of secondary date search range to generate tile for (e.g., 20211231)'
+        'begin_date', type=str, help='Start of secondary date search range to generate tile for (e.g., 20211231)'
     )
     parser.add_argument(
-        '--end_date', type=str, help='End of secondary date search range to generate tile for (e.g., 20211231)'
+        'end_date', type=str, help='End of secondary date search range to generate tile for (e.g., 20211231)'
     )
 
     parser.add_argument('--bucket', help='AWS S3 bucket HyP3 for upload the final products')
