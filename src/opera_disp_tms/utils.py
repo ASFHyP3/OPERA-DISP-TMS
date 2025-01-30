@@ -15,6 +15,34 @@ S3_CLIENT = boto3.client('s3')
 DATE_FORMAT = '%Y%m%dT%H%M%SZ'
 
 
+def list_files_in_s3(bucket: str, bucket_prefix: str):
+    resp = S3_CLIENT.list_objects_v2(Bucket=bucket, Prefix=bucket_prefix)
+
+    return resp['Contents']
+
+
+def download_file_from_s3(bucket: str, download_key, dest_dir: Path) -> Path:
+    """Download a file from an S3 bucket
+
+    Args:
+        uri: URI of the file to download
+        dest_dir: the directory to place the downloaded file in
+    """
+    filename, output_path = make_output_path(dest_dir, download_key)
+
+    S3_CLIENT.download_file(bucket, download_key, output_path)
+
+    return output_path
+
+
+def make_output_path(dest_dir: Path, download_key: str):
+    filename = Path(download_key).parts[-1]
+
+    output_path = dest_dir / filename
+
+    return output_path, filename
+
+
 def download_file(
     url: str,
     download_path: Union[Path, str] = '.',

@@ -7,7 +7,7 @@ from pathlib import Path
 
 from osgeo import gdal, gdalconst, osr
 
-from opera_disp_tms.utils import upload_dir_to_s3
+from opera_disp_tms.utils import download_file_from_s3, list_files_in_s3, upload_dir_to_s3
 
 
 gdal.UseExceptions()
@@ -89,22 +89,27 @@ def create_tile_map(output_folder: str, input_rasters: list[str], scale_range: l
         create_bounds_file(vrt_info, scale_range, Path(output_folder))
 
 
-def download_geotiffs():
-    pass
+def download_geotiffs(bucket, bucket_prefix):
+    resp = list_files_in_s3(bucket, bucket_prefix)
+
+    geotiff_s3_filenames = [f['Key'] for f in resp if f['Key'].endswith('.tif')]
+    dest_dir = Path.cwd()
+
+    geotiff_paths = [
+        download_file_from_s3(bucket, geotiff_s3_filename, dest_dir) for geotiff_s3_filename in geotiff_s3_filenames
+    ]
+
+    return geotiff_paths
 
 
-def generate_tile_map_service(measurement_type: str, frame_id: list[int]) -> Path:
-    measurement_geotiffs = []
-
-    download_geotiffs()
-
+def generate_tile_map_service(measurement_type: str, geotiff_paths: list[str]) -> Path:
     scale = {
         'displacement': None,
         'secant_velocity': [-0.05, 0.05],
         'velocity': [-0.05, 0.05],
     }
 
-    create_tile_map(measurement_type, measurement_geotiffs, scale[measurement_type])
+    create_tile_map(measurement_type, geotiff_paths, scale[measurement_type])
     return Path(measurement_type)
 
 
@@ -130,13 +135,11 @@ def make_parser():
 
 def main():
     parser = make_parser()
-
     args = parser.parse_args()
 
-    generate_tile_map_service(
-        args.measurement_type,
-        args.frame_id,
-    )
+    geotiff_paths = download_geotiffs(args.bucket, args.bucket_prefix)
+
+    generate_tile_map_service(args.measurement_type, geotiff_paths)
 
     if args.bucket:
         upload_path = Path(args.measurement_type)
