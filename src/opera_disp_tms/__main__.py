@@ -1,6 +1,7 @@
 """OPERA-DISP Tile Map Service Generator"""
 
 import argparse
+import json
 from datetime import datetime
 from pathlib import Path
 
@@ -35,10 +36,24 @@ class Frames(argparse.Action):
         setattr(namespace, self.dest, frames)
 
 
-def get_west_most_point(geotiff_path: Path) -> float:
-    info = gdal.Info(str(geotiff_path), format='json')
+def get_west_most_point(geotiff_path: str) -> float:
+    info = gdal.Info(geotiff_path, format='json')
     west_most = min(coord[0] for coord in info['wgs84Extent']['coordinates'][0])
     return west_most
+
+
+def get_frame_id(geotiff_path: str) -> int:
+    info = gdal.Info(geotiff_path, format='json')
+    return int(info['metadata']['']['frame_id'])
+
+
+def get_common_direction(frame_ids: set[int]):
+    data_file = Path(__file__).parent / 'data' / 'frame_directions.json'
+    frame_directions = json.loads(data_file.read_text())
+    for direction, frame_list in frame_directions.items():
+        if frame_ids <= set(frame_list):
+            return direction
+    raise ValueError('Frames do not share a common flight direction')
 
 
 def generate_tile_map_service(
@@ -50,9 +65,9 @@ def generate_tile_map_service(
         measurement_geotiff = create_measurement_geotiff(measurement_type, frame, begin_date, end_date)
         measurement_geotiffs.append(measurement_geotiff.name)
 
-    # TODO: create a json that tell us which frames are ascending/descending
-    is_desc = True
-    measurement_geotiffs.sort(key=lambda x: get_west_most_point(x), reverse=is_desc)
+    frame_ids = {get_frame_id(geotiff) for geotiff in measurement_geotiffs}
+    direction = get_common_direction(frame_ids)
+    measurement_geotiffs.sort(key=lambda x: get_west_most_point(x), reverse=direction == 'DESCENDING')
 
     scale = {
         'displacement': None,
