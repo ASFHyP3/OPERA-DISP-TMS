@@ -27,4 +27,3 @@ dependencies:
   - s3fs
   - cachetools
   - numpy
-  - requests

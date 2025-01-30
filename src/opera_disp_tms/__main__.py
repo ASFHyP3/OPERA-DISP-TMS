@@ -11,6 +11,9 @@ from opera_disp_tms.create_tile_map import create_tile_map
 from opera_disp_tms.utils import upload_dir_to_s3
 
 
+gdal.UseExceptions()
+
+
 class Date(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         try:
