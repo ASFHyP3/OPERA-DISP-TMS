@@ -39,7 +39,5 @@ RUN mamba env create -f /OPERA-DISP-TMS/environment.yml && \
     sed -i 's/conda activate base/conda activate opera-disp-tms/g' /home/conda/.profile && \
     python -m pip install --no-cache-dir /OPERA-DISP-TMS
 
-RUN python -c 'from opera_disp_tms import frames; frames.download_frame_db()'
-
 ENTRYPOINT ["/OPERA-DISP-TMS/src/opera_disp_tms/etc/entrypoint.sh"]
 CMD ["-h"]
