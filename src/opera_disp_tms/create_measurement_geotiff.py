@@ -133,7 +133,7 @@ def frame_type(frame):
     frame = int(frame)
 
     if not (1 <= frame <= 46986):
-        raise ValueError(f'Value {frame} must be between 1 and 46986')
+        raise argparse.ArgumentTypeError(f'Frame {frame} must be between 1 and 46986')
 
     return frame
 
