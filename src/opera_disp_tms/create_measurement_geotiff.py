@@ -133,7 +133,15 @@ def create_measurement_geotiff(measurement_type: str, frame_id: int, begin_date:
 def make_parser():
     parser = argparse.ArgumentParser(description='Create a short wavelength displacement or velocity geotiff')
 
-    parser.add_argument('frame_id', type=int, help='Frame id of the OPERA DISP granule stack to process')
+    def frame_type(frame):
+        frame = int(frame)
+
+        if not (1 <= frame <= 46986):
+            parser.error(f'Value {frame} must be between 1 and 46986')
+
+        return frame
+
+    parser.add_argument('frame_id', type=frame_type, help='Frame id of the OPERA DISP granule stack to process')
     parser.add_argument(
         'measurement_type',
         type=str,
