@@ -143,7 +143,9 @@ def main():
 
     if args.bucket:
         upload_path = Path(args.measurement_type)
-        upload_dir_to_s3(upload_path, args.bucket, args.bucket_prefix)
+        output_s3_prefix = args.bucket_prefix + '/tms/'
+
+        upload_dir_to_s3(upload_path, args.bucket, output_s3_prefix)
 
 
 if __name__ == '__main__':
