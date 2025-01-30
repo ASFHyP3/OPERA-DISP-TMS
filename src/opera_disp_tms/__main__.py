@@ -4,9 +4,10 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 
+from osgeo import gdal
+
 from opera_disp_tms.create_measurement_geotiff import create_measurement_geotiff
 from opera_disp_tms.create_tile_map import create_tile_map
-from opera_disp_tms.frames import sort_geotiffs
 from opera_disp_tms.utils import upload_dir_to_s3
 
 
@@ -31,6 +32,12 @@ class Frames(argparse.Action):
         setattr(namespace, self.dest, frames)
 
 
+def get_west_most_point(geotiff_path: Path) -> float:
+    info = gdal.Info(str(geotiff_path), format='json')
+    west_most = min(coord[0] for coord in info['wgs84Extent']['coordinates'][0])
+    return west_most
+
+
 def generate_tile_map_service(
     measurement_type: str, frames: list[int], begin_date: datetime, end_date: datetime
 ) -> Path:
@@ -40,7 +47,9 @@ def generate_tile_map_service(
         measurement_geotiff = create_measurement_geotiff(measurement_type, frame, begin_date, end_date)
         measurement_geotiffs.append(measurement_geotiff.name)
 
-    measurement_geotiffs = sort_geotiffs(measurement_geotiffs)
+    # TODO: create a json that tell us which frames are ascending/descending
+    is_desc = True
+    measurement_geotiffs.sort(key=lambda x: get_west_most_point(x), reverse=is_desc)
 
     scale = {
         'displacement': None,
