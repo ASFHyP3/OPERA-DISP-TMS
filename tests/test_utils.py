@@ -1,6 +1,6 @@
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 import pytest
 from botocore.stub import ANY, Stubber
@@ -41,13 +41,22 @@ def test_upload_file_to_s3(tmp_path, s3_stubber):
 
 
 def test_upload_dir_to_s3(tmp_path):
-    file_to_upload = tmp_path / 'subdir1' / 'subdir2' / 'myFile.txt'
-    Path(file_to_upload).parent.mkdir(parents=True, exist_ok=True)
-    file_to_upload.touch()
+    files_to_upload = [
+        tmp_path / 'subdir1' / 'subdir2' / 'foo.txt',
+        tmp_path / 'subdir1' / 'subdir3' / 'bar.txt',
+    ]
+    for file_to_upload in files_to_upload:
+        Path(file_to_upload).parent.mkdir(parents=True, exist_ok=True)
+        file_to_upload.touch()
+
     with patch.object(ut, 'upload_file_to_s3') as mock_upload:
-        mock_upload.return_value = []
         ut.upload_dir_to_s3(tmp_path, 'myBucket', 'myPrefix')
-        mock_upload.assert_called_once_with(file_to_upload, 'myBucket', 'myPrefix/subdir1/subdir2/myFile.txt')
+        mock_upload.assert_has_calls(
+            [
+                call(tmp_path / 'subdir1/subdir2/foo.txt', 'myBucket', 'myPrefix/subdir1/subdir2/foo.txt'),
+                call(tmp_path / 'subdir1/subdir3/bar.txt', 'myBucket', 'myPrefix/subdir1/subdir3/bar.txt'),
+            ]
+        )
 
 
 def test_list_files_in_s3(s3_stubber, list_objects_response):

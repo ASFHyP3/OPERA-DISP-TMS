@@ -1,4 +1,5 @@
 import os
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from mimetypes import guess_type
 from pathlib import Path
@@ -88,8 +89,9 @@ def upload_dir_to_s3(path_to_dir: Path, bucket: str, prefix: str = ''):
         bucket: S3 bucket to which the directory should be uploaded
         prefix: prefix in S3 bucket to upload the directory to. Defaults to ''
     """
-    for branch in os.walk(path_to_dir, topdown=True):
-        for filename in branch[2]:
-            path_to_file = Path(branch[0]) / filename
-            key = str(prefix / path_to_file.relative_to(path_to_dir))
-            upload_file_to_s3(path_to_file, bucket, key)
+    file_paths = [Path(branch[0]) / filename for branch in os.walk(path_to_dir, topdown=True) for filename in branch[2]]
+    buckets = [bucket for _ in file_paths]
+    keys = [str(prefix / file_path.relative_to(path_to_dir)) for file_path in file_paths]
+
+    with ThreadPoolExecutor() as executor:
+        executor.map(upload_file_to_s3, file_paths, buckets, keys, chunksize=10)
