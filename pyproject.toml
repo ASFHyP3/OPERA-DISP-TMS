@@ -31,6 +31,7 @@ dependencies = [
     "numba",
     "cachetools",
     "numpy",
+    "requests",
 ]
 dynamic = ["version", "readme"]
 

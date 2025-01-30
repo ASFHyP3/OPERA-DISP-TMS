@@ -6,11 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.7.1]
-
-### Added
-* Re-added ability to layer frames so that later collected frames are over earlier collected frames, and near range data is over far range data
-
 ## [0.7.0]
 Strategy to create the Tile Map Service has been updated to create measurement geotiffs for each OPERA frame, rather
 than creating measurement geotiffs for each 1x1 degree tile.
@@ -20,6 +15,7 @@ than creating measurement geotiffs for each 1x1 degree tile.
 * `create_measurement_geotiff` replaces both `generate_sw_disp_tile` and `generate_sw_vel_tile`. This script takes a
   measurement type, frame id, start date, and end date, computes the requested measurement value (displacement,
   secant_velocity, velocity) for the given frame and date range, and outputs a geotiff in EPSG:3857.
+* Changed frame ordering strategy so that near range paths are displayed over far range paths.
 
 ### Removed
 * `generate_metadata_tile.py` has been removed, as creation of metadata tiles is no longer necessary
