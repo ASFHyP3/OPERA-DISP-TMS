@@ -60,8 +60,3 @@ def create_test_geotiff(output_file, geotransform, shape, epsg):
     band = dataset.GetRasterBand(1)
     band.WriteArray(np.ones(shape, dtype=int))
     dataset = None
-
-
-def test_download_geotiffs():
-    pass
-    # create_tile_map.download_geotiffs(bucket)

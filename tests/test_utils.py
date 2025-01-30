@@ -58,7 +58,7 @@ def test_upload_dir_to_s3(tmp_path):
             ]
         )
 
-        
+
 def test_list_files_in_s3(s3_stubber, list_objects_response):
     s3_stubber.add_response('list_objects_v2', list_objects_response)
 
