@@ -1,6 +1,9 @@
 from datetime import datetime
+from unittest.mock import patch
 
-from opera_disp_tms.search import Granule
+import responses
+
+from opera_disp_tms import search
 
 
 def test_from_umm():
@@ -21,7 +24,7 @@ def test_from_umm():
             'DataGranule': {'ProductionDateTime': '2024-10-29T21:36:46Z'},
         },
     }
-    assert Granule.from_umm(umm) == Granule(
+    assert search.Granule.from_umm(umm) == search.Granule(
         scene_name='mock-scene-name',
         frame_id=8882,
         orbit_pass='ASCENDING',
@@ -36,7 +39,7 @@ def test_from_umm():
         {'Name': 'FRAME_NUMBER', 'Values': ['9154']},
         {'Name': 'ASCENDING_DESCENDING', 'Values': ['DESCENDING']},
     ]
-    assert Granule.from_umm(umm) == Granule(
+    assert search.Granule.from_umm(umm) == search.Granule(
         scene_name='mock-scene-name',
         frame_id=9154,
         orbit_pass='DESCENDING',
@@ -46,3 +49,37 @@ def test_from_umm():
         secondary_date=datetime(2020, 9, 30, 0, 26, 48),
         creation_date=datetime(2024, 10, 29, 21, 36, 46),
     )
+
+
+def test_get_cmr_metadata():
+    with responses.RequestsMock() as rsps:
+        data = {
+            'short_name': 'OPERA_L3_DISP-S1_V1',
+            'attribute[]': [f'int,FRAME_NUMBER,123', f'float,PRODUCT_VERSION,0.9,'],
+            'page_size': 2000,
+        }
+
+        rsps.get(
+            'https://cmr.earthdata.nasa.gov/search/granules.umm_json',
+            match=[
+                responses.matchers.header_matcher({'Authorization': 'Bearer myToken'}),
+                responses.matchers.query_param_matcher(data),
+            ],
+            status=200,
+            json={'items': [1, 2, 3]},
+            headers={'CMR-Search-After': 'cmr-s-a'},
+        )
+
+        rsps.get(
+            'https://cmr.earthdata.nasa.gov/search/granules.umm_json',
+            match=[
+                responses.matchers.header_matcher({'Authorization': 'Bearer myToken', 'CMR-Search-After': 'cmr-s-a'}),
+                responses.matchers.query_param_matcher(data),
+            ],
+            status=200,
+            json={'items': [4, 5]},
+        )
+
+        with patch('opera_disp_tms.utils.get_edl_bearer_token', return_value='myToken') as mock_token:
+            assert search.get_cmr_metadata(123) == [1, 2, 3, 4, 5]
+            assert mock_token.call_count == 1

@@ -3,7 +3,7 @@ from datetime import datetime
 
 import requests
 
-from opera_disp_tms.utils import get_edl_bearer_token
+from opera_disp_tms import utils
 
 
 CMR_DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
@@ -76,11 +76,11 @@ def get_cmr_metadata(
         'attribute[]': [f'int,FRAME_NUMBER,{frame_id}', f'float,PRODUCT_VERSION,{version},'],
         'page_size': 2000,
     }
-    headers = {'Authorization': f'Bearer {get_edl_bearer_token()}'}
+    headers = {'Authorization': f'Bearer {utils.get_edl_bearer_token()}'}
     items = []
 
     while True:
-        response = requests.post(cmr_endpoint, data=cmr_parameters, headers=headers)
+        response = requests.get(cmr_endpoint, params=cmr_parameters, headers=headers)
         response.raise_for_status()
         items.extend(response.json()['items'])
         if 'CMR-Search-After' not in response.headers:
