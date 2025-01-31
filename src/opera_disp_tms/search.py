@@ -60,7 +60,7 @@ class Granule:
 def get_cmr_metadata(
     frame_id: int,
     version: str = '0.9',
-    cmr_endpoint='https://cmr.uat.earthdata.nasa.gov/search/granules.umm_json',
+    cmr_endpoint='https://cmr.earthdata.nasa.gov/search/granules.umm_json',
 ) -> list[dict]:
     """Find all OPERA L3 DISP S1 granules for a specific frame ID and minimum product version
 

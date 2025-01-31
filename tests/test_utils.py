@@ -3,6 +3,7 @@ from pathlib import Path
 from unittest.mock import call, patch
 
 import pytest
+import responses
 from botocore.stub import ANY, Stubber
 
 import opera_disp_tms.utils as ut
@@ -57,3 +58,19 @@ def test_upload_dir_to_s3(tmp_path):
                 call(tmp_path / 'subdir1/subdir3/bar.txt', 'myBucket', 'myPrefix/subdir1/subdir3/bar.txt'),
             ]
         )
+
+
+def test_get_edl_bearer_token(monkeypatch):
+    monkeypatch.setenv('EARTHDATA_USERNAME', 'user')
+    monkeypatch.setenv('EARTHDATA_PASSWORD', 'pass')
+
+    with responses.RequestsMock() as rsps:
+        rsps.post('https://urs.earthdata.nasa.gov/api/users/find_or_create_token', status=401)
+        rsps.post(
+            'https://urs.earthdata.nasa.gov/api/users/find_or_create_token',
+            match=[responses.matchers.header_matcher({'Authorization': 'Basic dXNlcjpwYXNz'})],
+            status=200,
+            json={'access_token': 'foo'},
+        )
+
+        assert ut.get_edl_bearer_token() == 'foo'
