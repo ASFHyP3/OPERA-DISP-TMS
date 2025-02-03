@@ -59,7 +59,7 @@ def within_one_day(date1: datetime, date2: datetime) -> bool:
     return abs(date1 - date2) <= timedelta(days=1)
 
 
-def upload_file_to_s3(path_to_file: Path, bucket: str, key):
+def upload_file_to_s3(path_to_file: Path, bucket: str, key: str):
     extra_args = {'ContentType': guess_type(path_to_file)[0]}
     S3_CLIENT.upload_file(str(path_to_file), bucket, key, ExtraArgs=extra_args)
 

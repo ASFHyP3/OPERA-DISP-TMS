@@ -29,6 +29,7 @@ def create_geotiff_name(measurement_type: str, frame_id: int, begin_date: dateti
     begin_date_str = datetime.strftime(begin_date, date_fmt)
     end_date_str = datetime.strftime(end_date, date_fmt)
     name = f'{measurement_type}_{frame_id:05}_{begin_date_str}_{end_date_str}.tif'
+
     return name
 
 
@@ -178,7 +179,8 @@ def main():
     )
 
     if args.bucket:
-        upload_file_to_s3(measurement_geotiff_path, args.bucket, args.bucket_prefix)
+        upload_key = Path(args.bucket_prefix) / measurement_geotiff_path.name
+        upload_file_to_s3(measurement_geotiff_path, args.bucket, upload_key)
 
 
 if __name__ == '__main__':
