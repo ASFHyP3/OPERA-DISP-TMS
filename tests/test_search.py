@@ -55,7 +55,7 @@ def test_get_cmr_metadata():
     with responses.RequestsMock() as rsps:
         params = {
             'short_name': 'OPERA_L3_DISP-S1_V1',
-            'attribute[]': [f'int,FRAME_NUMBER,123', f'float,PRODUCT_VERSION,0.9,'],
+            'attribute[]': ['int,FRAME_NUMBER,123', 'float,PRODUCT_VERSION,0.9,'],
             'page_size': 2000,
         }
 
@@ -66,7 +66,7 @@ def test_get_cmr_metadata():
                 responses.matchers.query_param_matcher(params),
             ],
             status=200,
-            json={'items': [1, 2, 3]},
+            json={'items': [{'id': 1}, {'id': 2}, {'id': 3}]},
             headers={'CMR-Search-After': 'cmr-s-a'},
         )
 
@@ -77,9 +77,9 @@ def test_get_cmr_metadata():
                 responses.matchers.query_param_matcher(params),
             ],
             status=200,
-            json={'items': [4, 5]},
+            json={'items': [{'id': 4}, {'id': 5}]},
         )
 
         with patch('opera_disp_tms.utils.get_edl_bearer_token', return_value='myToken') as mock_token:
-            assert search.get_cmr_metadata(frame_id=123) == [1, 2, 3, 4, 5]
+            assert search.get_cmr_metadata(frame_id=123) == [{'id': 1}, {'id': 2}, {'id': 3}, {'id': 4}, {'id': 5}]
             assert mock_token.call_count == 1

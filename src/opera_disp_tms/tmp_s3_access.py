@@ -1,5 +1,3 @@
-import os
-
 import cachetools.func
 import requests
 import s3fs
