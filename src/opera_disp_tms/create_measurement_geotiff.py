@@ -179,7 +179,7 @@ def main():
     )
 
     if args.bucket:
-        upload_key = Path(args.bucket_prefix) / measurement_geotiff_path.name
+        upload_key = str(Path(args.bucket_prefix) / measurement_geotiff_path.name)
         upload_file_to_s3(measurement_geotiff_path, args.bucket, upload_key)
 
 
