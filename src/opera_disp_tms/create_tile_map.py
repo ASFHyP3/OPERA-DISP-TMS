@@ -43,7 +43,7 @@ def create_bounds_file(info: dict, scale_range: list, output_folder: Path) -> No
         json.dump(extent, outfile)
 
 
-def create_tile_map(output_folder: str, input_rasters: list[Path], scale_range: list[float] | None) -> Path:
+def create_tile_map(measurement_type: str, input_rasters: list[Path]) -> Path:
     """Generate a directory with small .png tiles from a list of rasters in a common projection, following the OSGeo
     Tile Map Service Specification, using gdal2tiles: https://gdal.org/en/latest/programs/gdal2tiles.html
 
@@ -52,6 +52,10 @@ def create_tile_map(output_folder: str, input_rasters: list[Path], scale_range: 
         input_rasters: List of gdal-compatible raster paths to mosaic
         scale_range: Optional list of two integers to scale the mosaic by
     """
+
+
+    output_folder = measurement_type
+
     with tempfile.NamedTemporaryFile() as mosaic_vrt, tempfile.NamedTemporaryFile() as byte_vrt:
         # mosaic the input rasters
         gdal.BuildVRT(mosaic_vrt.name, input_rasters, resampleAlg='nearest')
@@ -60,8 +64,11 @@ def create_tile_map(output_folder: str, input_rasters: list[Path], scale_range: 
         vrt_info = gdal.Info(mosaic_vrt.name, stats=True, format='json')
         stats = vrt_info['bands'][0]['metadata']['']
 
-        if scale_range is None:
-            scale_range = [float(stats['STATISTICS_MINIMUM']), float(stats['STATISTICS_MAXIMUM'])]
+        scale_range = {
+            'displacement': [float(stats['STATISTICS_MINIMUM']), float(stats['STATISTICS_MAXIMUM'])],
+            'secant_velocity': [-0.05, 0.05],
+            'velocity': [-0.05, 0.05],
+        }[measurement_type]
 
         gdal.Translate(
             destName=byte_vrt.name,
@@ -131,13 +138,7 @@ def main():
 
     geotiff_paths = download_geotiffs(args.bucket, args.bucket_prefix)
 
-    scale_range = {
-        'displacement': None,
-        'secant_velocity': [-0.05, 0.05],
-        'velocity': [-0.05, 0.05],
-    }[args.measurement_type]
-
-    upload_path = create_tile_map(args.measurement_type, geotiff_paths, scale_range)
+    upload_path = create_tile_map(args.measurement_type, geotiff_paths)
 
     if args.bucket:
         output_s3_prefix = f'{args.bucket_prefix}/tms/'
