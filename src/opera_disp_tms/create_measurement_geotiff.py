@@ -129,7 +129,7 @@ def create_measurement_geotiff(measurement_type: str, frame_id: int, begin_date:
 
     return product_path
 
-def frame_type(frame):
+def frame_type(frame: str):
     frame = int(frame)
 
     if not (1 <= frame <= 46986):
@@ -137,7 +137,7 @@ def frame_type(frame):
 
     return frame
 
-def make_parser():
+def make_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description='Create a short wavelength displacement or velocity geotiff')
 
     parser.add_argument('frame_id', type=frame_type, help='Frame id of the OPERA DISP granule stack to process')
@@ -154,7 +154,7 @@ def make_parser():
         'end_date', type=str, help='End of secondary date search range to generate tile for (e.g., 20211231)'
     )
 
-    parser.add_argument('--bucket', help='AWS S3 bucket HyP3 for upload the final products')
+    parser.add_argument('--bucket', help='AWS S3 bucket HyP3 uses for uploading the final products')
     parser.add_argument('--bucket-prefix', default='', help='Add a bucket prefix to products')
 
     return parser
@@ -176,7 +176,7 @@ def main():
     )
 
     if args.bucket:
-        upload_file_to_s3(Path(measurement_geotiff_path), args.bucket, args.bucket_prefix)
+        upload_file_to_s3(measurement_geotiff_path, args.bucket, args.bucket_prefix)
 
 
 if __name__ == '__main__':

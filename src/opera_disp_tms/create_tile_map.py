@@ -43,7 +43,7 @@ def create_bounds_file(info: dict, scale_range: list, output_folder: Path) -> No
         json.dump(extent, outfile)
 
 
-def create_tile_map(output_folder: str, input_rasters: list[str], scale_range: list[float] | None = None) -> None:
+def create_tile_map(output_folder: str, input_rasters: list[Path], scale_range: list[float] | None) -> None:
     """Generate a directory with small .png tiles from a list of rasters in a common projection, following the OSGeo
     Tile Map Service Specification, using gdal2tiles: https://gdal.org/en/latest/programs/gdal2tiles.html
 
@@ -88,8 +88,10 @@ def create_tile_map(output_folder: str, input_rasters: list[str], scale_range: l
         # get bounds of VRT and write to file
         create_bounds_file(vrt_info, scale_range, Path(output_folder))
 
+        return Path(output_folder)
 
-def download_geotiffs(bucket, bucket_prefix):
+
+def download_geotiffs(bucket: str, bucket_prefix: str) -> list[Path]:
     resp = list_files_in_s3(bucket, bucket_prefix)
 
     geotiff_s3_filenames = [f['Key'] for f in resp if f['Key'].endswith('.tif')]
@@ -102,18 +104,7 @@ def download_geotiffs(bucket, bucket_prefix):
     return geotiff_paths
 
 
-def generate_tile_map_service(measurement_type: str, geotiff_paths: list[str]) -> Path:
-    scale = {
-        'displacement': None,
-        'secant_velocity': [-0.05, 0.05],
-        'velocity': [-0.05, 0.05],
-    }
-
-    create_tile_map(measurement_type, geotiff_paths, scale[measurement_type])
-    return Path(measurement_type)
-
-
-def make_parser():
+def make_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description='Generate a directory with small.png tiles from a list of rasters in a common projection, '
         'following the OSGeo Tile Map Service Specification, using gdal2tiles: '
@@ -127,7 +118,7 @@ def make_parser():
         help='Data measurement to compute',
     )
 
-    parser.add_argument('--bucket', help='AWS S3 bucket HyP3 for upload the final products')
+    parser.add_argument('--bucket', help='AWS S3 bucket HyP3 uses for uploading the final products')
     parser.add_argument('--bucket-prefix', default='', help='Add a bucket prefix to products')
 
     return parser
@@ -139,11 +130,16 @@ def main():
 
     geotiff_paths = download_geotiffs(args.bucket, args.bucket_prefix)
 
-    generate_tile_map_service(args.measurement_type, geotiff_paths)
+    scale_range = {
+        'displacement': None,
+        'secant_velocity': [-0.05, 0.05],
+        'velocity': [-0.05, 0.05],
+    }[args.measurement_type]
+
+    upload_path = create_tile_map(args.measurement_type, geotiff_paths, scale_range)
 
     if args.bucket:
-        upload_path = Path(args.measurement_type)
-        output_s3_prefix = args.bucket_prefix + '/tms/'
+        output_s3_prefix = f'{args.bucket_prefix}/tms/'
 
         upload_dir_to_s3(upload_path, args.bucket, output_s3_prefix)
 

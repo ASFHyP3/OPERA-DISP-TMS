@@ -4,11 +4,13 @@ from unittest.mock import call, patch
 
 import pytest
 from botocore.stub import ANY, Stubber
+from moto import mock_aws
+from moto.core import patch_client
 
 import opera_disp_tms.utils as ut
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=False)
 def s3_stubber():
     with Stubber(ut.S3_CLIENT) as stubber:
         yield stubber
@@ -59,49 +61,44 @@ def test_upload_dir_to_s3(tmp_path):
         )
 
 
-def test_list_files_in_s3(s3_stubber, list_objects_response):
-    s3_stubber.add_response('list_objects_v2', list_objects_response)
+@mock_aws
+def test_list_files_in_s3(s3_bucket):
+    prefix = 'geotiffs'
+    geotiffs = [
+        f'{prefix}/my-file1.tif',
+        f'{prefix}/my-file2.tif',
+        f'{prefix}/my-file3.tif',
+    ]
 
-    files = ut.list_files_in_s3('myBucket', 'myPrefix')
+    for tif in geotiffs:
+        ut.S3_CLIENT.put_object(Bucket=s3_bucket, Key=tif)
 
-    assert len(files) == len(list_objects_response['Contents'])
+    files = ut.list_files_in_s3(s3_bucket, prefix)
+
+    assert len(files) == len(geotiffs)
     assert files[0]['Key'].endswith('.tif')
 
 
-def test_make_output_path(tmp_path, s3_stubber):
+@mock_aws
+def test_download_file_from_s3(tmp_path, s3_bucket):
     download_path = 'geotiffs/my-file.tif'
-    dest_dir = tmp_path
+    dest_dir = Path(tmp_path)
 
-    output_path, filename = ut.make_output_path(dest_dir, download_path)
+    ut.S3_CLIENT.put_object(Bucket=s3_bucket, Key=download_path)
+
+    output_path = ut.download_file_from_s3(s3_bucket, download_path, dest_dir)
 
     assert output_path == tmp_path / 'my-file.tif'
-    assert filename == 'my-file.tif'
 
 
 @pytest.fixture
-def list_objects_response():
-    return {
-        'Contents': [
-            {
-                'Key': 'disp-geotiffs/displacement_11113_20140101_20260101.tif',
-                'LastModified': datetime(2025, 1, 1),
-                'ETag': '"4a25e8a5fb5b0a7d02b0b25b137e2a21-2"',
-                'Size': 275547567,
-                'StorageClass': 'STANDARD',
-            },
-            {
-                'Key': 'disp-geotiffs/displacement_11114_20140101_20260101.tif',
-                'LastModified': datetime(2025, 1, 1),
-                'ETag': '"e8036c00b4433ee9df9f1d7ed33671e4-2"',
-                'Size': 275328187,
-                'StorageClass': 'STANDARD',
-            },
-            {
-                'Key': 'disp-geotiffs/displacement_11115_20140101_20260101.tif',
-                'LastModified': datetime(2025, 1, 1),
-                'ETag': '"633fa5c46a45569b16b11dc27e736c88-2"',
-                'Size': 275147777,
-                'StorageClass': 'STANDARD',
-            },
-        ]
-    }
+def s3_bucket(scope='function'):
+    with mock_aws():
+        patch_client(ut.S3_CLIENT)
+
+        bucketName = 'myBucket'
+        location = {'LocationConstraint': 'us-west-2'}
+
+        ut.S3_CLIENT.create_bucket(Bucket=bucketName, CreateBucketConfiguration=location)
+
+        yield bucketName
