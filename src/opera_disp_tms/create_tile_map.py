@@ -64,11 +64,10 @@ def create_tile_map(measurement_type: str, input_rasters: list[Path]) -> Path:
         vrt_info = gdal.Info(mosaic_vrt.name, stats=True, format='json')
         stats = vrt_info['bands'][0]['metadata']['']
 
-        scale_range = {
-            'displacement': [float(stats['STATISTICS_MINIMUM']), float(stats['STATISTICS_MAXIMUM'])],
-            'secant_velocity': [-0.05, 0.05],
-            'velocity': [-0.05, 0.05],
-        }[measurement_type]
+        if measurement_type == 'displacement':
+            scale_range = [float(stats['STATISTICS_MINIMUM']), float(stats['STATISTICS_MAXIMUM'])],
+        else:
+            scale_range = [-0.05, 0.05]
 
         gdal.Translate(
             destName=byte_vrt.name,
