@@ -130,8 +130,8 @@ def create_measurement_geotiff(measurement_type: str, frame_id: int, begin_date:
     return product_path
 
 
-def frame_type(frame: str):
-    frame = int(frame)
+def frame_type(frameStr: str):
+    frame = int(frameStr)
 
     if not (1 <= frame <= 46986):
         raise argparse.ArgumentTypeError(f'Frame {frame} must be between 1 and 46986')

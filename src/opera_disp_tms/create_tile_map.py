@@ -84,11 +84,12 @@ def create_tile_map(output_folder: str, input_rasters: list[Path], scale_range: 
             output_folder,
         ]
         subprocess.run(command)
+        output_path = Path(output_folder)
 
         # get bounds of VRT and write to file
-        create_bounds_file(vrt_info, scale_range, Path(output_folder))
+        create_bounds_file(vrt_info, scale_range, output_path)
 
-        return Path(output_folder)
+        return output_path
 
 
 def download_geotiffs(bucket: str, bucket_prefix: str) -> list[Path]:
