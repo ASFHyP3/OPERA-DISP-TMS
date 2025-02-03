@@ -43,7 +43,7 @@ def create_bounds_file(info: dict, scale_range: list, output_folder: Path) -> No
         json.dump(extent, outfile)
 
 
-def create_tile_map(output_folder: str, input_rasters: list[Path], scale_range: list[float] | None) -> None:
+def create_tile_map(output_folder: str, input_rasters: list[Path], scale_range: list[float] | None) -> Path:
     """Generate a directory with small .png tiles from a list of rasters in a common projection, following the OSGeo
     Tile Map Service Specification, using gdal2tiles: https://gdal.org/en/latest/programs/gdal2tiles.html
 
