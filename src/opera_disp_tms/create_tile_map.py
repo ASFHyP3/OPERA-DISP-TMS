@@ -57,8 +57,10 @@ def create_tile_map(measurement_type: str, input_rasters: list[Path]) -> Path:
     output_folder = measurement_type
 
     with tempfile.NamedTemporaryFile() as mosaic_vrt, tempfile.NamedTemporaryFile() as byte_vrt:
+        input_raster_strs = [str(raster) for raster in input_rasters]
+
         # mosaic the input rasters
-        gdal.BuildVRT(mosaic_vrt.name, input_rasters, resampleAlg='nearest')
+        gdal.BuildVRT(mosaic_vrt.name, input_raster_strs, resampleAlg='nearest')
 
         # scale the mosaic from Float to Byte
         vrt_info = gdal.Info(mosaic_vrt.name, stats=True, format='json')
