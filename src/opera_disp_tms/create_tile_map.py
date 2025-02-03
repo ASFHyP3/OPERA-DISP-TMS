@@ -48,9 +48,8 @@ def create_tile_map(measurement_type: str, input_rasters: list[Path]) -> Path:
     Tile Map Service Specification, using gdal2tiles: https://gdal.org/en/latest/programs/gdal2tiles.html
 
     Args:
-        output_folder: Path of the output directory to create
+        measurement_type: Data measurement type to set scale_range and output folder
         input_rasters: List of gdal-compatible raster paths to mosaic
-        scale_range: Optional list of two integers to scale the mosaic by
     """
 
     output_folder = measurement_type
