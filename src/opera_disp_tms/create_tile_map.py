@@ -52,7 +52,7 @@ def create_tile_map(measurement_type: str, input_rasters: list[Path]) -> Path:
         input_rasters: List of gdal-compatible raster paths to mosaic
     """
 
-    output_folder = measurement_type
+    output_folder = Path(measurement_type)
 
     with tempfile.NamedTemporaryFile() as mosaic_vrt, tempfile.NamedTemporaryFile() as byte_vrt:
         input_raster_strs = [str(raster) for raster in input_rasters]
@@ -87,15 +87,14 @@ def create_tile_map(measurement_type: str, input_rasters: list[Path]) -> Path:
             '--webviewer=openlayers',
             '--resampling=near',
             byte_vrt.name,
-            output_folder,
+            str(output_folder),
         ]
         subprocess.run(command)
-        output_path = Path(output_folder)
 
         # get bounds of VRT and write to file
-        create_bounds_file(vrt_info, scale_range, output_path)
+        create_bounds_file(vrt_info, scale_range, output_folder)
 
-        return output_path
+        return output_folder
 
 
 def download_geotiffs(bucket: str, bucket_prefix: str) -> list[Path]:
