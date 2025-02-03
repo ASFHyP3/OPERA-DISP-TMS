@@ -250,3 +250,5 @@ src/opera_disp_tms/credentials.json
 *.tif
 *.tiff
 displacement/
+velocity/
+secant_velocity/
