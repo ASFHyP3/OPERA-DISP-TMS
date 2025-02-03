@@ -28,6 +28,7 @@ def test_upload_file_to_s3(tmp_path, s3_stubber):
         'Bucket': 'myBucket',
         'Key': 'myPrefix/myObject.png',
         'ContentType': 'image/png',
+        'ChecksumAlgorithm': 'CRC32',
     }
     tag_params = {
         'Bucket': 'myBucket',
