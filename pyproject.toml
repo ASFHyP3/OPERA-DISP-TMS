@@ -22,7 +22,7 @@ classifiers=[
 ]
 dependencies = [
     "gdal",
-    "boto3",
+    "boto3>=1.36.0",
     "h5py",
     "s3fs",
     "h5netcdf",

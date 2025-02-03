@@ -66,10 +66,11 @@ def get_opera_disp_granule_metadata(s3_uri) -> tuple:
     return ref_point_eastingnorthing, epsg, reference_date, secondary_date, frame_id
 
 
-def open_opera_disp_granule(ds: xr.Dataset, s3_uri: str, data_vars=list[str]) -> xr.Dataset:
+def open_opera_disp_granule(ds: xr.Dataset, s3_uri: str, data_vars: list[str]) -> xr.Dataset:
     """Open an OPERA DISP granule from S3 and set important attributes
 
     Args:
+        ds: dataset
         s3_uri: URI of the granule on S3
         data_vars: List of data variable names to include
 
