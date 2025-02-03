@@ -65,7 +65,7 @@ def create_tile_map(measurement_type: str, input_rasters: list[Path]) -> Path:
         stats = vrt_info['bands'][0]['metadata']['']
 
         if measurement_type == 'displacement':
-            scale_range = [float(stats['STATISTICS_MINIMUM']), float(stats['STATISTICS_MAXIMUM'])],
+            scale_range = [float(stats['STATISTICS_MINIMUM']), float(stats['STATISTICS_MAXIMUM'])]
         else:
             scale_range = [-0.05, 0.05]
 
