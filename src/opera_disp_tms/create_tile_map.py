@@ -53,7 +53,6 @@ def create_tile_map(measurement_type: str, input_rasters: list[Path]) -> Path:
         scale_range: Optional list of two integers to scale the mosaic by
     """
 
-
     output_folder = measurement_type
 
     with tempfile.NamedTemporaryFile() as mosaic_vrt, tempfile.NamedTemporaryFile() as byte_vrt:
