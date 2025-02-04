@@ -161,5 +161,5 @@ def test_clip_measurement():
     out_array = geo.clip_measurement(in_array, 'velocity')
     assert np.all(out_array == np.array([[VELOCITY_SCALE[0], VELOCITY_SCALE[1]], [-0.01, 0.01]]))
 
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         geo.clip_measurement(in_array, 'foo')
