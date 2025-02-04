@@ -85,4 +85,8 @@ def test_download_geotiffs(tmp_path):
     output_paths = create_tile_map.download_geotiffs(bucketName, prefix)
 
     assert len(output_paths) == 3
-    assert output_paths[0] == Path.cwd() / 'my-file1.tif'
+    assert output_paths == [
+        Path.cwd() / 'my-file1.tif',
+        Path.cwd() / 'my-file2.tif',
+        Path.cwd() / 'my-file3.tif',
+    ]
