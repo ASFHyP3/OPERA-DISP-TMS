@@ -37,7 +37,7 @@ def test_create_measurement_geotiff_parser():
 
     assert args.frame_id == 11113
     assert args.measurement_type == 'secant_velocity'
-    assert args.bucket == 'myBucket'
-    assert args.bucket_prefix == 'myPrefix'
     assert args.begin_date == '20140101'
     assert args.end_date == '20260101'
+    assert args.bucket == 'myBucket'
+    assert args.bucket_prefix == 'myPrefix'
