@@ -33,7 +33,7 @@ The `create_measurement_geotiff` CLI command can be used to generate a cumulativ
 ```bash
 create_measurement_geotiff 11115 displacement 20140101 20260101
 ```
-Where `11115` is OPERA frame id of the granule stack in CMR, and `20170901`/`20171231` specify the start/end of the secondary date search range in format `%Y%m%d`.
+Where `11115` is OPERA frame id of the granule stack in CMR, and `20140101`/`20260101` specify the start/end of the secondary date search range in format `%Y%m%d`.
 
 The resulting products have the name format:
 `displacement_{frame id}_{start date}_{end_date}.tif`
@@ -45,7 +45,7 @@ The `create_measurement_geotiff` CLI command can be used to generate a short wav
 ```bash
 create_measurement_geotiff 11115 velocity 20140101 20260101
 ```
-Where `11115` is OPERA frame id of the granule stack in CMR, and `20170901`/`20171231` specify the start/end of the secondary date search range in format `%Y%m%d`.
+Where `11115` is OPERA frame id of the granule stack in CMR, and `20140101`/`20260101` specify the start/end of the secondary date search range in format `%Y%m%d`.
 
 The velocity will be calculated from the minimum set of granules needed to span the temporal search range.
 
