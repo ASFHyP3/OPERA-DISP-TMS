@@ -3,12 +3,14 @@ from pathlib import Path
 from unittest.mock import call, patch
 
 import pytest
-from botocore.stub import ANY, Stubber
+from botocore.stub import ANY, Stubber  # TODO: fully transition to moto for S3 mocking
+from moto import mock_aws
+from moto.core import patch_client
 
 import opera_disp_tms.utils as ut
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def s3_stubber():
     with Stubber(ut.S3_CLIENT) as stubber:
         yield stubber
@@ -58,3 +60,48 @@ def test_upload_dir_to_s3(tmp_path):
                 call(tmp_path / 'subdir1/subdir3/bar.txt', 'myBucket', 'myPrefix/subdir1/subdir3/bar.txt'),
             ]
         )
+
+
+@mock_aws
+def test_list_files_in_s3(s3_bucket):
+    prefix = 'geotiffs'
+    geotiffs = [
+        f'{prefix}/my-file1.tif',
+        f'{prefix}/my-file2.tif',
+        f'{prefix}/my-file3.tif',
+    ]
+
+    for tif in geotiffs:
+        ut.S3_CLIENT.put_object(Bucket=s3_bucket, Key=tif)
+
+    files = ut.list_files_in_s3(s3_bucket, prefix)
+
+    assert len(files) == 3
+    assert files[0]['Key'] == f'{prefix}/my-file1.tif'
+    assert files[1]['Key'] == f'{prefix}/my-file2.tif'
+    assert files[2]['Key'] == f'{prefix}/my-file3.tif'
+
+
+@mock_aws
+def test_download_file_from_s3(tmp_path, s3_bucket):
+    object_key = 'geotiffs/my-file.tif'
+
+    ut.S3_CLIENT.put_object(Bucket=s3_bucket, Key=object_key)
+
+    output_path = ut.download_file_from_s3(s3_bucket, object_key, tmp_path)
+
+    assert output_path == tmp_path / 'my-file.tif'
+    assert output_path.exists()
+
+
+@pytest.fixture
+def s3_bucket():
+    with mock_aws():
+        patch_client(ut.S3_CLIENT)
+
+        bucket_name = 'myBucket'
+        location = {'LocationConstraint': 'us-west-2'}
+
+        ut.S3_CLIENT.create_bucket(Bucket=bucket_name, CreateBucketConfiguration=location)
+
+        yield bucket_name
