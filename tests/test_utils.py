@@ -3,18 +3,10 @@ from pathlib import Path
 from unittest.mock import call, patch
 
 import pytest
-from botocore.stub import ANY, Stubber  # TODO: fully transition to moto for S3 mocking
 from moto import mock_aws
 from moto.core import patch_client
 
 import opera_disp_tms.utils as ut
-
-
-@pytest.fixture
-def s3_stubber():
-    with Stubber(ut.S3_CLIENT) as stubber:
-        yield stubber
-        stubber.assert_no_pending_responses()
 
 
 def test_within_in_day():
@@ -22,44 +14,45 @@ def test_within_in_day():
     assert not ut.within_one_day(datetime(2021, 1, 1, 12, 1, 1), datetime(2021, 1, 2, 12, 1, 2))
 
 
-def test_upload_file_to_s3(tmp_path, s3_stubber):
-    expected_params = {
-        'Body': ANY,
-        'Bucket': 'myBucket',
-        'Key': 'myPrefix/myObject.png',
-        'ContentType': 'image/png',
-        'ChecksumAlgorithm': 'CRC32',
-    }
-    tag_params = {
-        'Bucket': 'myBucket',
-        'Key': 'myPrefix/myObject.png',
-        'Tagging': {'TagSet': [{'Key': 'file_type', 'Value': 'product'}]},
-    }
-    s3_stubber.add_response(method='put_object', expected_params=expected_params, service_response={})
-    s3_stubber.add_response(method='put_object_tagging', expected_params=tag_params, service_response={})
-
+@mock_aws
+def test_upload_file_to_s3(tmp_path, s3_bucket):
     file_to_upload = tmp_path / 'myFile.png'
     file_to_upload.touch()
-    ut.upload_file_to_s3(file_to_upload, 'myBucket', key='myPrefix/myObject.png')
+
+    ut.upload_file_to_s3(file_to_upload, s3_bucket, key='myPrefix/myObject.png')
+
+    resp = ut.S3_CLIENT.get_object(Bucket=s3_bucket, Key='myPrefix/myObject.png')
+
+    assert resp['ContentType'] == 'image/png'
+
+    tag_resp = ut.S3_CLIENT.get_object_tagging(Bucket=s3_bucket, Key='myPrefix/myObject.png')
+
+    assert len(tag_resp['TagSet']) == 1
+    tag = tag_resp['TagSet'].pop()
+
+    assert tag['Key'] == 'file_type'
+    assert tag['Value'] == 'product'
 
 
-def test_upload_dir_to_s3(tmp_path):
+@mock_aws
+def test_upload_dir_to_s3(tmp_path, s3_bucket):
     files_to_upload = [
         tmp_path / 'subdir1' / 'subdir2' / 'foo.txt',
         tmp_path / 'subdir1' / 'subdir3' / 'bar.txt',
     ]
+
     for file_to_upload in files_to_upload:
         Path(file_to_upload).parent.mkdir(parents=True, exist_ok=True)
         file_to_upload.touch()
 
-    with patch.object(ut, 'upload_file_to_s3') as mock_upload:
-        ut.upload_dir_to_s3(tmp_path, 'myBucket', 'myPrefix')
-        mock_upload.assert_has_calls(
-            [
-                call(tmp_path / 'subdir1/subdir2/foo.txt', 'myBucket', 'myPrefix/subdir1/subdir2/foo.txt'),
-                call(tmp_path / 'subdir1/subdir3/bar.txt', 'myBucket', 'myPrefix/subdir1/subdir3/bar.txt'),
-            ]
-        )
+    ut.upload_dir_to_s3(tmp_path, s3_bucket, 'myPrefix')
+
+    resp = ut.S3_CLIENT.list_objects_v2(Bucket=s3_bucket, Prefix='myPrefix')
+
+    assert len(resp['Contents']) == 2
+    assert resp['Contents'][0]['Key'] == 'myPrefix/subdir1/subdir2/foo.txt'
+    assert resp['Contents'][1]['Key'] == 'myPrefix/subdir1/subdir3/bar.txt'
+
 
 
 @mock_aws
@@ -138,7 +131,7 @@ def test_get_west_most_point():
             'coordinates': [
                 [
                     [-122.201872, 41.1562811],
-                    [-122.201872, 39.2490859],
+                    [-122.201872, 3.240859],
                     [-118.7684233, 39.2490859],
                     [-118.7684233, 41.1562811],
                     [-122.201872, 41.1562811],
