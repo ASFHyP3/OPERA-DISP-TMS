@@ -63,7 +63,7 @@ To create a tile map from a set of displacement GeoTIFFs:
 create_tile_map displacement --bucket myBucket --bucket-prefix myPrefix
 ```
 
-This will look for all `.tif` files in `myBucket/myPrefix/` and use them to make the tile map.
+This will look for all `.tif` files in `s3://myBucket/myPrefix/` and use them to make the tile map.
 
 A simple web page with a viewer based on OpenLayers is included to visualize the map in a browser, e.g. `tiles/openlayers.html`.
 
