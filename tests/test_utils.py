@@ -1,12 +1,25 @@
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import call, patch
+from unittest.mock import patch
 
 import pytest
 from moto import mock_aws
 from moto.core import patch_client
 
 import opera_disp_tms.utils as ut
+
+
+@pytest.fixture
+def s3_bucket():
+    with mock_aws():
+        patch_client(ut.S3_CLIENT)
+
+        bucket_name = 'myBucket'
+        location = {'LocationConstraint': 'us-west-2'}
+
+        ut.S3_CLIENT.create_bucket(Bucket=bucket_name, CreateBucketConfiguration=location)
+
+        yield bucket_name
 
 
 def test_within_in_day():
@@ -54,7 +67,6 @@ def test_upload_dir_to_s3(tmp_path, s3_bucket):
     assert resp['Contents'][1]['Key'] == 'myPrefix/subdir1/subdir3/bar.txt'
 
 
-
 @mock_aws
 def test_list_files_in_s3(s3_bucket):
     prefix = 'geotiffs'
@@ -85,19 +97,6 @@ def test_download_file_from_s3(tmp_path, s3_bucket):
 
     assert output_path == tmp_path / 'my-file.tif'
     assert output_path.exists()
-
-
-@pytest.fixture
-def s3_bucket():
-    with mock_aws():
-        patch_client(ut.S3_CLIENT)
-
-        bucket_name = 'myBucket'
-        location = {'LocationConstraint': 'us-west-2'}
-
-        ut.S3_CLIENT.create_bucket(Bucket=bucket_name, CreateBucketConfiguration=location)
-
-        yield bucket_name
 
 
 def test_get_frame_id():
