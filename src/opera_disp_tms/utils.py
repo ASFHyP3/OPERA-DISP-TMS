@@ -18,6 +18,7 @@ DATE_FORMAT = '%Y%m%dT%H%M%SZ'
 
 
 def list_files_in_s3(bucket: str, bucket_prefix: str) -> list[dict]:
+    # TODO: Implement paging for when dataset size increases
     resp = S3_CLIENT.list_objects_v2(Bucket=bucket, Prefix=bucket_prefix)
 
     return resp['Contents']
