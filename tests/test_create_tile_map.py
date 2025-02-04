@@ -3,7 +3,6 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from botocore.stub import Stubber
 from moto import mock_aws
 from moto.core import patch_client
 from osgeo import gdal, osr
