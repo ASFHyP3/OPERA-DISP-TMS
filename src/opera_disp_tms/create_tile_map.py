@@ -8,7 +8,7 @@ from pathlib import Path
 from osgeo import gdal, gdalconst, osr
 
 from opera_disp_tms import utils
-from opera_disp_tms.constants import SCALE_DICT
+from opera_disp_tms.constants import SCALE_DICT, UNITS_DICT
 
 
 gdal.UseExceptions()
@@ -22,8 +22,7 @@ def create_bounds_file(info: dict, measurement_type: str, output_folder: Path) -
         measurement_type: Data measurement type to set scale_range and units
         output_folder: folder to write "extent.json"
     """
-    units_dict = {'displacement': 'm', 'secant_velocity': 'm/yr', 'velocity': 'm/yr'}
-    units = units_dict[measurement_type]
+    units = UNITS_DICT[measurement_type]
     scale_range = SCALE_DICT[measurement_type]
     minx, miny = info['cornerCoordinates']['lowerLeft']
     maxx, maxy = info['cornerCoordinates']['upperRight']

@@ -6,3 +6,4 @@ SCALE_DICT = {
     'secant_velocity': SECANT_VELOCITY_SCALE,
     'velocity': VELOCITY_SCALE,
 }
+UNITS_DICT = {'displacement': 'm', 'secant_velocity': 'm/yr', 'velocity': 'm/yr'}
