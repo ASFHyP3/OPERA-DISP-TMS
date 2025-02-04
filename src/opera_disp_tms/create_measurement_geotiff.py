@@ -8,7 +8,7 @@ from numba import njit, prange
 from osgeo import gdal
 
 from opera_disp_tms import prep_stack
-from opera_disp_tms.constants import DISPLACEMENT_SCALE, SECANT_VELOCITY_SCALE, VELOCITY_SCALE
+from opera_disp_tms.constants import SCALE_DICT
 from opera_disp_tms.utils import upload_file_to_s3
 
 
@@ -118,16 +118,8 @@ def compute_measurement(measurement_type: str, stack: list[xr.DataArray]) -> xr.
 
 
 def clip_measurement(in_array, measurement_type):
-    if measurement_type == 'displacement':
-        scale = DISPLACEMENT_SCALE
-    elif measurement_type == 'secant_velocity':
-        scale = SECANT_VELOCITY_SCALE
-    elif measurement_type == 'velocity':
-        scale = VELOCITY_SCALE
-    else:
-        raise ValueError(f'Invalid measurement type: {measurement_type}')
-
-    out_array = np.clip(in_array, scale[0], scale[1])
+    scale_range = SCALE_DICT[measurement_type]
+    out_array = np.clip(in_array, scale_range[0], scale_range[1])
     return out_array
 
 
