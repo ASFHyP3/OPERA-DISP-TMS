@@ -84,14 +84,14 @@ def test_list_files_in_s3(s3_bucket):
 
 @mock_aws
 def test_download_file_from_s3(tmp_path, s3_bucket):
-    download_path = 'geotiffs/my-file.tif'
-    dest_dir = Path(tmp_path)
+    object_key = 'geotiffs/my-file.tif'
 
-    ut.S3_CLIENT.put_object(Bucket=s3_bucket, Key=download_path)
+    ut.S3_CLIENT.put_object(Bucket=s3_bucket, Key=object_key)
 
-    output_path = ut.download_file_from_s3(s3_bucket, download_path, dest_dir)
+    output_path = ut.download_file_from_s3(s3_bucket, object_key, tmp_path)
 
     assert output_path == tmp_path / 'my-file.tif'
+    assert output_path.exists()
 
 
 @pytest.fixture
