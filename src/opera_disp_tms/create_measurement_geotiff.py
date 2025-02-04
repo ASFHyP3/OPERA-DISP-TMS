@@ -8,6 +8,7 @@ from numba import njit, prange
 from osgeo import gdal
 
 from opera_disp_tms import prep_stack
+from opera_disp_tms.constants import DISPLACEMENT_SCALE, SECANT_VELOCITY_SCALE, VELOCITY_SCALE
 
 
 gdal.UseExceptions()
@@ -115,9 +116,24 @@ def compute_measurement(measurement_type: str, stack: list[xr.DataArray]) -> xr.
     return slope_da
 
 
+def clip_measurement(in_array, measurement_type):
+    if measurement_type == 'displacement':
+        scale = DISPLACEMENT_SCALE
+    elif measurement_type == 'secant_velocity':
+        scale = SECANT_VELOCITY_SCALE
+    elif measurement_type == 'velocity':
+        scale = VELOCITY_SCALE
+    else:
+        raise ValueError(f'Invalid measurement type: {measurement_type}')
+
+    out_array = np.clip(in_array, scale[0], scale[1])
+    return out_array
+
+
 def create_measurement_geotiff(measurement_type: str, frame_id: int, begin_date: datetime, end_date: datetime) -> Path:
     stack = prep_stack.load_sw_disp_stack(frame_id, begin_date, end_date, 'spanning')
     data = compute_measurement(measurement_type, stack)
+    data = clip_measurement(data, measurement_type)
 
     data.rio.write_nodata(np.nan, inplace=True)
     data = data.rio.reproject('EPSG:3857')

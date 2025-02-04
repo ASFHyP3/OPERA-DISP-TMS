@@ -4,6 +4,7 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 
+from opera_disp_tms.constants import DISPLACEMENT_SCALE, SECANT_VELOCITY_SCALE, VELOCITY_SCALE
 from opera_disp_tms.create_measurement_geotiff import create_measurement_geotiff
 from opera_disp_tms.create_tile_map import create_tile_map
 from opera_disp_tms.utils import upload_dir_to_s3
@@ -42,9 +43,9 @@ def generate_tile_map_service(
     # FIXME sort geotiffs to give the layering we want
 
     scale = {
-        'displacement': None,
-        'secant_velocity': [-0.05, 0.05],
-        'velocity': [-0.05, 0.05],
+        'displacement': DISPLACEMENT_SCALE,
+        'secant_velocity': SECANT_VELOCITY_SCALE,
+        'velocity': VELOCITY_SCALE,
     }
     create_tile_map(measurement_type, measurement_geotiffs, scale[measurement_type])
     return Path(measurement_type)

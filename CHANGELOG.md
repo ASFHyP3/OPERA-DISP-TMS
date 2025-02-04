@@ -26,6 +26,9 @@ than creating measurement geotiffs for each 1x1 degree tile.
   data in CMR UAT, so the California-specific scripts are no longer necessary.
 * Outdated `Design.md` describing the previous tile-by-tile strategy.
 
+### Fixed
+* Values beyond bounds of measurement are now correctly clipped to the min/max value instead of set to NaN.
+
 ## [0.6.0]
 ### Added
 * Add scale range value and units to extent.json output file
