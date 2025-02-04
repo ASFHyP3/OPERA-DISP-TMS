@@ -102,6 +102,6 @@ def s3_bucket():
         bucket_name = 'myBucket'
         location = {'LocationConstraint': 'us-west-2'}
 
-        ut.S3_CLIENT.create_bucket(Bucket=bucketName, CreateBucketConfiguration=location)
+        ut.S3_CLIENT.create_bucket(Bucket=bucket_name, CreateBucketConfiguration=location)
 
         yield bucket_name
