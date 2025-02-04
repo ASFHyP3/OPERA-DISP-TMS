@@ -99,9 +99,9 @@ def s3_bucket():
     with mock_aws():
         patch_client(ut.S3_CLIENT)
 
-        bucketName = 'myBucket'
+        bucket_name = 'myBucket'
         location = {'LocationConstraint': 'us-west-2'}
 
         ut.S3_CLIENT.create_bucket(Bucket=bucketName, CreateBucketConfiguration=location)
 
-        yield bucketName
+        yield bucket_name
