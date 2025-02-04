@@ -37,6 +37,7 @@ Where `11115` is OPERA frame id of the granule stack in CMR, and `20140101`/`202
 
 The resulting products have the name format:
 `displacement_{frame id}_{start date}_{end_date}.tif`
+
 For example:
 `displacement_11115_20140101_20260101.tif`
 
