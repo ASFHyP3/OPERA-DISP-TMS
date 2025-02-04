@@ -41,25 +41,19 @@ def create_bounds_file(info: dict, scale_range: list, output_folder: Path) -> No
         json.dump(extent, outfile)
 
 
-def create_tile_map(output_folder: str, input_rasters: list[str], scale_range: list[float] | None = None) -> None:
+def create_tile_map(output_folder: str, input_rasters: list[str], scale_range: list[float]) -> None:
     """Generate a directory with small .png tiles from a list of rasters in a common projection, following the OSGeo
     Tile Map Service Specification, using gdal2tiles: https://gdal.org/en/latest/programs/gdal2tiles.html
 
     Args:
         output_folder: Path of the output directory to create
         input_rasters: List of gdal-compatible raster paths to mosaic
-        scale_range: Optional list of two integers to scale the mosaic by
+        scale_range: List of two integers to scale the mosaic by
     """
     with tempfile.NamedTemporaryFile() as mosaic_vrt, tempfile.NamedTemporaryFile() as byte_vrt:
         # mosaic the input rasters
         gdal.BuildVRT(mosaic_vrt.name, input_rasters, resampleAlg='nearest')
-
-        # scale the mosaic from Float to Byte
-        vrt_info = gdal.Info(mosaic_vrt.name, stats=True, format='json')
-        stats = vrt_info['bands'][0]['metadata']['']
-
-        if scale_range is None:
-            scale_range = [float(stats['STATISTICS_MINIMUM']), float(stats['STATISTICS_MAXIMUM'])]
+        vrt_info = gdal.Info(mosaic_vrt.name, format='json')
 
         gdal.Translate(
             destName=byte_vrt.name,
