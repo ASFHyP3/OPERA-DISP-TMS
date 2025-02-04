@@ -1,105 +1,28 @@
 """OPERA-DISP Tile Map Service Generator"""
 
 import argparse
-from datetime import datetime
-from pathlib import Path
-
-from opera_disp_tms.create_tile_map import create_tile_map
-from opera_disp_tms.generate_metadata_tile import create_tile_for_bbox
-from opera_disp_tms.generate_sw_disp_tile import create_sw_disp_tile
-from opera_disp_tms.generate_sw_vel_tile import create_sw_vel_tile
-from opera_disp_tms.utils import partition_bbox, upload_dir_to_s3
-
-
-class Date(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
-        try:
-            value = datetime.strptime(values, '%Y%m%d')
-        except ValueError:
-            parser.error(f'{self.dest} must be formatted YYYYMMDD, e.g. 20211231')
-        setattr(namespace, self.dest, value)
-
-
-class Bbox(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
-        try:
-            bbox = tuple(int(item) for sublist in values for item in sublist)
-        except ValueError:
-            parser.error(f'{self.dest} values must be integers ordered [min lon, min lat, max lon, max lat]')
-        if len(bbox) != 4:
-            parser.error(f'{self.dest} must have exactly 4 values ordered [min lon, min lat, max lon, max lat]')
-        if not (-180 <= bbox[0] <= bbox[2] <= 180 and -90 <= bbox[1] <= bbox[3] <= 90):
-            parser.error(f'{self.dest} must be ordered [min lon, min lat, max lon, max lat]')
-        setattr(namespace, self.dest, bbox)
-
-
-def generate_mosaic_geotiff(
-    tile_type: str, bbox: tuple[int, int, int, int], direction: str, begin_date: datetime, end_date: datetime
-) -> Path:
-    metadata_geotiff = create_tile_for_bbox(bbox, direction=direction)
-    if not metadata_geotiff:
-        raise ValueError(f'No data found for bounding box {bbox} and direction {direction}')
-
-    if tile_type == 'displacement':
-        mosaic_geotiff = create_sw_disp_tile(metadata_geotiff, begin_date, end_date)
-    elif tile_type == 'secant_velocity':
-        mosaic_geotiff = create_sw_vel_tile(metadata_geotiff, begin_date, end_date, secant=True)
-    else:
-        raise ValueError(f'Unsupported tile type: {tile_type}')
-
-    return mosaic_geotiff
-
-
-def generate_tile_map_service(
-    tile_type: str, bbox: tuple[int, int, int, int], direction: str, begin_date: datetime, end_date: datetime
-) -> Path:
-    mosaic_geotiffs = []
-    for partition in partition_bbox(bbox):
-        try:
-            mosaic_geotiff = generate_mosaic_geotiff(tile_type, partition, direction, begin_date, end_date)
-            mosaic_geotiffs.append(mosaic_geotiff.name)
-        except ValueError as e:
-            print(e)
-
-    scale = {
-        'displacement': None,
-        'secant_velocity': [-0.05, 0.05],
-    }
-    create_tile_map(tile_type, mosaic_geotiffs, scale[tile_type])
-    return Path(tile_type)
+import sys
+from importlib.metadata import entry_points
 
 
 def main():
-    """HyP3 CLI entrypoint to create a Tile Map Service (TMS) visualization of the OPERA Displacement data set"""
-    parser = argparse.ArgumentParser(
-        description='Create a Tile Map Service (TMS) visualization of the OPERA Displacement data set'
-    )
-    parser.add_argument('--bucket', help='AWS S3 bucket HyP3 for upload the final products')
-    parser.add_argument('--bucket-prefix', default='', help='Add a bucket prefix to products')
-    parser.add_argument(
-        'tile_type', type=str, choices=['displacement', 'secant_velocity'], help='Data value to visualize'
-    )
-    parser.add_argument(
-        'bbox',
-        type=str.split,
-        nargs='+',
-        action=Bbox,
-        help='Integer bounds in EPSG:4326, formatted like [min lon, min lat, max lon, max lat]',
-    )
-    parser.add_argument('direction', type=str, choices=['ascending', 'descending'], help='Direction of the orbit pass')
-    parser.add_argument(
-        'begin_date', type=str, action=Date, help='Start of secondary date search range to visualize (e.g., 20211231)'
-    )
-    parser.add_argument(
-        'end_date', type=str, action=Date, help='End of secondary date search range to visualize (e.g., 20211231)'
-    )
-    args = parser.parse_args()
+    """Main entrypoint for HyP3 processing
 
-    output_directory = generate_tile_map_service(
-        args.tile_type, args.bbox, args.direction, args.begin_date, args.end_date
+    Calls the HyP3 entrypoint specified by the `++process` argument
+    """
+    parser = argparse.ArgumentParser(prefix_chars='+', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument(
+        '++process',
+        choices=['create_measurement_geotiff', 'create_tile_map'],
+        default='create_measurement_geotiff',
+        help='Select the HyP3 entrypoint to use',  # HyP3 entrypoints are specified in `pyproject.toml`
     )
-    if args.bucket:
-        upload_dir_to_s3(output_directory, args.bucket, args.bucket_prefix)
+
+    args, unknowns = parser.parse_known_args()
+    process_entry_point = list(entry_points(group='hyp3', name=args.process))[0]
+
+    sys.argv = [args.process, *unknowns]
+    sys.exit(process_entry_point.load()())
 
 
 if __name__ == '__main__':

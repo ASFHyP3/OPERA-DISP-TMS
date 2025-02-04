@@ -28,58 +28,42 @@ For instructions on setting up your Earthdata Login via a `.netrc` file, check o
 
 ## Usage
 
-### Create a frame metadata tile
-These tiles serve as the foundation for the creation of all other Tile Map Server datasets. More details on the structure of these datasets can be found in the [Design.md](https://github.com/ASFHyP3/OPERA-DISP-TMS/blob/develop/Design.md) document.
-
-The `generate_metadata_tile` CLI command can be used to generate a frame metadata tile:
+### Create a Short Wavelength Cumulative Displacement GeoTIFF
+The `create_measurement_geotiff` CLI command can be used to generate a cumulative displacement geotiff for a given OPERA frame:
 ```bash
-generate_metadata_tile -125 42 ascending
+create_measurement_geotiff 11115 displacement 20140101 20260101
 ```
-Where `-125 42` is the upper-left corner of the desired bounding box in **integer** `minx maxy` longitude/latitude values, and `ascending` specifies which orbit direction you want to generate a frame metadata tile for (`ascending` or `descending`).
-
-For TMS generation ASF will be using 1x1 degree tiles.
+Where `11115` is OPERA frame id of the granule stack in CMR, and `20140101`/`20260101` specify the start/end of the secondary date search range in format `%Y%m%d`.
 
 The resulting products have the name format:
-`METADATA_{orbit direction}_{upper left corner in lon/lat}.tif`.
-For example:
-`METADATA_ASCENDING_W125N42.tif`
+`displacement_{frame id}_{start date}_{end_date}.tif`
 
-### Create a Short Wavelength Cumulative Displacement tile
-The `generate_sw_disp_tile` CLI command can be used to generate a cumulative displacement geotiff:
+For example:
+`displacement_11115_20140101_20260101.tif`
+
+### Create a Short Wavelength Velocity GeoTIFF
+The `create_measurement_geotiff` CLI command can be used to generate a short wavelength velocity geotiff for a given OPERA frame:
 ```bash
-generate_sw_disp_tile METADATA_ASCENDING_W125N42.tif 20170901 20171231
+create_measurement_geotiff 11115 velocity 20140101 20260101
 ```
-Where `METADATA_ASCENDING_W125N42.tif` is the path to the frame metadata tile you want to generate a Short Wavelength Cumulative Displacement tile for, and `20170901`/`20171231` specify the start/end of the secondary date search range to generate a tile for in format `%Y%m%d`.
+Where `11115` is OPERA frame id of the granule stack in CMR, and `20140101`/`20260101` specify the start/end of the secondary date search range in format `%Y%m%d`.
+
+The velocity will be calculated from the minimum set of granules needed to span the temporal search range.
 
 The resulting products have the name format:
-`SW_CUMUL_DISP_{start date search range}_{stop data search range}_{orbit direction}_{upper left corner in lon/lat}.tif`
+`velocity_{frame id}_{start date}_{end_date}.tif`
 For example:
-`SW_CUMUL_DISP_20170901_20171231_ASCENDING_W125N42.tif`
-
-### Create a Short Wavelength Velocity tile
-The `generate_sw_vel_tile` CLI command can be used to generate a short wavelength velocity geotiff:
-```bash
-generate_sw_vel_tile METADATA_ASCENDING_W125N42.tif 20170901 20171231
-```
-Where `METADATA_ASCENDING_W125N42.tif` is the path to the frame metadata tile you want to generate a Short Wavelength Velocity tile for, and `20170901`/`20171231` specify the start/end of the secondary date search range to generate a tile for in format `%Y%m%d`.
-
-By default, the velocity will be calculated with **only** two data points (the first and last dates in the search range), but you can pass the optional `--full` flag to calculate the velocity using all available data in the search range. Using this option will significantly increase processing times.
-
-The resulting products have the name format:
-`SW_VELOCITY_DISP_{start date search range}_{stop data search range}_{orbit direction}_{upper left corner in lon/lat}.tif`
-For example:
-`SW_VELOCITY_DISP_20170901_20171231_ASCENDING_W125N42.tif`
+`velocity_11115_20140101_20260101.tif`
 
 ### Create a Tile Map
-The `create_tile_map` CLI command generates a directory with small .png tiles from a list of rasters in a common projection, following the OSGeo Tile Map Service Specification, using gdal2tiles: https://gdal.org/en/latest/programs/gdal2tiles.html
+The `create_tile_map` CLI command generates a directory with small.png tiles from a s3 bucket with a list of rasters in a common projection, following the OSGeo Tile Map Service Specification, using gdal2tiles: https://gdal.org/en/latest/programs/gdal2tiles.html
 
 To create a tile map from a set of displacement GeoTIFFs:
 ```bash
-create_tile_map tiles/ \
-  SW_CUMUL_DISP_20170901_20171231_ASCENDING_W125N42.tif \
-  SW_CUMUL_DISP_20170901_20171231_ASCENDING_W125N42.tif \
-  SW_CUMUL_DISP_20170901_20171231_ASCENDING_W125N42.tif
+create_tile_map displacement --bucket myBucket --bucket-prefix myPrefix
 ```
+
+This will look for all `.tif` files in `s3://myBucket/myPrefix/` and use them to make the tile map.
 
 A simple web page with a viewer based on OpenLayers is included to visualize the map in a browser, e.g. `tiles/openlayers.html`.
 

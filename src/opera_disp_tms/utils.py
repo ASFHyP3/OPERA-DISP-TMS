@@ -1,5 +1,6 @@
+import json
 import os
-from collections.abc import Iterable
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from mimetypes import guess_type
 from pathlib import Path
@@ -7,8 +8,7 @@ from typing import Union
 
 import boto3
 import requests
-from osgeo import gdal, osr
-from pyproj import Transformer
+from osgeo import gdal
 
 
 gdal.UseExceptions()
@@ -17,21 +17,20 @@ S3_CLIENT = boto3.client('s3')
 DATE_FORMAT = '%Y%m%dT%H%M%SZ'
 
 
-def get_raster_as_numpy(raster_path: Path, band: int = 1) -> tuple:
-    """Get data and geotransform of a raster
+def list_files_in_s3(bucket: str, bucket_prefix: str) -> list[dict]:
+    # TODO: Implement paging for when dataset size increases
+    resp = S3_CLIENT.list_objects_v2(Bucket=bucket, Prefix=bucket_prefix)
 
-    Args:
-        raster_path: Path to the raster file
-        band: Band to get
+    return resp['Contents']
 
-    Returns:
-        raster's numpy array and geotransform
-    """
-    raster = gdal.Open(str(raster_path))
-    raster_band = raster.GetRasterBand(band)
-    data = raster_band.ReadAsArray()
-    geotransform = raster.GetGeoTransform()
-    return data, geotransform
+
+def download_file_from_s3(bucket: str, download_key: str, dest_dir: Path) -> Path:
+    filename = Path(download_key).parts[-1]
+    output_path = dest_dir / filename
+
+    S3_CLIENT.download_file(bucket, download_key, output_path)
+
+    return output_path
 
 
 def download_file(
@@ -62,106 +61,7 @@ def within_one_day(date1: datetime, date2: datetime) -> bool:
     return abs(date1 - date2) <= timedelta(days=1)
 
 
-def wkt_from_epsg(epsg_code: int) -> str:
-    """Get the WKT from an EPSG code
-
-    Args:
-        epsg_code: EPSG code to get the WKT for
-
-    Returns:
-        WKT for the EPSG code
-    """
-    srs = osr.SpatialReference()
-    srs.ImportFromEPSG(epsg_code)
-    wkt = srs.ExportToWkt()
-    return wkt
-
-
-def transform_point(x: float, y: float, source_wkt: str, target_wkt: str) -> tuple[float, float]:
-    """Transform a point from one coordinate system to another
-
-    Args:
-        x: x coordinate in the source coordinate system
-        y: y coordinate in the source coordinate system
-        source_wkt: WKT of the source coordinate system
-        target_wkt: WKT of the target coordinate system
-
-    Returns:
-        x_transformed: x coordinate in the target coordinate system
-        y_transformed: y coordinate in the target coordinate system
-    """
-    transformer = Transformer.from_crs(source_wkt, target_wkt, always_xy=True)
-    x_transformed, y_transformed = transformer.transform(x, y)
-    return x_transformed, y_transformed
-
-
-def create_buffered_bbox(
-    geotransform: Iterable[int], shape: tuple[int, ...], buffer_size: int
-) -> tuple[int, int, int, int]:
-    """Create a buffered bounding box from a geotransform and shape
-
-    Args:
-        geotransform: Geotransform of the raster in GDAL style
-        shape: Shape of the raster (n_rows, n_cols)
-        buffer_size: Size of the buffer to add to the bounding box in the same units as the geotransform
-
-    Returns:
-        Bounding box in the form (minx, miny, maxx, maxy)
-    """
-    minx, xres, _, maxy, _, yres = geotransform
-    miny = maxy + (shape[0] * yres)
-    maxx = minx + (shape[1] * xres)
-    minx -= buffer_size
-    maxx += buffer_size
-    miny -= buffer_size
-    maxy += buffer_size
-    return minx, miny, maxx, maxy
-
-
-def validate_bbox(bbox: tuple[int, int, int, int]) -> None:
-    """Check that bounding box:
-    - Has four elements
-    - All elements are integers
-    - Minx is less than maxx
-    - Miny is less than maxy
-
-    Args:
-        bbox: Bounding box to check
-    """
-    if len(bbox) != 4:
-        raise ValueError('Bounding box must have 4 elements')
-
-    if not all(isinstance(i, int) for i in bbox):
-        raise ValueError('Bounding box must be integers')
-
-    if bbox[0] > bbox[2]:
-        raise ValueError('Bounding box minx is greater than maxx')
-
-    if bbox[1] > bbox[3]:
-        raise ValueError('Bounding box miny is greater than maxy')
-
-
-def create_tile_name(
-    metadata_name: str, begin_date: datetime, end_date: datetime, prod_type: str = 'SW_CUMUL_DISP'
-) -> str:
-    """Create a product name for a short wavelength cumulative displacement tile
-    Takes the form: SW_CUMUL_DISP_YYYYMMDD_YYYYMMDD_DIRECTION_TILECOORDS.tif
-
-    Args:
-        metadata_name: The name of the metadata file
-        begin_date: Start of secondary date search range to generate tile for
-        end_date: End of secondary date search range to generate tile for
-        prod_type: Product type prefix to use
-    """
-    _, flight_direction, tile_coordinates = metadata_name.split('_')
-    date_fmt = '%Y%m%d'
-    begin_date_str = datetime.strftime(begin_date, date_fmt)
-    end_date_str = datetime.strftime(end_date, date_fmt)
-    name = '_'.join([prod_type, begin_date_str, end_date_str, flight_direction, tile_coordinates])
-    return name
-
-
-def upload_file_to_s3(path_to_file: Path, bucket: str, key):
+def upload_file_to_s3(path_to_file: Path, bucket: str, key: str):
     extra_args = {'ContentType': guess_type(path_to_file)[0]}
     S3_CLIENT.upload_file(str(path_to_file), bucket, key, ExtraArgs=extra_args)
 
@@ -178,19 +78,29 @@ def upload_dir_to_s3(path_to_dir: Path, bucket: str, prefix: str = ''):
         bucket: S3 bucket to which the directory should be uploaded
         prefix: prefix in S3 bucket to upload the directory to. Defaults to ''
     """
-    for branch in os.walk(path_to_dir, topdown=True):
-        for filename in branch[2]:
-            path_to_file = Path(branch[0]) / filename
-            key = str(prefix / path_to_file.relative_to(path_to_dir))
-            upload_file_to_s3(path_to_file, bucket, key)
+    file_paths = [Path(branch[0]) / filename for branch in os.walk(path_to_dir, topdown=True) for filename in branch[2]]
+    buckets = [bucket for _ in file_paths]
+    keys = [str(prefix / file_path.relative_to(path_to_dir)) for file_path in file_paths]
+
+    with ThreadPoolExecutor() as executor:
+        executor.map(upload_file_to_s3, file_paths, buckets, keys, chunksize=10)
 
 
-def partition_bbox(
-    bbox: tuple[int, int, int, int], width: int = 10, height: int = 10
-) -> list[tuple[int, int, int, int]]:
-    partitions = []
-    for lon in range(bbox[0], bbox[2], width):
-        for lat in range(bbox[1], bbox[3], height):
-            partition = (lon, lat, min(lon + width, bbox[2]), min(lat + height, bbox[3]))
-            partitions.append(partition)
-    return partitions
+def get_west_most_point(geotiff_path: str) -> float:
+    info = gdal.Info(geotiff_path, format='json')
+    west_most = min(coord[0] for coord in info['wgs84Extent']['coordinates'][0])
+    return west_most
+
+
+def get_frame_id(geotiff_path: str) -> int:
+    info = gdal.Info(geotiff_path, format='json')
+    return int(info['metadata']['']['frame_id'])
+
+
+def get_common_direction(frame_ids: set[int]):
+    data_file = Path(__file__).parent / 'data' / 'frame_directions.json'
+    frame_directions = json.loads(data_file.read_text())
+    for direction, frame_list in frame_directions.items():
+        if frame_ids <= set(frame_list):
+            return direction
+    raise ValueError('Frames do not share a common flight direction')
