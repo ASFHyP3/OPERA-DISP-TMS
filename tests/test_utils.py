@@ -77,9 +77,9 @@ def test_list_files_in_s3(s3_bucket):
     files = ut.list_files_in_s3(s3_bucket, prefix)
 
     assert len(files) == 3
-    assert files[0]['Key'] == 'my-file1.tif'
-    assert files[1]['Key'] == 'my-file2.tif'
-    assert files[2]['Key'] == 'my-file3.tif'
+    assert files[0]['Key'] == f'{prefix}/my-file1.tif'
+    assert files[1]['Key'] == f'{prefix}/my-file2.tif'
+    assert files[2]['Key'] == f'{prefix}/my-file3.tif'
 
 
 @mock_aws
