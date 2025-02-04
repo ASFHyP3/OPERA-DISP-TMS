@@ -56,7 +56,7 @@ def test_get_cmr_metadata():
         params = {
             'short_name': 'OPERA_L3_DISP-S1_V1',
             'attribute[]': ['int,FRAME_NUMBER,123', 'float,PRODUCT_VERSION,0.9,'],
-            'page_size': 2000,
+            'page_size': '2000',
         }
 
         rsps.get(
