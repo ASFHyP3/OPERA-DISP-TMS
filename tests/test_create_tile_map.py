@@ -65,13 +65,6 @@ def create_test_geotiff(output_file, geotransform, shape, epsg):
     dataset = None
 
 
-@pytest.fixture(autouse=False)
-def s3_stubber():
-    with Stubber(ut.S3_CLIENT) as stubber:
-        yield stubber
-        stubber.assert_no_pending_responses()
-
-
 @mock_aws
 def test_download_geotiffs(tmp_path):
     prefix = 'geotiffs'

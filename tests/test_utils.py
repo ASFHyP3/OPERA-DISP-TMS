@@ -3,14 +3,14 @@ from pathlib import Path
 from unittest.mock import call, patch
 
 import pytest
-from botocore.stub import ANY, Stubber
+from botocore.stub import ANY, Stubber  # TODO: fully transition to moto for S3 mocking
 from moto import mock_aws
 from moto.core import patch_client
 
 import opera_disp_tms.utils as ut
 
 
-@pytest.fixture(autouse=False)
+@pytest.fixture
 def s3_stubber():
     with Stubber(ut.S3_CLIENT) as stubber:
         yield stubber
@@ -93,7 +93,7 @@ def test_download_file_from_s3(tmp_path, s3_bucket):
 
 
 @pytest.fixture
-def s3_bucket(scope='function'):
+def s3_bucket():
     with mock_aws():
         patch_client(ut.S3_CLIENT)
 
