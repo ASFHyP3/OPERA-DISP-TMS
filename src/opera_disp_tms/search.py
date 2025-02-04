@@ -74,7 +74,7 @@ def get_cmr_metadata(
     cmr_parameters = {
         'short_name': 'OPERA_L3_DISP-S1_V1',
         'attribute[]': [f'int,FRAME_NUMBER,{frame_id}', f'float,PRODUCT_VERSION,{version},'],
-        'page_size': 2000,
+        'page_size': '2000',
     }
     headers = {'Authorization': f'Bearer {utils.get_edl_bearer_token()}'}
     items = []
