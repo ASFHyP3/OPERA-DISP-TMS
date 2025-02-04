@@ -9,6 +9,7 @@ from osgeo import gdal, gdalconst, osr
 
 from opera_disp_tms import utils
 
+
 gdal.UseExceptions()
 
 
