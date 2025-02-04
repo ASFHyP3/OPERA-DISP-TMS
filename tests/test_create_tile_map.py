@@ -67,7 +67,7 @@ def create_test_geotiff(output_file, geotransform, shape, epsg):
 @mock_aws
 def test_download_geotiffs(tmp_path):
     prefix = 'geotiffs'
-    download_paths = [
+    object_keys = [
         f'{prefix}/my-file1.tif',
         f'{prefix}/my-file2.tif',
         f'{prefix}/my-file3.tif',
@@ -79,7 +79,7 @@ def test_download_geotiffs(tmp_path):
     location = {'LocationConstraint': 'us-west-2'}
 
     ut.S3_CLIENT.create_bucket(Bucket=bucketName, CreateBucketConfiguration=location)
-    for tif in download_paths:
+    for tif in object_keys:
         ut.S3_CLIENT.put_object(Bucket=bucketName, Key=tif)
 
     output_paths = create_tile_map.download_geotiffs(bucketName, prefix)
