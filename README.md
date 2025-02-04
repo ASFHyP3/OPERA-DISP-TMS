@@ -19,7 +19,7 @@ python -m pip install -e .
 
 ## Credentials
 
-This application requires Earthdata Login UAT credentials to download OPERA Displacement data. These credentials can be provided either via a `uat.urs.earthdata.nasa.gov` entry in your `.netrc` file, or via `EARTHDATA_USERNAME` and `EARTHDATA_PASSWORD` environment variables.
+This application requires Earthdata Login credentials to download OPERA Displacement data. These credentials can be provided either via a `urs.earthdata.nasa.gov` entry in your `.netrc` file, or via `EARTHDATA_USERNAME` and `EARTHDATA_PASSWORD` environment variables.
 
 For instructions on setting up your Earthdata Login via a `.netrc` file, check out this [guide](https://harmony.earthdata.nasa.gov/docs#getting-started).
 

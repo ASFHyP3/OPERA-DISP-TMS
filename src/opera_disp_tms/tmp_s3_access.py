@@ -1,8 +1,8 @@
-import os
-
 import cachetools.func
 import requests
 import s3fs
+
+from opera_disp_tms import utils
 
 
 # Set TTL to number of seconds to cache.
@@ -17,10 +17,8 @@ def get_temporary_aws_credentials() -> dict:
     Returns:
         dictionary of credentials
     """
-    resp = requests.get('https://cumulus-test.asf.alaska.edu/s3credentials')
-    if resp.status_code == 401 and resp.url.startswith('https://uat.urs.earthdata.nasa.gov/oauth/authorize?'):
-        auth = (os.environ['EARTHDATA_USERNAME'], os.environ['EARTHDATA_PASSWORD'])
-        resp = requests.get(resp.url, auth=auth)
+    headers = {'Authorization': f'Bearer {utils.get_edl_bearer_token()}'}
+    resp = requests.get('https://cumulus.asf.alaska.edu/s3credentials', headers=headers)
     resp.raise_for_status()
     return resp.json()
 

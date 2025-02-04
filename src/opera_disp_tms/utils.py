@@ -67,3 +67,13 @@ def upload_dir_to_s3(path_to_dir: Path, bucket: str, prefix: str = ''):
 
     with ThreadPoolExecutor() as executor:
         executor.map(upload_file_to_s3, file_paths, buckets, keys, chunksize=10)
+
+
+def get_edl_bearer_token() -> str:
+    token_url = 'https://urs.earthdata.nasa.gov/api/users/find_or_create_token'
+    response = requests.post(token_url)
+    if response.status_code == 401:
+        auth = (os.environ['EARTHDATA_USERNAME'], os.environ['EARTHDATA_PASSWORD'])
+        response = requests.post(token_url, auth=auth)
+    response.raise_for_status()
+    return response.json()['access_token']
