@@ -7,7 +7,7 @@ from pathlib import Path
 
 from osgeo import gdal, gdalconst, osr
 
-from opera_disp_tms.utils import download_file_from_s3, list_files_in_s3, upload_dir_to_s3
+from opera_disp_tms import utils
 
 
 gdal.UseExceptions()
@@ -98,13 +98,14 @@ def create_tile_map(measurement_type: str, input_rasters: list[Path]) -> Path:
 
 
 def download_geotiffs(bucket: str, bucket_prefix: str) -> list[Path]:
-    resp = list_files_in_s3(bucket, bucket_prefix)
+    resp = utils.list_files_in_s3(bucket, bucket_prefix)
 
     geotiff_s3_filenames = [f['Key'] for f in resp if f['Key'].endswith('.tif')]
     dest_dir = Path.cwd()
 
     geotiff_paths = [
-        download_file_from_s3(bucket, geotiff_s3_filename, dest_dir) for geotiff_s3_filename in geotiff_s3_filenames
+        utils.download_file_from_s3(bucket, geotiff_s3_filename, dest_dir)
+        for geotiff_s3_filename in geotiff_s3_filenames
     ]
 
     return geotiff_paths
@@ -136,12 +137,16 @@ def main():
 
     geotiff_paths = download_geotiffs(args.bucket, args.bucket_prefix)
 
+    frame_ids = {utils.get_frame_id(str(geotiff)) for geotiff in geotiff_paths}
+    direction = utils.get_common_direction(frame_ids)
+    geotiff_paths.sort(key=lambda x: utils.get_west_most_point(str(x)), reverse=direction == 'DESCENDING')
+
     upload_path = create_tile_map(args.measurement_type, geotiff_paths)
 
     if args.bucket:
         output_s3_prefix = f'{args.bucket_prefix}/tms/'
 
-        upload_dir_to_s3(upload_path, args.bucket, output_s3_prefix)
+        utils.upload_dir_to_s3(upload_path, args.bucket, output_s3_prefix)
 
 
 if __name__ == '__main__':

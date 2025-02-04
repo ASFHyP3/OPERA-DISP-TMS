@@ -1,3 +1,4 @@
+import json
 import os
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
@@ -83,3 +84,23 @@ def upload_dir_to_s3(path_to_dir: Path, bucket: str, prefix: str = ''):
 
     with ThreadPoolExecutor() as executor:
         executor.map(upload_file_to_s3, file_paths, buckets, keys, chunksize=10)
+
+
+def get_west_most_point(geotiff_path: str) -> float:
+    info = gdal.Info(geotiff_path, format='json')
+    west_most = min(coord[0] for coord in info['wgs84Extent']['coordinates'][0])
+    return west_most
+
+
+def get_frame_id(geotiff_path: str) -> int:
+    info = gdal.Info(geotiff_path, format='json')
+    return int(info['metadata']['']['frame_id'])
+
+
+def get_common_direction(frame_ids: set[int]):
+    data_file = Path(__file__).parent / 'data' / 'frame_directions.json'
+    frame_directions = json.loads(data_file.read_text())
+    for direction, frame_list in frame_directions.items():
+        if frame_ids <= set(frame_list):
+            return direction
+    raise ValueError('Frames do not share a common flight direction')

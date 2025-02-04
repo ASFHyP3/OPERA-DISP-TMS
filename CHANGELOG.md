@@ -18,6 +18,7 @@ than creating measurement geotiffs for each 1x1 degree tile.
   secant_velocity, velocity) for the given frame and date range, and outputs a geotiff in EPSG:3857.
 * `create_measurement_geotiff` and `create_tile_map` now take `--bucket` and `--bucket-prefix` as params and uploads results to bucket
 * `create_tile_map` downloads all tif's from `--bucket` and `--bucket-prefix` params as inputs
+* Changed frame ordering strategy so that near range paths are displayed over far range paths.
 
 ### Removed
 * `generate_metadata_tile.py` has been removed, as creation of metadata tiles is no longer necessary
