@@ -60,7 +60,7 @@ The `create_tile_map` CLI command generates a directory with small.png tiles fro
 
 To create a tile map from a set of displacement GeoTIFFs:
 ```bash
-create_tile_map tiles displacement --bucket myBucket --bucket-prefix myPrefix
+create_tile_map displacement --bucket myBucket --bucket-prefix myPrefix
 ```
 
 This will look for all `.tif` files in `myBucket/myPrefix/` and use them to make the tile map.
