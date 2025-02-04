@@ -12,9 +12,12 @@ than creating measurement geotiffs for each 1x1 degree tile.
 
 ### Changed
 * `main.__main__` now accepts a list of frames rather than a bounding box and flight direction.
+* `main.__main__` is now an entrypoint that uses `++process` which can be `create_measurement_geotiff` or `create_tile_map`
 * `create_measurement_geotiff` replaces both `generate_sw_disp_tile` and `generate_sw_vel_tile`. This script takes a
   measurement type, frame id, start date, and end date, computes the requested measurement value (displacement,
   secant_velocity, velocity) for the given frame and date range, and outputs a geotiff in EPSG:3857.
+* `create_measurement_geotiff` and `create_tile_map` now take `--bucket` and `--bucket-prefix` as params and uploads results to bucket
+* `create_tile_map` downloads all tif's from `--bucket` and `--bucket-prefix` params as inputs
 * Changed frame ordering strategy so that near range paths are displayed over far range paths.
 
 ### Removed

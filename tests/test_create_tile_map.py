@@ -1,10 +1,15 @@
 import json
+from pathlib import Path
 
 import numpy as np
 import pytest
+from botocore.stub import Stubber
+from moto import mock_aws
+from moto.core import patch_client
 from osgeo import gdal, osr
 
 from opera_disp_tms import create_tile_map
+from opera_disp_tms import utils as ut
 
 
 def test_create_bounds_file(tmp_path, geotiff_info):
@@ -14,7 +19,6 @@ def test_create_bounds_file(tmp_path, geotiff_info):
 
     with open(f'{tmp_path}/extent.json') as f:
         extent_json = json.load(f)
-        print(extent_json)
 
     assert extent_json == {
         'extent': [-113, 33, -112, 34],
@@ -30,7 +34,6 @@ def test_bounds_file_scale_is_rounded(tmp_path, geotiff_info):
 
     with open(f'{tmp_path}/extent.json') as f:
         extent_json = json.load(f)
-        print(extent_json)
 
     assert extent_json['scale_range']['range'] == [-0.064, 0.051]
 
@@ -60,3 +63,34 @@ def create_test_geotiff(output_file, geotransform, shape, epsg):
     band = dataset.GetRasterBand(1)
     band.WriteArray(np.ones(shape, dtype=int))
     dataset = None
+
+
+@pytest.fixture(autouse=False)
+def s3_stubber():
+    with Stubber(ut.S3_CLIENT) as stubber:
+        yield stubber
+        stubber.assert_no_pending_responses()
+
+
+@mock_aws
+def test_download_geotiffs(tmp_path):
+    prefix = 'geotiffs'
+    download_paths = [
+        f'{prefix}/my-file1.tif',
+        f'{prefix}/my-file2.tif',
+        f'{prefix}/my-file3.tif',
+    ]
+
+    patch_client(ut.S3_CLIENT)
+
+    bucketName = 'myBucket'
+    location = {'LocationConstraint': 'us-west-2'}
+
+    ut.S3_CLIENT.create_bucket(Bucket=bucketName, CreateBucketConfiguration=location)
+    for tif in download_paths:
+        ut.S3_CLIENT.put_object(Bucket=bucketName, Key=tif)
+
+    output_paths = create_tile_map.download_geotiffs(bucketName, prefix)
+
+    assert len(output_paths) == 3
+    assert output_paths[0] == Path.cwd() / 'my-file1.tif'
