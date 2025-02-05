@@ -40,11 +40,7 @@ def test_upload_file_to_s3(tmp_path, s3_bucket):
 
     tag_resp = ut.S3_CLIENT.get_object_tagging(Bucket=s3_bucket, Key='myPrefix/myObject.png')
 
-    assert len(tag_resp['TagSet']) == 1
-    tag = tag_resp['TagSet'].pop()
-
-    assert tag['Key'] == 'file_type'
-    assert tag['Value'] == 'product'
+    assert tag_resp['TagSet'] == [{'Key': 'file_type', 'Value': 'product'}]
 
 
 @mock_aws
