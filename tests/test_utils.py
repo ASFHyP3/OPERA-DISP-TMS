@@ -22,7 +22,7 @@ def s3_bucket():
         yield bucket_name
 
 
-def test_within_in_day():
+def test_within_one_day():
     assert ut.within_one_day(datetime(2021, 1, 1, 12, 1, 1), datetime(2021, 1, 2, 0, 0, 0))
     assert not ut.within_one_day(datetime(2021, 1, 1, 12, 1, 1), datetime(2021, 1, 2, 12, 1, 2))
 
