@@ -8,19 +8,22 @@ from pathlib import Path
 from osgeo import gdal, gdalconst, osr
 
 from opera_disp_tms import utils
+from opera_disp_tms.constants import SCALE_DICT, UNITS_DICT
 
 
 gdal.UseExceptions()
 
 
-def create_bounds_file(info: dict, scale_range: list, output_folder: Path) -> None:
+def create_bounds_file(info: dict, measurement_type: str, output_folder: Path) -> None:
     """Generate file with the bounds and scale ranges of the newly created vrt
 
     Args:
         info: gdalinfo dict from vrt file
-        scale_range: list with min and max of tile map
+        measurement_type: Data measurement type to set scale_range and units
         output_folder: folder to write "extent.json"
     """
+    units = UNITS_DICT[measurement_type]
+    scale_range = SCALE_DICT[measurement_type]
     minx, miny = info['cornerCoordinates']['lowerLeft']
     maxx, maxy = info['cornerCoordinates']['upperRight']
     proj = osr.SpatialReference(info['coordinateSystem']['wkt'])
@@ -32,7 +35,7 @@ def create_bounds_file(info: dict, scale_range: list, output_folder: Path) -> No
         'EPSG': int(proj.GetAttrValue('AUTHORITY', 1)),
         'scale_range': {
             'range': [round(scale, sig_figs) for scale in scale_range],
-            'units': 'm/yr',
+            'units': units,
         },
     }
 
@@ -51,7 +54,7 @@ def create_tile_map(measurement_type: str, input_rasters: list[Path]) -> Path:
         measurement_type: Data measurement type to set scale_range and output folder
         input_rasters: List of gdal-compatible raster paths to mosaic
     """
-
+    scale_range = SCALE_DICT[measurement_type]
     output_dir = Path(measurement_type)
 
     with tempfile.NamedTemporaryFile() as mosaic_vrt, tempfile.NamedTemporaryFile() as byte_vrt:
@@ -59,15 +62,7 @@ def create_tile_map(measurement_type: str, input_rasters: list[Path]) -> Path:
 
         # mosaic the input rasters
         gdal.BuildVRT(mosaic_vrt.name, input_raster_strs, resampleAlg='nearest')
-
-        # scale the mosaic from Float to Byte
-        vrt_info = gdal.Info(mosaic_vrt.name, stats=True, format='json')
-        stats = vrt_info['bands'][0]['metadata']['']
-
-        if measurement_type == 'displacement':
-            scale_range = [float(stats['STATISTICS_MINIMUM']), float(stats['STATISTICS_MAXIMUM'])]
-        else:
-            scale_range = [-0.05, 0.05]
+        vrt_info = gdal.Info(mosaic_vrt.name, format='json')
 
         gdal.Translate(
             destName=byte_vrt.name,
@@ -92,7 +87,7 @@ def create_tile_map(measurement_type: str, input_rasters: list[Path]) -> Path:
         subprocess.run(command)
 
         # get bounds of VRT and write to file
-        create_bounds_file(vrt_info, scale_range, output_dir)
+        create_bounds_file(vrt_info, measurement_type, output_dir)
 
         return output_dir
 
@@ -145,7 +140,6 @@ def main():
 
     if args.bucket:
         output_s3_prefix = f'{args.bucket_prefix}/tms/'
-
         utils.upload_dir_to_s3(upload_path, args.bucket, output_s3_prefix)
 
 

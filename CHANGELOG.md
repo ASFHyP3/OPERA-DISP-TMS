@@ -18,6 +18,7 @@ than creating measurement geotiffs for each 1x1 degree tile.
 * `create_measurement_geotiff` and `create_tile_map` now take `--bucket` and `--bucket-prefix` as params and uploads results to bucket
 * `create_tile_map` downloads all tifs from `--bucket` and `--bucket-prefix` params as inputs
 * Changed frame ordering strategy so that near range paths are displayed over far range paths.
+* Map scale range is globally [-0.05, 0.05] for velocity/secant_velocity and [-0.25, 0.25] for displacement.
 
 ### Removed
 * `generate_metadata_tile.py` has been removed, as creation of metadata tiles is no longer necessary
@@ -28,6 +29,10 @@ than creating measurement geotiffs for each 1x1 degree tile.
   the California data set delivered by the project for initial testing. This application can now act on arbitrary v0.9+
   data in CMR UAT, so the California-specific scripts are no longer necessary.
 * Outdated `Design.md` describing the previous tile-by-tile strategy has been removed.
+
+### Fixed
+* Values beyond bounds of measurement are now correctly clipped to the min/max value instead of set to NaN.
+* Units are now m/yr for velocity/secant_velocity and m for displacement.
 
 ## [0.6.0]
 ### Added

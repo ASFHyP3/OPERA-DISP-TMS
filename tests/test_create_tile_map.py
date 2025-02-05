@@ -9,32 +9,31 @@ from osgeo import gdal, osr
 
 from opera_disp_tms import create_tile_map
 from opera_disp_tms import utils as ut
+from opera_disp_tms.constants import SCALE_DICT
 
 
 def test_create_bounds_file(tmp_path, geotiff_info):
-    scale_range = [-1, 1]
-
-    create_tile_map.create_bounds_file(geotiff_info, scale_range, tmp_path)
+    create_tile_map.create_bounds_file(geotiff_info, 'displacement', tmp_path)
 
     with open(f'{tmp_path}/extent.json') as f:
         extent_json = json.load(f)
 
     assert extent_json == {
         'extent': [-113, 33, -112, 34],
-        'scale_range': {'range': [-1, 1], 'units': 'm/yr'},
+        'scale_range': {'range': SCALE_DICT['displacement'], 'units': 'm'},
         'EPSG': 3857,
     }
 
-
-def test_bounds_file_scale_is_rounded(tmp_path, geotiff_info):
-    scale_range = [-0.064441680908203, 0.051021575927734]
-
-    create_tile_map.create_bounds_file(geotiff_info, scale_range, tmp_path)
+    create_tile_map.create_bounds_file(geotiff_info, 'velocity', tmp_path)
 
     with open(f'{tmp_path}/extent.json') as f:
         extent_json = json.load(f)
 
-    assert extent_json['scale_range']['range'] == [-0.064, 0.051]
+    assert extent_json == {
+        'extent': [-113, 33, -112, 34],
+        'scale_range': {'range': SCALE_DICT['velocity'], 'units': 'm/yr'},
+        'EPSG': 3857,
+    }
 
 
 @pytest.fixture
