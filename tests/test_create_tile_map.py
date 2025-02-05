@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 
 import numpy as np
 import pytest
@@ -81,11 +80,11 @@ def test_download_geotiffs(tmp_path):
     for tif in object_keys:
         ut.S3_CLIENT.put_object(Bucket=bucketName, Key=tif)
 
-    output_paths = create_tile_map.download_geotiffs(bucketName, prefix)
+    output_paths = create_tile_map.download_geotiffs(bucketName, prefix, dest_dir=tmp_path)
 
     assert len(output_paths) == 3
     assert output_paths == [
-        Path.cwd() / 'my-file1.tif',
-        Path.cwd() / 'my-file2.tif',
-        Path.cwd() / 'my-file3.tif',
+        tmp_path / 'my-file1.tif',
+        tmp_path / 'my-file2.tif',
+        tmp_path / 'my-file3.tif',
     ]
