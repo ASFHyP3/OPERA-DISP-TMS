@@ -80,7 +80,7 @@ def test_download_geotiffs(tmp_path):
     for tif in object_keys:
         ut.S3_CLIENT.put_object(Bucket=bucketName, Key=tif)
 
-    output_paths = create_tile_map.download_geotiffs(bucketName, prefix, dest_dir = tmp_path)
+    output_paths = create_tile_map.download_geotiffs(bucketName, prefix, dest_dir=tmp_path)
 
     assert len(output_paths) == 3
     assert output_paths == [
