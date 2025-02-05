@@ -119,7 +119,6 @@ def compute_measurement(measurement_type: str, stack: list[xr.DataArray]) -> xr.
 
 def clip_measurement(in_array: xr.DataArray, measurement_type: str) -> xr.DataArray:
     scale_range = SCALE_DICT[measurement_type]
-    breakpoint()
     out_array = in_array.clip(scale_range[0], scale_range[1])
     return out_array
 
