@@ -8,6 +8,7 @@ from numba import njit, prange
 from osgeo import gdal
 
 from opera_disp_tms import prep_stack
+from opera_disp_tms.constants import SCALE_DICT
 from opera_disp_tms.utils import upload_file_to_s3
 
 
@@ -29,7 +30,6 @@ def create_geotiff_name(measurement_type: str, frame_id: int, begin_date: dateti
     begin_date_str = datetime.strftime(begin_date, date_fmt)
     end_date_str = datetime.strftime(end_date, date_fmt)
     name = f'{measurement_type}_{frame_id:05}_{begin_date_str}_{end_date_str}.tif'
-
     return name
 
 
@@ -117,9 +117,16 @@ def compute_measurement(measurement_type: str, stack: list[xr.DataArray]) -> xr.
     return slope_da
 
 
+def clip_measurement(in_array: xr.DataArray, measurement_type: str) -> xr.DataArray:
+    scale_range = SCALE_DICT[measurement_type]
+    out_array = in_array.clip(scale_range[0], scale_range[1])
+    return out_array
+
+
 def create_measurement_geotiff(measurement_type: str, frame_id: int, begin_date: datetime, end_date: datetime) -> Path:
     stack = prep_stack.load_sw_disp_stack(frame_id, begin_date, end_date, 'spanning')
     data = compute_measurement(measurement_type, stack)
+    data = clip_measurement(data, measurement_type)
 
     data.rio.write_nodata(np.nan, inplace=True)
     data = data.rio.reproject('EPSG:3857')
@@ -127,7 +134,6 @@ def create_measurement_geotiff(measurement_type: str, frame_id: int, begin_date:
     product_name = create_geotiff_name(measurement_type, frame_id, begin_date, end_date)
     product_path = Path.cwd() / product_name
     data.rio.to_raster(product_path.name)
-
     return product_path
 
 
