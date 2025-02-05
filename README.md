@@ -31,21 +31,22 @@ For instructions on setting up your Earthdata Login via a `.netrc` file, check o
 ### Create a Short Wavelength Cumulative Displacement GeoTIFF
 The `create_measurement_geotiff` CLI command can be used to generate a cumulative displacement geotiff for a given OPERA frame:
 ```bash
-generate_sw_disp_tile displacement 11115 20140101 20260101
+create_measurement_geotiff 11115 displacement 20140101 20260101
 ```
-Where `11115` is OPERA frame id of the granule stack in CMR, and `20170901`/`20171231` specify the start/end of the secondary date search range in format `%Y%m%d`.
+Where `11115` is OPERA frame id of the granule stack in CMR, and `20140101`/`20260101` specify the start/end of the secondary date search range in format `%Y%m%d`.
 
 The resulting products have the name format:
 `displacement_{frame id}_{start date}_{end_date}.tif`
+
 For example:
 `displacement_11115_20140101_20260101.tif`
 
 ### Create a Short Wavelength Velocity GeoTIFF
 The `create_measurement_geotiff` CLI command can be used to generate a short wavelength velocity geotiff for a given OPERA frame:
 ```bash
-generate_sw_disp_tile velocity 11115 20140101 20260101
+create_measurement_geotiff 11115 velocity 20140101 20260101
 ```
-Where `11115` is OPERA frame id of the granule stack in CMR, and `20170901`/`20171231` specify the start/end of the secondary date search range in format `%Y%m%d`.
+Where `11115` is OPERA frame id of the granule stack in CMR, and `20140101`/`20260101` specify the start/end of the secondary date search range in format `%Y%m%d`.
 
 The velocity will be calculated from the minimum set of granules needed to span the temporal search range.
 
@@ -55,15 +56,14 @@ For example:
 `velocity_11115_20140101_20260101.tif`
 
 ### Create a Tile Map
-The `create_tile_map` CLI command generates a directory with small .png tiles from a list of rasters in a common projection, following the OSGeo Tile Map Service Specification, using gdal2tiles: https://gdal.org/en/latest/programs/gdal2tiles.html
+The `create_tile_map` CLI command generates a directory with small.png tiles from a s3 bucket with a list of rasters in a common projection, following the OSGeo Tile Map Service Specification, using gdal2tiles: https://gdal.org/en/latest/programs/gdal2tiles.html
 
 To create a tile map from a set of displacement GeoTIFFs:
 ```bash
-create_tile_map tiles/ \
-  displacement_11113_20140101_20260101.tif \
-  displacement_11114_20140101_20260101.tif \
-  displacement_11115_20140101_20260101.tif
+create_tile_map displacement --bucket myBucket --bucket-prefix myPrefix
 ```
+
+This will look for all `.tif` files in `s3://myBucket/myPrefix/` and use them to make the tile map.
 
 A simple web page with a viewer based on OpenLayers is included to visualize the map in a browser, e.g. `tiles/openlayers.html`.
 
