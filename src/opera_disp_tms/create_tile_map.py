@@ -92,11 +92,10 @@ def create_tile_map(measurement_type: str, input_rasters: list[Path]) -> Path:
         return output_dir
 
 
-def download_geotiffs(bucket: str, bucket_prefix: str) -> list[Path]:
+def download_geotiffs(bucket: str, bucket_prefix: str, dest_dir: Path = Path.cwd()) -> list[Path]:
     resp = utils.list_files_in_s3(bucket, bucket_prefix)
 
     geotiff_s3_filenames = [f['Key'] for f in resp if f['Key'].endswith('.tif')]
-    dest_dir = Path.cwd()
 
     geotiff_paths = [
         utils.download_file_from_s3(bucket, geotiff_s3_filename, dest_dir)
