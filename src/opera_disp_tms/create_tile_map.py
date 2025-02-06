@@ -69,7 +69,7 @@ def create_tile_map(measurement_type: str, input_rasters: list[Path]) -> Path:
             srcDS=mosaic_vrt.name,
             format='VRT',
             outputType=gdalconst.GDT_Byte,
-            scaleParams=[scale_range],
+            scaleParams=[[*scale_range, 1, 255]],
             resampleAlg='nearest',
         )
 
