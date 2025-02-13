@@ -92,3 +92,8 @@ def find_granules_for_frame(frame_id: int) -> list[Granule]:
     umms = get_cmr_metadata(frame_id)
     granules = [Granule.from_umm(umm) for umm in umms]
     return granules
+
+
+def eliminate_duplicates(granules: list[Granule]) -> list[Granule]:
+    # TODO implement me
+    return granules

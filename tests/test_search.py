@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from opera_disp_tms.search import Granule
+from opera_disp_tms.search import Granule, eliminate_duplicates
 
 
 def test_from_umm():
@@ -46,3 +46,57 @@ def test_from_umm():
         secondary_date=datetime(2020, 9, 30, 0, 26, 48),
         creation_date=datetime(2024, 10, 29, 21, 36, 46),
     )
+
+
+def test_eliminate_duplicates():
+
+    def make_granule(name, ref, sec, creation):
+        return Granule(
+            scene_name=name,
+            reference_date=ref,
+            secondary_date=sec,
+            creation_date=creation,
+            frame_id=0,
+            orbit_pass='',
+            url='',
+            s3_uri='',
+        )
+
+    assert eliminate_duplicates([]) == []
+
+    granules = [
+        make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 1)),
+    ]
+    assert eliminate_duplicates(granules) == granules
+
+    granules = [
+        make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 1)),
+        make_granule('B', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3)),
+        make_granule('C', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 4)),
+        make_granule('D', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 2)),
+    ]
+    assert eliminate_duplicates(granules) == [granules[2]]
+
+    granules = [
+        make_granule('A', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 1)),
+        make_granule('B', datetime(1, 1, 2), datetime(1, 1, 4), datetime(1, 1, 3)),
+    ]
+    assert eliminate_duplicates(granules) == [granules[1]]
+
+    granules = [
+        make_granule('A', datetime(1, 1, 1), datetime(1, 1, 5), datetime(1, 1, 1)),
+        make_granule('B', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
+    ]
+    assert eliminate_duplicates(granules) == [granules[1]]
+
+    granules = [
+        make_granule('A', datetime(1, 1, 2), datetime(1, 1, 5), datetime(1, 1, 1)),
+        make_granule('B', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
+    ]
+    assert eliminate_duplicates(granules) == [granules[1]]
+
+    granules = [
+        make_granule('A', datetime(1, 1, 2, 0, 0, 1), datetime(1, 1, 5), datetime(1, 1, 1)),
+        make_granule('B', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
+    ]
+    assert eliminate_duplicates(granules) == granules
