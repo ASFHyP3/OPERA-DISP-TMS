@@ -100,3 +100,27 @@ def test_eliminate_duplicates():
         make_granule('B', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
     ]
     assert eliminate_duplicates(granules) == granules
+
+
+def test__eq__():
+    def make_granule(name, ref, sec, creation):
+        return Granule(
+            scene_name=name,
+            reference_date=ref,
+            secondary_date=sec,
+            creation_date=creation,
+            frame_id=0,
+            orbit_pass='',
+            url='',
+            s3_uri='',
+        )
+
+    granule1 = make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3))
+    granule2 = make_granule('B', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3))
+
+    assert granule1 == (granule2)
+
+    granule1 = make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3))
+    granule2 = make_granule('B', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 5))
+
+    assert granule1 != (granule2)

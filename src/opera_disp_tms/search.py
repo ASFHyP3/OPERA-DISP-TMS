@@ -3,6 +3,7 @@ from datetime import datetime
 
 import requests
 
+from opera_disp_tms.utils import within_one_day
 
 CMR_DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
@@ -56,6 +57,26 @@ class Granule:
             creation_date=creation_date,
         )
 
+    def __eq__(self, other) -> bool:
+        """
+        Compare two granules to see if they are represent the same data
+        Args:
+            other: Granule object to compare
+
+        Returns:
+            bool: True if they are identical, False otherwise
+        """
+
+        if self.frame_id == other.frame_id:
+            if within_one_day(self.reference_date, other.reference_date):
+                if within_one_day(self.secondary_date, other.secondary_date):
+                    return True
+
+        return False
+
+    def __neq__(self, other) -> bool:
+        return not self.__eq__(other)
+
 
 def get_cmr_metadata(
     frame_id: int,
@@ -95,5 +116,12 @@ def find_granules_for_frame(frame_id: int) -> list[Granule]:
 
 
 def eliminate_duplicates(granules: list[Granule]) -> list[Granule]:
-    # TODO implement me
+    """
+    Eliminate duplicate granules and return a list of granules over unique times
+    Args:
+        granules:
+
+    Returns:
+        granules: a list of unique granules
+    """
     return granules
