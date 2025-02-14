@@ -48,20 +48,19 @@ def test_from_umm():
     )
 
 
+def make_granule(name, ref, sec, creation, frame_id=0):
+    return Granule(
+        scene_name=name,
+        reference_date=ref,
+        secondary_date=sec,
+        creation_date=creation,
+        frame_id=frame_id,
+        orbit_pass='',
+        url='',
+        s3_uri='',
+    )
+
 def test_eliminate_duplicates():
-
-    def make_granule(name, ref, sec, creation):
-        return Granule(
-            scene_name=name,
-            reference_date=ref,
-            secondary_date=sec,
-            creation_date=creation,
-            frame_id=0,
-            orbit_pass='',
-            url='',
-            s3_uri='',
-        )
-
     assert eliminate_duplicates([]) == []
 
     granules = [
@@ -107,19 +106,10 @@ def test_eliminate_duplicates():
     ]
     assert eliminate_duplicates(granules) == [granules[0]]
 
+def test_is_duplicate():
+    pass
 
 def test__eq__():
-    def make_granule(name, ref, sec, creation):
-        return Granule(
-            scene_name=name,
-            reference_date=ref,
-            secondary_date=sec,
-            creation_date=creation,
-            frame_id=0,
-            orbit_pass='',
-            url='',
-            s3_uri='',
-        )
 
     granule1 = make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3))
     granule2 = make_granule('B', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3))
@@ -128,5 +118,10 @@ def test__eq__():
 
     granule1 = make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3))
     granule2 = make_granule('B', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 5))
+
+    assert not granule1 == (granule2)
+
+    granule1 = make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3), frame_id=0)
+    granule2 = make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3), frame_id=1)
 
     assert not granule1 == (granule2)

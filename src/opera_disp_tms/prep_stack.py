@@ -4,7 +4,7 @@ import numpy as np
 import xarray as xr
 
 from opera_disp_tms.s3_xarray import open_opera_disp_granule, s3_xarray_dataset
-from opera_disp_tms.search import Granule, find_granules_for_frame, eliminate_duplicates
+from opera_disp_tms.search import Granule, eliminate_duplicates, find_granules_for_frame
 from opera_disp_tms.utils import within_one_day
 
 
@@ -49,7 +49,7 @@ def find_needed_granules(frame_id: int, begin_date: datetime, end_date: datetime
     """
     granules_full_stack = find_granules_for_frame(frame_id)
     granules = [g for g in granules_full_stack if begin_date <= g.secondary_date <= end_date]
-    granules = eliminate_duplicates(granules) # TODO: Move to a better spot, if necessary?
+    granules = eliminate_duplicates(granules)  # TODO: Move to a better spot, if necessary?
     if strategy == 'spanning':
         needed_granules = restrict_to_spanning_set(granules)
     elif strategy == 'all':

@@ -18,6 +18,7 @@ def test_find_needed_granules():
         GranuleStub(frame_id=1, reference_date=datetime(2021, 1, 8), secondary_date=datetime(2021, 1, 11), creation_date=datetime(2021, 1, 11)),
     ]
     fn_name = 'opera_disp_tms.prep_stack.find_granules_for_frame'
+
     with mock.patch(fn_name, return_value=granules):
         needed_granules = prep_stack.find_needed_granules(1, datetime(2021, 1, 1), datetime(2021, 1, 9), strategy='all')
         assert len(needed_granules) == 3

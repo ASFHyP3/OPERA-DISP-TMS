@@ -5,6 +5,7 @@ import requests
 
 from opera_disp_tms.utils import within_one_day
 
+
 CMR_DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
 
@@ -66,15 +67,17 @@ class Granule:
         Returns:
             bool: True if they are identical, False otherwise
         """
-        return (self.frame_id == other.frame_id
-                and within_one_day(self.reference_date, other.reference_date)
-                and within_one_day(self.secondary_date, other.secondary_date))
+        return (
+            self.frame_id == other.frame_id
+            and within_one_day(self.reference_date, other.reference_date)
+            and within_one_day(self.secondary_date, other.secondary_date)
+        )
 
 
 def get_cmr_metadata(
-        frame_id: int,
-        version: str = '0.9',
-        cmr_endpoint='https://cmr.uat.earthdata.nasa.gov/search/granules.umm_json',
+    frame_id: int,
+    version: str = '0.9',
+    cmr_endpoint='https://cmr.uat.earthdata.nasa.gov/search/granules.umm_json',
 ) -> list[dict]:
     """Find all OPERA L3 DISP S1 granules for a specific frame ID and minimum product version
 
@@ -118,11 +121,20 @@ def eliminate_duplicates(granules: list[Granule]) -> list[Granule]:
         granules: a list of unique granules
     """
     unique_granules = []
+
     for candidate in granules:
-        duplicate = False
-        for other in granules:
-            if candidate == other and (candidate.creation_date < other.creation_date or candidate.creation_date == other.creation_date and other in unique_granules):
-                duplicate = True
-        if not duplicate:
-            unique_granules.append(candidate)
+        duplicate = any([is_duplicate(candidate, other, unique_granules) for other in granules])
+
+        if duplicate:
+            continue
+
+        unique_granules.append(candidate)
+
     return unique_granules
+
+
+def is_duplicate(candidate: Granule, other: Granule, unique_granules: list[Granule]) -> bool:
+    return candidate == other and (
+        candidate.creation_date < other.creation_date
+        or (candidate.creation_date == other.creation_date and other in unique_granules)
+    )
