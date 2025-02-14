@@ -101,6 +101,12 @@ def test_eliminate_duplicates():
     ]
     assert eliminate_duplicates(granules) == granules
 
+    granules = [
+        make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 1)),
+        make_granule('B', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 1)),
+    ]
+    assert eliminate_duplicates(granules) == [granules[0]]
+
 
 def test__eq__():
     def make_granule(name, ref, sec, creation):

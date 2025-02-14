@@ -72,12 +72,6 @@ class Granule:
                     return True
         return False
 
-    def __neq__(self, other) -> bool:
-        return not self.__eq__(other)
-
-    def __hash__(self) -> bool:
-        return hash((self.frame_id, self.reference_date, self.secondary_date))
-
 
 def get_cmr_metadata(
     frame_id: int,
@@ -129,7 +123,7 @@ def eliminate_duplicates(granules: list[Granule]) -> list[Granule]:
     for candidate in granules:
         duplicate = False
         for other in granules:
-            if candidate == other and candidate.creation_date < other.creation_date:
+            if candidate == other and (candidate.creation_date < other.creation_date or candidate.creation_date == other.creation_date and other in unique_granules):
                 duplicate = True
         if not duplicate:
             unique_granules.append(candidate)
