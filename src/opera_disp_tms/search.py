@@ -66,16 +66,17 @@ class Granule:
         Returns:
             bool: True if they are identical, False otherwise
         """
-
         if self.frame_id == other.frame_id:
             if within_one_day(self.reference_date, other.reference_date):
                 if within_one_day(self.secondary_date, other.secondary_date):
                     return True
-
         return False
 
     def __neq__(self, other) -> bool:
         return not self.__eq__(other)
+
+    def __hash__(self) -> bool:
+        return hash((self.frame_id, self.reference_date, self.secondary_date))
 
 
 def get_cmr_metadata(
@@ -124,4 +125,12 @@ def eliminate_duplicates(granules: list[Granule]) -> list[Granule]:
     Returns:
         granules: a list of unique granules
     """
-    return granules
+    unique_granules = []
+    for candidate in granules:
+        duplicate = False
+        for other in granules:
+            if candidate == other and candidate.creation_date < other.creation_date:
+                duplicate = True
+        if not duplicate:
+            unique_granules.append(candidate)
+    return unique_granules
