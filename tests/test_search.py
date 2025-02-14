@@ -129,4 +129,4 @@ def test__eq__():
     granule1 = make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3))
     granule2 = make_granule('B', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 5))
 
-    assert granule1 != (granule2)
+    assert not granule1 == (granule2)
