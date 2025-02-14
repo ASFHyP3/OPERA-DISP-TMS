@@ -69,9 +69,13 @@ class Granule:
         """
         return (
             self.frame_id == other.frame_id
-            and within_one_day(self.reference_date, other.reference_date)
-            and within_one_day(self.secondary_date, other.secondary_date)
+            and self.reference_date == other.reference_date
+            and self.secondary_date == other.secondary_date
+            and self.creation_date == other.creation_date
         )
+
+    def __hash__(self):
+        return hash((self.frame_id, self.reference_date, self.secondary_date, self.creation_date))
 
 
 def get_cmr_metadata(
@@ -122,10 +126,10 @@ def eliminate_duplicates(granules: list[Granule]) -> list[Granule]:
     """
     unique_granules = []
 
-    for candidate in granules:
-        duplicate = any([is_duplicate(candidate, other, unique_granules) for other in granules])
+    for candidate in filter_identical(granules):
+        redundant = any([is_redundant(candidate, other) for other in granules])
 
-        if duplicate:
+        if redundant:
             continue
 
         unique_granules.append(candidate)
@@ -133,8 +137,14 @@ def eliminate_duplicates(granules: list[Granule]) -> list[Granule]:
     return unique_granules
 
 
-def is_duplicate(candidate: Granule, other: Granule, unique_granules: list[Granule]) -> bool:
-    return candidate == other and (
-        candidate.creation_date < other.creation_date
-        or (candidate.creation_date == other.creation_date and other in unique_granules)
+def filter_identical(granules: list[Granule]) -> list[Granule]:
+    return list(dict.fromkeys(granules))
+
+
+def is_redundant(candidate: Granule, other: Granule) -> bool:
+    return (
+        candidate.frame_id == other.frame_id
+        and within_one_day(candidate.reference_date, other.reference_date)
+        and within_one_day(candidate.secondary_date, other.secondary_date)
+        and candidate.creation_date < other.creation_date
     )

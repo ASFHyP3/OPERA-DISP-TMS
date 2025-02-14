@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from opera_disp_tms.search import Granule, eliminate_duplicates
+from opera_disp_tms.search import Granule, eliminate_duplicates, filter_identical, is_redundant
 
 
 def test_from_umm():
@@ -60,6 +60,7 @@ def make_granule(name, ref, sec, creation, frame_id=0):
         s3_uri='',
     )
 
+
 def test_eliminate_duplicates():
     assert eliminate_duplicates([]) == []
 
@@ -77,40 +78,77 @@ def test_eliminate_duplicates():
     assert eliminate_duplicates(granules) == [granules[2]]
 
     granules = [
-        make_granule('A', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 1)),
-        make_granule('B', datetime(1, 1, 2), datetime(1, 1, 4), datetime(1, 1, 3)),
-    ]
-    assert eliminate_duplicates(granules) == [granules[1]]
-
-    granules = [
-        make_granule('A', datetime(1, 1, 1), datetime(1, 1, 5), datetime(1, 1, 1)),
-        make_granule('B', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
-    ]
-    assert eliminate_duplicates(granules) == [granules[1]]
-
-    granules = [
-        make_granule('A', datetime(1, 1, 2), datetime(1, 1, 5), datetime(1, 1, 1)),
-        make_granule('B', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
-    ]
-    assert eliminate_duplicates(granules) == [granules[1]]
-
-    granules = [
         make_granule('A', datetime(1, 1, 2, 0, 0, 1), datetime(1, 1, 5), datetime(1, 1, 1)),
         make_granule('B', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
     ]
     assert eliminate_duplicates(granules) == granules
 
     granules = [
-        make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 1)),
-        make_granule('B', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 1)),
+        make_granule('A', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 1)),
+        make_granule('B', datetime(1, 1, 2), datetime(1, 1, 4), datetime(1, 1, 3)),
+        make_granule('A', datetime(2, 1, 1), datetime(1, 1, 5), datetime(1, 1, 1)),
+        make_granule('B', datetime(2, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
     ]
-    assert eliminate_duplicates(granules) == [granules[0]]
 
-def test_is_duplicate():
-    pass
+    assert eliminate_duplicates(granules) == [granules[1], granules[3]]
+
+    granules = [
+        make_granule('A', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 1)),
+        make_granule('B', datetime(1, 1, 2), datetime(1, 1, 4), datetime(1, 1, 3)),
+        make_granule('A', datetime(2, 1, 1), datetime(1, 1, 5), datetime(1, 1, 1)),
+        make_granule('B', datetime(2, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
+        make_granule('A', datetime(3, 1, 2), datetime(1, 1, 5), datetime(1, 1, 1)),
+        make_granule('B', datetime(3, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
+    ]
+
+    assert eliminate_duplicates(granules) == [granules[1], granules[3], granules[5]]
+
+
+def test_filter_identical():
+    assert filter_identical([]) == []
+
+    granule = (make_granule('A', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 1)),)
+
+    assert filter_identical([granule]) == [granule]
+
+    granules = [
+        make_granule('A', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 1), frame_id=1),
+        make_granule('A', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 1), frame_id=2),
+    ]
+    assert filter_identical(granules) == granules
+
+    granules = [
+        make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3)),
+        make_granule('B', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3)),
+        make_granule('C', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3)),
+        make_granule('D', datetime(2, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3)),
+        make_granule('E', datetime(2, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3)),
+    ]
+
+    assert filter_identical(granules) == [granules[0], granules[3]]
+
+
+def test_is_redundant():
+    granules = [
+        make_granule('A', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 1)),
+        make_granule('B', datetime(1, 1, 2), datetime(1, 1, 4), datetime(1, 1, 3)),
+    ]
+    assert is_redundant(*granules)
+
+    granules = [
+        make_granule('A', datetime(1, 1, 1), datetime(1, 1, 5), datetime(1, 1, 1)),
+        make_granule('B', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
+    ]
+    assert is_redundant(*granules)
+
+    granules = [
+        make_granule('A', datetime(1, 1, 2), datetime(1, 1, 5), datetime(1, 1, 1)),
+        make_granule('B', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
+    ]
+    assert is_redundant(*granules)
+
 
 def test__eq__():
-
     granule1 = make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3))
     granule2 = make_granule('B', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3))
 
