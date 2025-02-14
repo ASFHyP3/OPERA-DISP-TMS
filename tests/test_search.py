@@ -93,27 +93,32 @@ def test_eliminate_duplicates():
     assert eliminate_duplicates(granules) == [granules[1], granules[3]]
 
     granules = [
-        make_granule('A', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 1)),
-        make_granule('B', datetime(1, 1, 2), datetime(1, 1, 4), datetime(1, 1, 3)),
-        make_granule('A', datetime(2, 1, 1), datetime(1, 1, 5), datetime(1, 1, 1)),
-        make_granule('B', datetime(2, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
-        make_granule('A', datetime(3, 1, 2), datetime(1, 1, 5), datetime(1, 1, 1)),
-        make_granule('B', datetime(3, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
+        make_granule('A', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 1), frame_id=1),
+
+        make_granule('B', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 1)),
+        make_granule('C', datetime(1, 1, 2), datetime(1, 1, 4), datetime(1, 1, 3)),
+
+        make_granule('D', datetime(2, 1, 1), datetime(1, 1, 5), datetime(1, 1, 1)),
+        make_granule('E', datetime(2, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
+        make_granule('F', datetime(3, 1, 2), datetime(1, 1, 5), datetime(1, 1, 1)),
+
+        make_granule('G', datetime(3, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
     ]
 
-    assert eliminate_duplicates(granules) == [granules[1], granules[3], granules[5]]
+    assert eliminate_duplicates(granules) == [granules[0], granules[2], granules[4], granules[6]]
 
 
 def test_filter_identical():
     assert filter_identical([]) == []
 
-    granule = (make_granule('A', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 1)),)
+    granule = make_granule('A', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 1))
 
     assert filter_identical([granule]) == [granule]
 
     granules = [
         make_granule('A', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 1), frame_id=1),
-        make_granule('A', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 1), frame_id=2),
+        make_granule('B', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 1), frame_id=2),
+        make_granule('C', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 1), frame_id=3),
     ]
     assert filter_identical(granules) == granules
 
@@ -123,29 +128,47 @@ def test_filter_identical():
         make_granule('C', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3)),
         make_granule('D', datetime(2, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3)),
         make_granule('E', datetime(2, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3)),
+        make_granule('F', datetime(2, 1, 1), datetime(3, 1, 2), datetime(1, 1, 3)),
     ]
 
-    assert filter_identical(granules) == [granules[0], granules[3]]
+    assert filter_identical(granules) == [granules[0], granules[3], granules[5]]
 
 
 def test_is_redundant():
-    granules = [
+    assert is_redundant(
         make_granule('A', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 1)),
         make_granule('B', datetime(1, 1, 2), datetime(1, 1, 4), datetime(1, 1, 3)),
-    ]
-    assert is_redundant(*granules)
+    )
 
-    granules = [
+    assert is_redundant(
         make_granule('A', datetime(1, 1, 1), datetime(1, 1, 5), datetime(1, 1, 1)),
         make_granule('B', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
-    ]
-    assert is_redundant(*granules)
+    )
 
-    granules = [
+    assert is_redundant(
         make_granule('A', datetime(1, 1, 2), datetime(1, 1, 5), datetime(1, 1, 1)),
         make_granule('B', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
-    ]
-    assert is_redundant(*granules)
+    )
+
+    assert not is_redundant(
+        make_granule('B', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
+        make_granule('A', datetime(1, 1, 2), datetime(1, 1, 5), datetime(1, 1, 1)),
+    )
+
+    assert not is_redundant(
+        make_granule('A', datetime(1, 1, 3), datetime(1, 1, 5), datetime(1, 1, 1)),
+        make_granule('B', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
+    )
+
+    assert not is_redundant(
+        make_granule('A', datetime(1, 1, 1), datetime(1, 1, 6), datetime(1, 1, 1)),
+        make_granule('B', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
+    )
+
+    assert not is_redundant(
+        make_granule('A', datetime(1, 1, 1), datetime(1, 1, 1), datetime(1, 1, 1), frame_id=1),
+        make_granule('B', datetime(1, 1, 1), datetime(1, 1, 1), datetime(1, 1, 1), frame_id=2),
+    )
 
 
 def test__eq__():
@@ -160,6 +183,6 @@ def test__eq__():
     assert not granule1 == (granule2)
 
     granule1 = make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3), frame_id=0)
-    granule2 = make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3), frame_id=1)
+    granule2 = make_granule('B', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3), frame_id=1)
 
     assert not granule1 == (granule2)
