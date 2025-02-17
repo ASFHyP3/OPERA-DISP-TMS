@@ -123,9 +123,9 @@ def find_granules_for_frame(frame_id: int) -> list[Granule]:
 
 def eliminate_duplicates(granules: list[Granule]) -> list[Granule]:
     """
-    Eliminate duplicate granules and return a list of granules over unique times
+    Remove equivalent granules, preferring the granule with the more recent creation date
     Args:
-        granules:
+        granules: a list of granules
 
     Returns:
         granules: a list of unique granules

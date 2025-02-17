@@ -8,8 +8,8 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.8.1]
 
-### Added
-* Duplicated granules are now eliminated during `find_needed_granules.py`
+### Changed
+* `prep_stack.find_needed_granules` now filters duplicate granules for the same frame id/reference date/secondary date, keeping the granule with the most recent creation date.
 
 ## [0.8.0]
 
