@@ -86,7 +86,6 @@ def test_eliminate_duplicates():
     granules = [
         make_granule('A', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 1)),
         make_granule('B', datetime(1, 1, 2), datetime(1, 1, 4), datetime(1, 1, 3)),
-
         make_granule('A', datetime(2, 1, 1), datetime(1, 1, 5), datetime(1, 1, 1)),
         make_granule('B', datetime(2, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
     ]
@@ -95,14 +94,11 @@ def test_eliminate_duplicates():
 
     granules = [
         make_granule('A', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 1), frame_id=1),
-
         make_granule('B', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 1)),
         make_granule('C', datetime(1, 1, 2), datetime(1, 1, 4), datetime(1, 1, 3)),
-
         make_granule('D', datetime(2, 1, 1), datetime(1, 1, 5), datetime(1, 1, 1)),
         make_granule('E', datetime(2, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
         make_granule('F', datetime(2, 1, 1), datetime(1, 1, 5), datetime(1, 1, 0)),
-
         make_granule('F', datetime(3, 1, 2), datetime(1, 1, 5), datetime(1, 1, 1)),
         make_granule('H', datetime(3, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
     ]
@@ -128,9 +124,7 @@ def test_filter_identical():
         make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3)),
         make_granule('B', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3)),
         make_granule('C', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3)),
-
         make_granule('D', datetime(2, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3)),
-
         make_granule('E', datetime(2, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3)),
         make_granule('F', datetime(2, 1, 1), datetime(3, 1, 2), datetime(1, 1, 3)),
     ]
