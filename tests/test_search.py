@@ -100,9 +100,10 @@ def test_eliminate_duplicates():
 
         make_granule('D', datetime(2, 1, 1), datetime(1, 1, 5), datetime(1, 1, 1)),
         make_granule('E', datetime(2, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
-        make_granule('F', datetime(3, 1, 2), datetime(1, 1, 5), datetime(1, 1, 1)),
+        make_granule('F', datetime(2, 1, 1), datetime(1, 1, 5), datetime(1, 1, 0)),
 
-        make_granule('G', datetime(3, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
+        make_granule('F', datetime(3, 1, 2), datetime(1, 1, 5), datetime(1, 1, 1)),
+        make_granule('H', datetime(3, 1, 1), datetime(1, 1, 4), datetime(1, 1, 3)),
     ]
 
     assert eliminate_duplicates(granules) == [granules[0], granules[2], granules[4], granules[6]]
