@@ -58,6 +58,10 @@ def find_needed_granules(frame_id: int, begin_date: datetime, end_date: datetime
         raise ValueError(f'Invalid strategy: {strategy}. Must be "spanning" or "all".')
     needed_granules = sorted(needed_granules, key=lambda x: x.secondary_date)
     print(f'Found {len(needed_granules)} granules for frame {frame_id} between {begin_date} and {end_date}')
+
+    for g in granules:
+        print(f'  {g.scene_name}')
+
     return needed_granules
 
 

@@ -58,6 +58,14 @@ class Granule:
             creation_date=creation_date,
         )
 
+    def __members(self) -> tuple:
+        return (
+            self.frame_id,
+            self.reference_date,
+            self.secondary_date,
+            self.creation_date,
+        )
+
     def __eq__(self, other) -> bool:
         """
         Compare two granules to see if they are represent the same data
@@ -67,15 +75,13 @@ class Granule:
         Returns:
             bool: True if they are identical, False otherwise
         """
-        return (
-            self.frame_id == other.frame_id
-            and self.reference_date == other.reference_date
-            and self.secondary_date == other.secondary_date
-            and self.creation_date == other.creation_date
-        )
+        if type(other) is type(self):
+            return self.__members() == other.__members()
+        else:
+            return False
 
     def __hash__(self):
-        return hash((self.frame_id, self.reference_date, self.secondary_date, self.creation_date))
+        return hash(self.__members())
 
 
 def get_cmr_metadata(
