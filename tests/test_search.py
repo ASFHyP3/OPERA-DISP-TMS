@@ -172,15 +172,23 @@ def test_is_redundant():
 def test__eq__():
     granule1 = make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3))
     granule2 = make_granule('B', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3))
-
-    assert granule1 == (granule2)
+    assert granule1 == granule2
 
     granule1 = make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3))
-    granule2 = make_granule('B', datetime(1, 1, 1), datetime(1, 1, 4), datetime(1, 1, 5))
+    granule2 = make_granule('A', datetime(1, 1, 2), datetime(1, 1, 2), datetime(1, 1, 3))
+    assert not granule1 == granule2
 
-    assert not granule1 == (granule2)
+    granule1 = make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3))
+    granule2 = make_granule('A', datetime(1, 1, 1), datetime(1, 1, 3), datetime(1, 1, 3))
+    assert not granule1 == granule2
+
+    granule1 = make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3))
+    granule2 = make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 5))
+    assert not granule1 == granule2
 
     granule1 = make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3), frame_id=0)
-    granule2 = make_granule('B', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3), frame_id=1)
+    granule2 = make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3), frame_id=1)
+    assert not granule1 == granule2
 
-    assert not granule1 == (granule2)
+    granule1 = make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3))
+    assert not granule1 == 'foo'
