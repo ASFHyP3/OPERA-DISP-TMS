@@ -6,8 +6,6 @@ dependencies:
   - python>=3.10
   - pip
   # For packaging, and testing
-  - ruff
-  - mypy
   - setuptools
   - setuptools_scm
   - wheel
@@ -28,3 +26,5 @@ dependencies:
   - cachetools
   - numpy
   - requests
+  - pip:
+    - -r requirements-static.txt

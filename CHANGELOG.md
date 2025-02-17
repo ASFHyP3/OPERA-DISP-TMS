@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1]
+
+### Changed
+* `prep_stack.find_needed_granules` now filters duplicate granules for the same frame id/reference date/secondary date, keeping the granule with the most recent creation date.
+
 ## [0.8.0]
 
 ### Changed
