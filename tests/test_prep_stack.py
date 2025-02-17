@@ -12,10 +12,30 @@ from opera_disp_tms import prep_stack
 def test_find_needed_granules():
     GranuleStub = namedtuple('GranuleStub', ['frame_id', 'reference_date', 'secondary_date', 'creation_date'])
     granules = [
-        GranuleStub(frame_id=1, reference_date=datetime(2021, 1, 1), secondary_date=datetime(2021, 1, 3), creation_date=datetime(2021, 1, 3)),
-        GranuleStub(frame_id=1, reference_date=datetime(2021, 1, 1), secondary_date=datetime(2021, 1, 5), creation_date=datetime(2021, 1, 5)),
-        GranuleStub(frame_id=1, reference_date=datetime(2021, 1, 5), secondary_date=datetime(2021, 1, 8), creation_date=datetime(2021, 1, 8)),
-        GranuleStub(frame_id=1, reference_date=datetime(2021, 1, 8), secondary_date=datetime(2021, 1, 11), creation_date=datetime(2021, 1, 11)),
+        GranuleStub(
+            frame_id=1,
+            reference_date=datetime(2021, 1, 1),
+            secondary_date=datetime(2021, 1, 3),
+            creation_date=datetime(2021, 1, 3),
+        ),
+        GranuleStub(
+            frame_id=1,
+            reference_date=datetime(2021, 1, 1),
+            secondary_date=datetime(2021, 1, 5),
+            creation_date=datetime(2021, 1, 5),
+        ),
+        GranuleStub(
+            frame_id=1,
+            reference_date=datetime(2021, 1, 5),
+            secondary_date=datetime(2021, 1, 8),
+            creation_date=datetime(2021, 1, 8),
+        ),
+        GranuleStub(
+            frame_id=1,
+            reference_date=datetime(2021, 1, 8),
+            secondary_date=datetime(2021, 1, 11),
+            creation_date=datetime(2021, 1, 11),
+        ),
     ]
     fn_name = 'opera_disp_tms.prep_stack.find_granules_for_frame'
 
