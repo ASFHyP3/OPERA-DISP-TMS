@@ -10,7 +10,9 @@ from opera_disp_tms import prep_stack
 
 
 def test_find_needed_granules():
-    GranuleStub = namedtuple('GranuleStub', ['frame_id', 'scene_name', 'reference_date', 'secondary_date', 'creation_date'])
+    GranuleStub = namedtuple(
+        'GranuleStub', ['frame_id', 'scene_name', 'reference_date', 'secondary_date', 'creation_date']
+    )
     granules = [
         GranuleStub(
             frame_id=1,
