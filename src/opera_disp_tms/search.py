@@ -3,6 +3,8 @@ from datetime import datetime
 
 import requests
 
+from opera_disp_tms.utils import within_one_day
+
 
 CMR_DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
@@ -56,6 +58,31 @@ class Granule:
             creation_date=creation_date,
         )
 
+    def __members(self) -> tuple:
+        return (
+            self.frame_id,
+            self.reference_date,
+            self.secondary_date,
+            self.creation_date,
+        )
+
+    def __eq__(self, other) -> bool:
+        """
+        Compare two granules to see if they are represent the same data
+        Args:
+            other: Granule object to compare
+
+        Returns:
+            bool: True if they are identical, False otherwise
+        """
+        if type(other) is type(self):
+            return self.__members() == other.__members()
+        else:
+            return False
+
+    def __hash__(self):
+        return hash(self.__members())
+
 
 def get_cmr_metadata(
     frame_id: int,
@@ -92,3 +119,38 @@ def find_granules_for_frame(frame_id: int) -> list[Granule]:
     umms = get_cmr_metadata(frame_id)
     granules = [Granule.from_umm(umm) for umm in umms]
     return granules
+
+
+def eliminate_duplicates(granules: list[Granule]) -> list[Granule]:
+    """
+    Remove equivalent granules, preferring the granule with the more recent creation date
+    Args:
+        granules: a list of granules
+
+    Returns:
+        granules: a list of unique granules
+    """
+    unique_granules = []
+
+    for candidate in filter_identical(granules):
+        redundant = any([is_redundant(candidate, other) for other in granules])
+
+        if redundant:
+            continue
+
+        unique_granules.append(candidate)
+
+    return unique_granules
+
+
+def filter_identical(granules: list[Granule]) -> list[Granule]:
+    return list(dict.fromkeys(granules))
+
+
+def is_redundant(candidate: Granule, other: Granule) -> bool:
+    return (
+        candidate.frame_id == other.frame_id
+        and within_one_day(candidate.reference_date, other.reference_date)
+        and within_one_day(candidate.secondary_date, other.secondary_date)
+        and candidate.creation_date < other.creation_date
+    )

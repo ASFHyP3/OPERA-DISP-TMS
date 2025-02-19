@@ -6,8 +6,6 @@ dependencies:
   - python>=3.10
   - pip
   # For packaging, and testing
-  - ruff
-  - mypy
   - setuptools
   - setuptools_scm
   - wheel
@@ -15,10 +13,10 @@ dependencies:
   - pytest-console-scripts
   - pytest-cov
   - responses
+  - moto[s3]
   # For Running
   - gdal
-  # FIXME check if boto3 S3 stub functonality is fixed in the future
-  - boto3<1.36.0
+  - boto3>=1.36.0
   - h5py
   - h5netcdf
   - xarray
@@ -28,3 +26,5 @@ dependencies:
   - cachetools
   - numpy
   - requests
+  - pip:
+    - -r requirements-static.txt
