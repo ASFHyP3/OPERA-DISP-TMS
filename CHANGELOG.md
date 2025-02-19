@@ -14,6 +14,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [0.8.1]
 
 ### Changed
+* Tile Map Service mosaics now include zoom levels 2-12
 * `prep_stack.find_needed_granules` now filters duplicate granules for the same frame id/reference date/secondary date, keeping the granule with the most recent creation date.
 
 ## [0.8.0]
