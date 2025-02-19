@@ -77,7 +77,7 @@ def create_tile_map(measurement_type: str, input_rasters: list[Path]) -> Path:
         command = [
             'gdal2tiles',
             '--xyz',
-            '--zoom=2-11',
+            '--zoom=2-12',
             '--exclude',
             f'--processes={multiprocessing.cpu_count()}',
             '--webviewer=openlayers',
