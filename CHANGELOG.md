@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.2]
+
+### Changed
+* Tile Map Service mosaics now include zoom levels 2-12
+* `create_tile_map.py` now excludes entirely NoData .pngs from the result tile set.
+
 ## [0.8.1]
 
 ### Changed
