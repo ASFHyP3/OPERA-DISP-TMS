@@ -10,7 +10,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 * `create_tile_map` now uses median resampling instead of nearest neighbor resampling when building the TMS mosaic.
-  Significantly fewer NoData pixels are shown when zoomed out; more NoData pixels becoming visible when zooming in.
+  Significantly fewer NoData pixels are shown when zoomed out; NoData pixels gradually appear when zooming in.
 
 ## [0.8.1]
 
