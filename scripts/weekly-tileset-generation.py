@@ -53,5 +53,6 @@ def main():
     for job in jobs:
         publish_mosaic(job)
 
+
 if __name__ == '__main__':
     main()
