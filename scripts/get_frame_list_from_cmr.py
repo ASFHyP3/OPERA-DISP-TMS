@@ -32,7 +32,7 @@ def get_granules(direction):
     return granules
 
 
-def get_frames_for_direction(direction) -> dict:
+def get_frames_for_direction(direction: str) -> list:
     granules = get_granules(direction)
     frames = {get_frame_number(granule) for granule in granules}
 # TODO remove frames that won't be successfully processed, e.g. 21518 with disjoint temporal coverage in CMR UAT
