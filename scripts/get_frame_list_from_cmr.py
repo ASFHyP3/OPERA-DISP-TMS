@@ -32,8 +32,14 @@ def get_granules(direction):
     return granules
 
 
-for direction in ['ASCENDING', 'DESCENDING']:
+def get_frames_for_direction(direction) -> dict:
     granules = get_granules(direction)
     frames = {get_frame_number(granule) for granule in granules}
-    # TODO remove frames that won't be successfully processed, e.g. 21518 with disjoint temporal coverage in CMR UAT
-    print(f'{direction}: {sorted(list(frames))}')
+# TODO remove frames that won't be successfully processed, e.g. 21518 with disjoint temporal coverage in CMR UAT
+    return sorted(list(frames))
+
+
+if __name__ == '__main__':
+    for direction in ['ASCENDING', 'DESCENDING']:
+        frames = get_frames_for_direction(direction)
+        print(f'{direction}: {frames}')
