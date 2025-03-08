@@ -19,7 +19,7 @@ def get_granules(direction):
         'page_size': 2000,
     }
     # TODO update to include bearer auth when we start working with the hidden collection in CMR production
-    headers = {}
+    headers: dict = {}
 
     granules = []
     while True:
