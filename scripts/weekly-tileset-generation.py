@@ -19,8 +19,8 @@ def build_job(name: str, measurement_type: str, frames: list[int]) -> dict:
             'measurement_type': measurement_type,
             'frame_ids': frames,
             'start_date': '20140101',
-            'end_date': '20260101'
-        }
+            'end_date': '20260101',
+        },
     }
 
 
@@ -47,7 +47,9 @@ def main():
     jobs = HyP3.watch(jobs, timeout=21600, interval=120)
 
     for job in jobs:
-        response = requests.get(f'https://hyp3-opera-disp-sandbox-contentbucket-ibxz8lcpdo59.s3.us-west-2.amazonaws.com/{job.job_id}/tms/openlayers.html')
+        response = requests.get(
+            f'https://hyp3-opera-disp-sandbox-contentbucket-ibxz8lcpdo59.s3.us-west-2.amazonaws.com/{job.job_id}/tms/openlayers.html'
+        )
         response.raise_for_status()
 
     for job in jobs:
