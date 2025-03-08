@@ -151,9 +151,10 @@ def test_compute_measurement():
 
 
 def test_clip_measurement():
-    in_array = np.array([[-1, 1], [-0.01, 0.01]])
+    in_array = xr.DataArray([[-1, 1], [-0.01, 0.01]], dims=('y', 'x'), attrs={'foo': 'bar'})
     out_array = geo.clip_measurement(in_array, 'displacement')
     assert np.all(out_array == np.array([[DISPLACEMENT_SCALE[0], DISPLACEMENT_SCALE[1]], [-0.01, 0.01]]))
+    assert out_array.attrs == {'foo': 'bar'}
 
     out_array = geo.clip_measurement(in_array, 'secant_velocity')
     assert np.all(out_array == np.array([[SECANT_VELOCITY_SCALE[0], SECANT_VELOCITY_SCALE[1]], [-0.01, 0.01]]))
@@ -162,4 +163,4 @@ def test_clip_measurement():
     assert np.all(out_array == np.array([[VELOCITY_SCALE[0], VELOCITY_SCALE[1]], [-0.01, 0.01]]))
 
     with pytest.raises(KeyError):
-        geo.clip_measurement(in_array, 'foo')
+        geo.clip_measurement(in_array, 'baz')

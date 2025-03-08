@@ -10,24 +10,51 @@ from opera_disp_tms import prep_stack
 
 
 def test_find_needed_granules():
-    GranuleStub = namedtuple('GranuleStub', ['frame_id', 'reference_date', 'secondary_date'])
+    GranuleStub = namedtuple(
+        'GranuleStub', ['frame_id', 'scene_name', 'reference_date', 'secondary_date', 'creation_date']
+    )
     granules = [
-        GranuleStub(frame_id=1, reference_date=datetime(2021, 1, 1), secondary_date=datetime(2021, 1, 3)),
-        GranuleStub(frame_id=1, reference_date=datetime(2021, 1, 1), secondary_date=datetime(2021, 1, 5)),
-        GranuleStub(frame_id=1, reference_date=datetime(2021, 1, 5), secondary_date=datetime(2021, 1, 8)),
-        GranuleStub(frame_id=1, reference_date=datetime(2021, 1, 8), secondary_date=datetime(2021, 1, 11)),
+        GranuleStub(
+            frame_id=1,
+            scene_name='A',
+            reference_date=datetime(2021, 1, 1),
+            secondary_date=datetime(2021, 1, 3),
+            creation_date=datetime(2021, 1, 3),
+        ),
+        GranuleStub(
+            frame_id=1,
+            scene_name='A',
+            reference_date=datetime(2021, 1, 1),
+            secondary_date=datetime(2021, 1, 5),
+            creation_date=datetime(2021, 1, 5),
+        ),
+        GranuleStub(
+            frame_id=1,
+            scene_name='A',
+            reference_date=datetime(2021, 1, 5),
+            secondary_date=datetime(2021, 1, 8),
+            creation_date=datetime(2021, 1, 8),
+        ),
+        GranuleStub(
+            frame_id=1,
+            scene_name='A',
+            reference_date=datetime(2021, 1, 8),
+            secondary_date=datetime(2021, 1, 11),
+            creation_date=datetime(2021, 1, 11),
+        ),
     ]
     fn_name = 'opera_disp_tms.prep_stack.find_granules_for_frame'
+
     with mock.patch(fn_name, return_value=granules):
         needed_granules = prep_stack.find_needed_granules(1, datetime(2021, 1, 1), datetime(2021, 1, 9), strategy='all')
         assert len(needed_granules) == 3
-        assert needed_granules == granules[:3]  # type: ignore[comparison-overlap]
+        assert needed_granules == granules[:3]
 
         needed_granules = prep_stack.find_needed_granules(
             1, datetime(2021, 1, 1), datetime(2021, 1, 9), strategy='spanning'
         )
         assert len(needed_granules) == 2
-        assert needed_granules == granules[1:3]  # type: ignore[comparison-overlap]
+        assert needed_granules == granules[1:3]
 
 
 def test_restrict_to_spanning_set():
@@ -39,12 +66,12 @@ def test_restrict_to_spanning_set():
     ]
     result = prep_stack.restrict_to_spanning_set(granules)  # type: ignore[arg-type]
     assert len(result) == 3
-    assert result == granules  # type: ignore[comparison-overlap]
+    assert result == granules
 
     granules.append(GranuleStub(1, datetime(2021, 1, 7), datetime(2021, 1, 13)))
     result = prep_stack.restrict_to_spanning_set(granules)  # type: ignore[arg-type]
     assert len(result) == 3
-    assert result == [granules[0], granules[1], granules[3]]  # type: ignore[comparison-overlap]
+    assert result == [granules[0], granules[1], granules[3]]
 
     with pytest.raises(ValueError, match='Granules do not form a spanning set.'):
         prep_stack.restrict_to_spanning_set([granules[0], granules[2], granules[3]])  # type: ignore[list-item]
