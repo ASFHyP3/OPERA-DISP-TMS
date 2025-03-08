@@ -1,16 +1,14 @@
 import subprocess
 
+import hyp3_sdk as sdk
 import requests
 from get_frame_list_from_cmr import get_frames_for_direction
-import hyp3_sdk as sdk
 
 
-def update_s3_prefix(job):
+def publish_mosaic(job: sdk.Job) -> None:
     source = f's3://hyp3-opera-disp-sandbox-contentbucket-ibxz8lcpdo59/{job.job_id}/tms/'
     target = f's3://asf-services-web-content-prod/main/{job.name}/'
-
-    subprocess.run(['aws', '--profile', 'edc-prod', 's3', 'rm', target, '--recursive'], check=True)
-    subprocess.run(['aws', '--profile', 'edc-prod', 's3', 'cp', source, target, '--recursive'], check=True)
+    subprocess.run(['aws', '--profile', 'edc-prod', 's3', 'sync', source, target], check=True)
 
 
 def build_job(name: str, measurement_type: str, frames: list[int]) -> dict:
@@ -25,27 +23,35 @@ def build_job(name: str, measurement_type: str, frames: list[int]) -> dict:
         }
     }
 
-ascending_frames = get_frames_for_direction('ASCENDING')
-descending_frames = get_frames_for_direction('DESCENDING')
 
-# Remove frame 21518
-ascending_frames.remove(21518)
+def main():
+    ascending_frames = get_frames_for_direction('ASCENDING')
+    descending_frames = get_frames_for_direction('DESCENDING')
 
-HyP3 = sdk.HyP3('https://hyp3-opera-disp-sandbox.asf.alaska.edu/')
+    # frame 21518 has disjoint temporal coverage
+    if 21518 in ascending_frames:
+        ascending_frames.remove(21518)
 
-prepared_jobs = [
-    build_job('disp/desc', 'displacement', descending_frames),
-    build_job('disp/asc', 'displacement', ascending_frames),
-    build_job('vel/desc', 'velocity', descending_frames),
-    build_job('vel/asc', 'velocity', ascending_frames),
-]
+    HyP3 = sdk.HyP3('https://hyp3-opera-disp-sandbox.asf.alaska.edu/')
 
-jobs = HyP3.submit_prepared_jobs(prepared_jobs)
-jobs = HyP3.watch(jobs, timeout=21600, interval=300)
+    prepared_jobs = [
+        build_job('disp/desc', 'displacement', descending_frames),
+        build_job('disp/asc', 'displacement', ascending_frames),
+        build_job('vel/desc', 'velocity', descending_frames),
+        build_job('vel/asc', 'velocity', ascending_frames),
+    ]
 
-for job in jobs:
-    response = requests.get(f'https://hyp3-opera-disp-sandbox-contentbucket-ibxz8lcpdo59.s3.us-west-2.amazonaws.com/{job.job_id}/tms/openlayers.html')
-    response.raise_for_status()
+    jobs = HyP3.submit_prepared_jobs(prepared_jobs)
+    for job in jobs:
+        print(f'https://hyp3-opera-disp-sandbox.asf.alaska.edu/jobs/{job.job_id}')
+    jobs = HyP3.watch(jobs, timeout=21600, interval=120)
 
-for job in jobs:
-    update_s3_prefix(job)
+    for job in jobs:
+        response = requests.get(f'https://hyp3-opera-disp-sandbox-contentbucket-ibxz8lcpdo59.s3.us-west-2.amazonaws.com/{job.job_id}/tms/openlayers.html')
+        response.raise_for_status()
+
+    for job in jobs:
+        publish_mosaic(job)
+
+if __name__ == '__main__':
+    main()
