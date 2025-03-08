@@ -13,7 +13,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   Significantly fewer NoData pixels are shown when zoomed out; NoData pixels gradually appear when zooming in.
 
 ### Added
-* Utility script `get_frame_list_from_cmr.py` to list all frames for which data exists in CMR
+* Utility scripts `get_frame_list_from_cmr.py` to list all frames for which data exists in CMR and `weekly-tileset-generation` to update OPERA tilesets with up-to-date data
 
 ## [0.8.1]
 
