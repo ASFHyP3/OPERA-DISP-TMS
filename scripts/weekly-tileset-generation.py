@@ -35,10 +35,10 @@ def main():
     HyP3 = sdk.HyP3('https://hyp3-opera-disp-sandbox.asf.alaska.edu/')
 
     prepared_jobs = [
-        build_job('disp/desc', 'displacement', descending_frames),
-        build_job('disp/asc', 'displacement', ascending_frames),
-        build_job('vel/desc', 'velocity', descending_frames),
-        build_job('vel/asc', 'velocity', ascending_frames),
+        build_job('desc/disp', 'displacement', descending_frames),
+        build_job('asc/disp', 'displacement', ascending_frames),
+        build_job('desc/vel', 'velocity', descending_frames),
+        build_job('asc/vel', 'velocity', ascending_frames),
     ]
 
     jobs = HyP3.submit_prepared_jobs(prepared_jobs)
