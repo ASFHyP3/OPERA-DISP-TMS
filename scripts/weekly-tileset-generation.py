@@ -8,7 +8,7 @@ from get_frame_list_from_cmr import get_frames_for_direction
 def publish_mosaic(job: sdk.Job) -> None:
     source = f's3://hyp3-opera-disp-sandbox-contentbucket-ibxz8lcpdo59/{job.job_id}/tms/'
     target = f's3://asf-services-web-content-prod/main/{job.name}/'
-    subprocess.run(['aws', '--profile', 'edc-prod', 's3', 'sync', source, target], check=True)
+    subprocess.run(['aws', '--profile', 'edc-prod', 's3', 'sync', source, target, '--delete'], check=True)
 
 
 def build_job(name: str, measurement_type: str, frames: list[int]) -> dict:
