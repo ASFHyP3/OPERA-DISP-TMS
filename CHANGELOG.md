@@ -6,14 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.3]
+
+### Added
+* Utility scripts `get_frame_list_from_cmr.py` to list all frames for which data exists in CMR and `weekly-tileset-generation` to update OPERA tilesets with up-to-date data
+
 ## [0.8.2]
 
 ### Changed
 * `create_tile_map` now uses median resampling instead of nearest neighbor resampling when building the TMS mosaic.
   Significantly fewer NoData pixels are shown when zoomed out; NoData pixels gradually appear when zooming in.
-
-### Added
-* Utility scripts `get_frame_list_from_cmr.py` to list all frames for which data exists in CMR and `weekly-tileset-generation` to update OPERA tilesets with up-to-date data
 
 ## [0.8.1]
 
