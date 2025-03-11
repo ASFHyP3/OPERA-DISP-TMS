@@ -14,6 +14,7 @@ dependencies:
   - pytest-cov
   - responses
   - moto[s3]
+  - hyp3_sdk
   # For Running
   - gdal
   - boto3>=1.36.0
