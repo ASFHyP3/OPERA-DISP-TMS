@@ -11,15 +11,12 @@ def publish_mosaic(job: sdk.Job) -> None:
     subprocess.run(['aws', '--profile', 'edc-prod', 's3', 'sync', source, target, '--delete'], check=True)
 
 
-def build_job(name: str, measurement_type: str, frames: list[int]) -> dict:
+def build_job(name: str, frames: list[int]) -> dict:
     return {
         'job_type': 'OPERA_DISP_TMS',
         'name': name,
         'job_parameters': {
-            'measurement_type': measurement_type,
             'frame_ids': frames,
-            'start_date': '20140101',
-            'end_date': '20260101',
         },
     }
 
@@ -31,8 +28,8 @@ def main():
     HyP3 = sdk.HyP3('https://hyp3-api.asf.alaska.edu/')
 
     prepared_jobs = [
-        build_job('desc/vel', 'velocity', descending_frames),
-        build_job('asc/vel', 'velocity', ascending_frames),
+        build_job('desc/vel', descending_frames),
+        build_job('asc/vel', ascending_frames),
     ]
 
     jobs = HyP3.submit_prepared_jobs(prepared_jobs)
