@@ -219,7 +219,7 @@ def test_get_cmr_metadata():
             'https://cmr.earthdata.nasa.gov/search/granules.umm_json',
             match=[
                 responses.matchers.query_param_matcher(params),
-                responses.matchers.header_matcher({'CMR-Search-After': 'cmr-s-a'})
+                responses.matchers.header_matcher({'CMR-Search-After': 'cmr-s-a'}),
             ],
             status=200,
             json={'items': [{'id': 4}, {'id': 5}]},

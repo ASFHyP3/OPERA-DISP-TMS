@@ -43,9 +43,7 @@ def main():
     jobs = HyP3.watch(jobs, timeout=21600, interval=120)
 
     for job in jobs:
-        response = requests.get(
-            f'https://d3gm2hf49xd6jj.cloudfront.net/{job.job_id}/tms/openlayers.html'
-        )
+        response = requests.get(f'https://d3gm2hf49xd6jj.cloudfront.net/{job.job_id}/tms/openlayers.html')
         response.raise_for_status()
 
     for job in jobs:
