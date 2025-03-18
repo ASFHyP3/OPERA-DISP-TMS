@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.4]
+
+### Changed
+* Mosaics are now generated from `OPERA_L3_DISP-S1_V1` data in ASF's production archive, rather than the UAT archive.
+* The `weekly-tileset-generation.py` script now submits jobs to hyp3-api, rather than hyp3-opera-disp-sandbox.
+
 ## [0.8.3]
 
 ### Added

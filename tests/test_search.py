@@ -1,6 +1,8 @@
 from datetime import datetime
 
-from opera_disp_tms.search import Granule, eliminate_duplicates, filter_identical, is_redundant
+import responses
+
+from opera_disp_tms.search import Granule, eliminate_duplicates, filter_identical, get_cmr_metadata, is_redundant
 
 
 def test_from_umm():
@@ -195,3 +197,32 @@ def test__eq__():
 
     granule1 = make_granule('A', datetime(1, 1, 1), datetime(1, 1, 2), datetime(1, 1, 3))
     assert not granule1 == 'foo'
+
+
+def test_get_cmr_metadata():
+    with responses.RequestsMock() as rsps:
+        params = {
+            'short_name': 'OPERA_L3_DISP-S1_V1',
+            'attribute[]': 'int,FRAME_NUMBER,123',
+            'page_size': '2000',
+        }
+
+        rsps.get(
+            'https://cmr.earthdata.nasa.gov/search/granules.umm_json',
+            match=[responses.matchers.query_param_matcher(params)],
+            status=200,
+            json={'items': [{'id': 1}, {'id': 2}, {'id': 3}]},
+            headers={'CMR-Search-After': 'cmr-s-a'},
+        )
+
+        rsps.get(
+            'https://cmr.earthdata.nasa.gov/search/granules.umm_json',
+            match=[
+                responses.matchers.query_param_matcher(params),
+                responses.matchers.header_matcher({'CMR-Search-After': 'cmr-s-a'})
+            ],
+            status=200,
+            json={'items': [{'id': 4}, {'id': 5}]},
+        )
+
+        assert get_cmr_metadata(frame_id=123) == [{'id': 1}, {'id': 2}, {'id': 3}, {'id': 4}, {'id': 5}]
