@@ -31,8 +31,6 @@ def main():
     HyP3 = sdk.HyP3('https://hyp3-api.asf.alaska.edu/')
 
     prepared_jobs = [
-        build_job('desc/disp', 'displacement', descending_frames),
-        build_job('asc/disp', 'displacement', ascending_frames),
         build_job('desc/vel', 'velocity', descending_frames),
         build_job('asc/vel', 'velocity', ascending_frames),
     ]
