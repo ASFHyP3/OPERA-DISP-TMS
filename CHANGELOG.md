@@ -10,6 +10,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 * `weekly-tileset-generation.py` no longer produces displacement mosaics, only velocity mosaics.
+* `create_measurement_geotiff.py` now scales velocity mosaics to +/- 0.03 m/yr, rather than +/- 0.05 m/yr.
 
 ## [0.8.3]
 
