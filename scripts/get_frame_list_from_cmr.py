@@ -9,19 +9,12 @@ def get_frame_number(item):
 
 
 def get_granules(direction):
-    # TODO update url when we start working with CMR production
-    url = 'https://cmr.uat.earthdata.nasa.gov/search/granules.umm_json'
+    url = 'https://cmr.earthdata.nasa.gov/search/granules.umm_json'
     params = {
         'short_name': 'OPERA_L3_DISP-S1_V1',
-        # TODO update PRODUCT_VERSION requirement if/when we want to focus on v1.0 data in CMR UAT
-        # TODO remove PRODUCT_VERSION requirement when we start working with CMR production?
-        'attribute[]': [
-            'float,PRODUCT_VERSION,0.9,',
-            f'string,ASCENDING_DESCENDING,{direction}',
-        ],
+        'attribute[]': f'string,ASCENDING_DESCENDING,{direction}',
         'page_size': '2000',
     }
-    # TODO update to include bearer auth when we start working with the hidden collection in CMR production
     headers: dict = {}
 
     granules = []
@@ -38,7 +31,6 @@ def get_granules(direction):
 def get_frames_for_direction(direction: str) -> list:
     granules = get_granules(direction)
     frames = {get_frame_number(granule) for granule in granules}
-    # TODO remove frames that won't be successfully processed, e.g. 21518 with disjoint temporal coverage in CMR UAT
     return sorted(list(frames))
 
 
