@@ -9,7 +9,10 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [0.8.4]
 
 ### Changed
+* Mosaics are now generated from `OPERA_L3_DISP-S1_V1` data in ASF's production archive, rather than the UAT archive.
+* The `weekly-tileset-generation.py` script now submits jobs to hyp3-api, rather than hyp3-opera-disp-sandbox.
 * `weekly-tileset-generation.py` no longer produces displacement mosaics, only velocity mosaics.
+* `weekly-tileset-generation.py` no longer includes parameters for OPERA_DISP_TMS jobs removed in HyP3 v10.2.0.
 
 ## [0.8.3]
 

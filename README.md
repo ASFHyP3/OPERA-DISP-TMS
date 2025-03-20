@@ -19,12 +19,12 @@ python -m pip install -e .
 
 ## Credentials
 
-This application requires Earthdata Login UAT credentials to download OPERA Displacement data. These credentials can be provided either via a `uat.urs.earthdata.nasa.gov` entry in your `.netrc` file, or via `EARTHDATA_USERNAME` and `EARTHDATA_PASSWORD` environment variables.
+This application requires Earthdata Login credentials to download OPERA Displacement data. These credentials can be provided either via a `urs.earthdata.nasa.gov` entry in your `.netrc` file, or via `EARTHDATA_USERNAME` and `EARTHDATA_PASSWORD` environment variables.
 
 For instructions on setting up your Earthdata Login via a `.netrc` file, check out this [guide](https://harmony.earthdata.nasa.gov/docs#getting-started).
 
 > [!WARNING]
-> This application uses [S3 Direct Access](https://cumulus-test.asf.alaska.edu/s3credentialsREADME) to download OPERA Displacement data, and must be run in the `us-west-2` AWS region.
+> This application uses [S3 Direct Access](https://cumulus.asf.alaska.edu/s3credentialsREADME) to download OPERA Displacement data, and must be run in the `us-west-2` AWS region.
 
 ## Usage
 
