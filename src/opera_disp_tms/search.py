@@ -86,26 +86,24 @@ class Granule:
 
 def get_cmr_metadata(
     frame_id: int,
-    version: str = '0.9',
-    cmr_endpoint='https://cmr.uat.earthdata.nasa.gov/search/granules.umm_json',
+    cmr_endpoint='https://cmr.earthdata.nasa.gov/search/granules.umm_json',
 ) -> list[dict]:
     """Find all OPERA L3 DISP S1 granules for a specific frame ID and minimum product version
 
     Args:
         frame_id: The frame ID to search for.
-        version: The minimum version of the granules to search for.
         cmr_endpoint: The endpoint to query for granules.
     """
     cmr_parameters = {
         'short_name': 'OPERA_L3_DISP-S1_V1',
-        'attribute[]': [f'int,FRAME_NUMBER,{frame_id}', f'float,PRODUCT_VERSION,{version},'],
-        'page_size': 2000,
+        'attribute[]': f'int,FRAME_NUMBER,{frame_id}',
+        'page_size': '2000',
     }
     headers: dict = {}
     items = []
 
     while True:
-        response = requests.post(cmr_endpoint, data=cmr_parameters, headers=headers)
+        response = requests.get(cmr_endpoint, params=cmr_parameters, headers=headers)
         response.raise_for_status()
         items.extend(response.json()['items'])
         if 'CMR-Search-After' not in response.headers:
