@@ -29,7 +29,7 @@ For instructions on setting up your Earthdata Login via a `.netrc` file, check o
 
 The `weekly-tileset-generation.py` script delivers updated velocity mosaics to the ASF Displacement portal at https://displacement.asf.alaska.edu. This script:
 1. Queries CMR for `OPERA_L3_DISP-S1_V1` granules to determine the ascending and descending frames for which data is available.
-1. Submits `OPERA_DISP_TMS` jobs to https://hyp3-opera-disp-sandbox.asf.alaska.edu/ to generate ascending and descending mosaics.
+1. Submits `OPERA_DISP_TMS` jobs to https://hyp3-api.asf.alaska.edu/ to generate ascending and descending mosaics.
 1. Syncs the new mosaics to the production hosting bucket at `s3://asf-services-web-content-prod/`.
 
 To run this script:
