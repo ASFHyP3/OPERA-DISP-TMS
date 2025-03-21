@@ -19,29 +19,33 @@ python -m pip install -e .
 
 ## Credentials
 
-This application requires Earthdata Login UAT credentials to download OPERA Displacement data. These credentials can be provided either via a `uat.urs.earthdata.nasa.gov` entry in your `.netrc` file, or via `EARTHDATA_USERNAME` and `EARTHDATA_PASSWORD` environment variables.
+This application requires Earthdata Login credentials to download OPERA Displacement data. These credentials can be provided either via a `urs.earthdata.nasa.gov` entry in your `.netrc` file, or via `EARTHDATA_USERNAME` and `EARTHDATA_PASSWORD` environment variables.
 
 For instructions on setting up your Earthdata Login via a `.netrc` file, check out this [guide](https://harmony.earthdata.nasa.gov/docs#getting-started).
 
-> [!WARNING]
-> This application uses [S3 Direct Access](https://cumulus-test.asf.alaska.edu/s3credentialsREADME) to download OPERA Displacement data, and must be run in the `us-west-2` AWS region.
-
 ## Usage
 
-### Create a Short Wavelength Cumulative Displacement GeoTIFF
-The `create_measurement_geotiff` CLI command can be used to generate a cumulative displacement geotiff for a given OPERA frame:
-```bash
-create_measurement_geotiff 11115 displacement 20140101 20260101
-```
-Where `11115` is OPERA frame id of the granule stack in CMR, and `20140101`/`20260101` specify the start/end of the secondary date search range in format `%Y%m%d`.
+### Deliver updated velocity mosaics to the ASF Displacement Portal
 
-The resulting products have the name format:
-`displacement_{frame id}_{start date}_{end_date}.tif`
+The `weekly-tileset-generation.py` script delivers updated velocity mosaics to the ASF Displacement portal at https://displacement.asf.alaska.edu. This script:
+1. Queries CMR for `OPERA_L3_DISP-S1_V1` granules to determine the ascending and descending frames for which data is available.
+1. Submits `OPERA_DISP_TMS` jobs to https://hyp3-opera-disp-sandbox.asf.alaska.edu/ to generate ascending and descending mosaics.
+1. Syncs the new mosaics to the production hosting bucket at `s3://asf-services-web-content-prod/`.
 
-For example:
-`displacement_11115_20140101_20260101.tif`
+To run this script:
+1. Configure an `edc-prod` profile in your `.aws/config` and `.aws/credentials` files.
+   1. (Optional) For speedier results, run from `us-west-2` and increase `max_concurrent_requests` per [AWS CLI S3 Configuration](https://docs.aws.amazon.com/cli/latest/topic/s3-config.html).
+1. Set up your .netrc file per [Credentials](#credentials).
+1. Install the application per [Installation](#installation) and activate the conda environment.
+1. Navigate to the scripts directory and run the script.
+   1. (Optional) This script will take hours to run, so running it as a background process via `screen` or `tmux` is recommended.
+   1. `cd scripts; python weekly-tileset-generation.py`
 
 ### Create a Short Wavelength Velocity GeoTIFF
+
+> [!WARNING]
+> This application uses [S3 Direct Access](https://cumulus.asf.alaska.edu/s3credentialsREADME) to download OPERA Displacement data, and must be run in the `us-west-2` AWS region.
+
 The `create_measurement_geotiff` CLI command can be used to generate a short wavelength velocity geotiff for a given OPERA frame:
 ```bash
 create_measurement_geotiff 11115 velocity 20140101 20260101
@@ -58,9 +62,9 @@ For example:
 ### Create a Tile Map
 The `create_tile_map` CLI command generates a directory with small.png tiles from a s3 bucket with a list of rasters in a common projection, following the OSGeo Tile Map Service Specification, using gdal2tiles: https://gdal.org/en/latest/programs/gdal2tiles.html
 
-To create a tile map from a set of displacement GeoTIFFs:
+To create a tile map from a set of velocity GeoTIFFs:
 ```bash
-create_tile_map displacement --bucket myBucket --bucket-prefix myPrefix
+create_tile_map velocity --bucket myBucket --bucket-prefix myPrefix
 ```
 
 This will look for all `.tif` files in `s3://myBucket/myPrefix/` and use them to make the tile map.
