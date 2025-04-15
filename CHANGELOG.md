@@ -11,6 +11,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 * `weekly-tileset-generation.py` now submits jobs to hyp3-api.asf.alaska.edu
 * Tilesets now are produced up to zoom level 12
+* Added description of the mosaic strategy to the README
 
 ## [0.8.4]
 
