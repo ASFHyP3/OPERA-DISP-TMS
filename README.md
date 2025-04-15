@@ -77,6 +77,23 @@ aws s3 cp tiles/ s3://myBucket/tiles/ --recursive
 ```
 The online map can then be reviewed in a browser, e.g. https://myBucket.s3.amazonaws.com/tiles/openlayers.html
 
+## Mosaic Strategy
+
+The general strategy used to produce the mosaic visualizations is as follows:
+
+1. For each of ASCENDING and DESCENDING:
+   1. Query CMR to identify all frames with data for the given flight direction
+   2. For each frame, create an average velocity GeoTIFF:
+      1. Find the minimum set of granules spanning the full temporal extent of the available data
+      2. Create a short wavelength displacement time series from those granules
+      3. Take a linear regression of that time series to determine average velocity
+         1. If any granule has no data for a particular pixel, set the velocity for that pixel to no data
+      4. Set values outside [-0.03 m/yr, +0.03 m/yr] to -0.03 and +0.03
+      5. Write the average velocity values to a geotiff
+   3. Overlay the individual frame GeoTIFFs into a mosaic
+      1. In areas where multiple frames overlap, prefer showing near-range pixels over far-range pixels (e.g. easternmost frame on top for ascending, westernmost on top for descending)
+      2. If the preferred frame has no data for a particular pixel, let the data value of the less-preferred frame show through
+
 ## License
 The OPERA-DISP-TMS package is licensed under the Apache License, Version 2 license. See the LICENSE file for more details.
 
