@@ -29,7 +29,7 @@ For instructions on setting up your Earthdata Login via a `.netrc` file, check o
 
 The `weekly-tileset-generation.py` script delivers updated velocity mosaics to the ASF Displacement portal at https://displacement.asf.alaska.edu. This script:
 1. Queries CMR for `OPERA_L3_DISP-S1_V1` granules to determine the ascending and descending frames for which data is available.
-1. Submits `OPERA_DISP_TMS` jobs to https://hyp3-opera-disp-sandbox.asf.alaska.edu/ to generate ascending and descending mosaics.
+1. Submits `OPERA_DISP_TMS` jobs to https://hyp3-api.asf.alaska.edu/ to generate ascending and descending mosaics.
 1. Syncs the new mosaics to the production hosting bucket at `s3://asf-services-web-content-prod/`.
 
 To run this script:
@@ -76,6 +76,23 @@ The output directory can be copied to a public AWS S3 bucket (or any other web s
 aws s3 cp tiles/ s3://myBucket/tiles/ --recursive
 ```
 The online map can then be reviewed in a browser, e.g. https://myBucket.s3.amazonaws.com/tiles/openlayers.html
+
+## Mosaic Strategy
+
+The general strategy used to produce the mosaic visualizations is as follows:
+
+1. For each of ASCENDING and DESCENDING:
+   1. Query CMR to identify all frames with data for the given flight direction
+   1. For each frame, create an average velocity GeoTIFF
+      1. Find the minimum set of granules spanning the full temporal extent of the available data
+      1. Create a short wavelength displacement time series from those granules
+      1. Take a linear regression of that time series to determine velocity
+         1. If any granule has no data for a particular pixel, set the velocity for that pixel to no data
+      1. Set values outside [-0.03 m/yr, +0.03 m/yr] to -0.03 and +0.03
+      1. Write the average velocity values to a geotiff
+   1. Overlay the individual frame GeoTIFFs into a mosaic
+      1. In areas where multiple frames overlap, prefer showing near-range pixels over far-range pixels (e.g. easternmost frame on top for ascending, westernmost on top for descending)
+      1. If the preferred frame has no data for a particular pixel, let the data value of the less-preferred frame show through
 
 ## License
 The OPERA-DISP-TMS package is licensed under the Apache License, Version 2 license. See the LICENSE file for more details.
