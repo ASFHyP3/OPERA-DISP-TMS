@@ -83,10 +83,10 @@ The general strategy used to produce the mosaic visualizations is as follows:
 
 1. For each of ASCENDING and DESCENDING:
    1. Query CMR to identify all frames with data for the given flight direction
-   1. For each frame, create an average velocity GeoTIFF:
+   1. For each frame, create an average velocity GeoTIFF
       1. Find the minimum set of granules spanning the full temporal extent of the available data
       1. Create a short wavelength displacement time series from those granules
-      1. Take a linear regression of that time series to determine average velocity
+      1. Take a linear regression of that time series to determine velocity
          1. If any granule has no data for a particular pixel, set the velocity for that pixel to no data
       1. Set values outside [-0.03 m/yr, +0.03 m/yr] to -0.03 and +0.03
       1. Write the average velocity values to a geotiff
