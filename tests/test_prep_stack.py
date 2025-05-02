@@ -80,7 +80,7 @@ def test_restrict_to_spanning_set():
 
 def test_replace_nans_with_zeros():
     def create_data_array(data, ref_date, sec_date):
-        coords = {'x': [1, 2]}
+        coords = {'x': [1, 2, 3]}
         da = xr.DataArray(
             data=data,
             attrs={'reference_date': ref_date, 'secondary_date': sec_date, 'frame_id': 1},
