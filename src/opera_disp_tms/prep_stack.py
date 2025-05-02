@@ -149,6 +149,6 @@ def load_sw_disp_stack(frame_id: int, begin_date: datetime, end_date: datetime, 
     """
     granules = find_needed_granules(frame_id, begin_date, end_date, strategy)
     granule_xrs = [load_sw_disp_granule(x, strategy) for x in granules]
-    granule_xrs = foo(granule_xrs)
+    granule_xrs = replace_nans_with_zeros(granule_xrs)
     align_to_common_reference_date(granule_xrs, min(g.reference_date for g in granule_xrs))
     return granule_xrs
