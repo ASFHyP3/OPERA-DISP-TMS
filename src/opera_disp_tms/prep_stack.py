@@ -65,32 +65,12 @@ def find_needed_granules(frame_id: int, begin_date: datetime, end_date: datetime
     return needed_granules
 
 
-def create_invalid_data_mask(granule_xr, strategy: str='spanning'):
-    """
-    Create an invalid data mask
-    if more than 90% of the spanning-set pixels are not nan, the nan values are changed to 0
-    Args:
-        granule_xr: Granule to mask
-        strategy: The strategy to use for selecting granules ("spanning" or "all")
-    Returns:
-        sw_cuml_disp_xr: masked sw_cumul_disp_xr
-    """
-    valid_data_mask = granule_xr['recommended_mask'] == 1
-    if strategy == 'spanning':
-        if sum(valid_data_mask)/valid_data_mask.size() >= 0.9:
-            sw_cumul_disp_xr = granule_xr['short_wavelength_displacement'].where(valid_data_mask, 0)
-    else:
-        sw_cumul_disp_xr = granule_xr['short_wavelength_displacement'].where(valid_data_mask, np.nan)
-    return sw_cumul_disp_xr
-
-
-def load_sw_disp_granule(granule: Granule, strategy: str='spanning') -> xr.DataArray:
+def load_sw_disp_granule(granule: Granule) -> xr.DataArray:
     """Load the short wavelength displacement data for and OPERA DISP granule.
     Clips to frame map and masks out invalid data.
 
     Args:
         granule: The granule to load
-        strategy: The strategy to use for selecting granules ("spanning" or "all")
     Returns:
         The short wavelength displacement data as an xarray DataArray
     """
@@ -98,16 +78,28 @@ def load_sw_disp_granule(granule: Granule, strategy: str='spanning') -> xr.DataA
     with s3_xarray_dataset(granule.s3_uri) as ds:
         granule_xr = open_opera_disp_granule(ds, granule.s3_uri, datasets)
         granule_xr = granule_xr.load()
-        sw_cumul_disp_xr = create_invalid_data_mask(granule_xr, strategy)
+        valid_data_mask = granule_xr['recommended_mask'] == 1
+        sw_cumul_disp_xr =granule_xr['short_wavelength_displacement'].where(valid_data_mask, np.nan)
         sw_cumul_disp_xr.attrs = granule_xr.attrs
     return sw_cumul_disp_xr
+
+
+def replace_nans_with_zeros(granule_xrs: list[xr.DataArray], minimum_valid_data_percent: float=0.9):
+    """
+    if more than 90% of the spanning-set pixels are not nan, the nan values are changed to 0
+    Args:
+        granule_xrs: A list of granule xarray DataArrays
+    Returns:
+        granule_xrs: A list of granule xarray DataArrays with NaNs replaced with 0s if appropriate
+    """
+    return granule_xrs
 
 
 def check_connected_network(granule_xrs: list[xr.DataArray]) -> None:
     """Check that cumulative displacement can reconstructed using given granule set.
 
     Args:
-        granules_xr: A list of granule xarray DataArrays
+        granule_xrs: A list of granule xarray DataArrays
     """
     reference_dates = sorted(list({g.reference_date for g in granule_xrs}))
     secondary_dates = sorted(list({g.secondary_date for g in granule_xrs}))
@@ -157,5 +149,6 @@ def load_sw_disp_stack(frame_id: int, begin_date: datetime, end_date: datetime, 
     """
     granules = find_needed_granules(frame_id, begin_date, end_date, strategy)
     granule_xrs = [load_sw_disp_granule(x, strategy) for x in granules]
+    granule_xrs = foo(granule_xrs)
     align_to_common_reference_date(granule_xrs, min(g.reference_date for g in granule_xrs))
     return granule_xrs
