@@ -78,7 +78,7 @@ def test_restrict_to_spanning_set():
 
 
 def test_create_invalid_data_mask():
-    assert 1 == 1
+    assert False
 
 
 def test_align_to_common_reference_date():

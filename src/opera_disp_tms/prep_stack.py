@@ -77,7 +77,7 @@ def create_invalid_data_mask(granule_xr, strategy: str='spanning'):
     """
     valid_data_mask = granule_xr['recommended_mask'] == 1
     if strategy == 'spanning':
-        if sum(valid_data_mask)/valid_data_mask.size() > 0.9:
+        if sum(valid_data_mask)/valid_data_mask.size() >= 0.9:
             sw_cumul_disp_xr = granule_xr['short_wavelength_displacement'].where(valid_data_mask, 0)
     else:
         sw_cumul_disp_xr = granule_xr['short_wavelength_displacement'].where(valid_data_mask, np.nan)
