@@ -79,12 +79,12 @@ def load_sw_disp_granule(granule: Granule) -> xr.DataArray:
         granule_xr = open_opera_disp_granule(ds, granule.s3_uri, datasets)
         granule_xr = granule_xr.load()
         valid_data_mask = granule_xr['recommended_mask'] == 1
-        sw_cumul_disp_xr =granule_xr['short_wavelength_displacement'].where(valid_data_mask, np.nan)
+        sw_cumul_disp_xr = granule_xr['short_wavelength_displacement'].where(valid_data_mask, np.nan)
         sw_cumul_disp_xr.attrs = granule_xr.attrs
     return sw_cumul_disp_xr
 
 
-def replace_nans_with_zeros(granule_xrs: list[xr.DataArray], minimum_valid_data_percent: float=0.9) -> None:
+def replace_nans_with_zeros(granule_xrs: list[xr.DataArray], minimum_valid_data_percent: float = 0.9) -> None:
     """
     if more than X% of granules have valid (non-nan) data for a pixel, set any nan values for that pixel to zero
     Args:

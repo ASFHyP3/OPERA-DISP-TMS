@@ -87,6 +87,7 @@ def test_replace_nans_with_zeros():
             coords=coords,
         )
         return da
+
     xrs = [
         create_data_array([1.0, 0.0, 1.0], datetime(1, 1, 1), datetime(1, 1, 2)),
         create_data_array([5.0, np.nan, np.nan], datetime(1, 1, 1), datetime(1, 1, 3)),
