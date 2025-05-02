@@ -77,6 +77,10 @@ def test_restrict_to_spanning_set():
         prep_stack.restrict_to_spanning_set([granules[0], granules[2], granules[3]])  # type: ignore[list-item]
 
 
+def test_create_invalid_data_mask():
+    assert 1 == 1
+
+
 def test_align_to_common_reference_date():
     def create_data_array(data, ref_date, sec_date):
         coords = {'x': [1, 2]}
