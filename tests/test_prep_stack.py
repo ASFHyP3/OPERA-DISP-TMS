@@ -2,6 +2,7 @@ from collections import namedtuple
 from datetime import datetime
 from unittest import mock
 
+import numpy as np
 import pytest
 import rioxarray  # noqa
 import xarray as xr
@@ -75,6 +76,25 @@ def test_restrict_to_spanning_set():
 
     with pytest.raises(ValueError, match='Granules do not form a spanning set.'):
         prep_stack.restrict_to_spanning_set([granules[0], granules[2], granules[3]])  # type: ignore[list-item]
+
+
+def test_replace_nans_with_zeros():
+    xrs = [
+        xr.DataArray([1.0, 0.0, 1.0]),
+        xr.DataArray([5.0, np.nan, np.nan]),
+        xr.DataArray([-1.0, 0.0, np.nan]),
+        xr.DataArray([7.0, 0.0, 1.0]),
+        xr.DataArray([-3.0, 1.0, 1.0]),
+    ]
+    expected = [
+        xr.DataArray([1.0, 0.0, 1.0]),
+        xr.DataArray([5.0, 0.0, np.nan]),
+        xr.DataArray([-1.0, 0.0, np.nan]),
+        xr.DataArray([7.0, 0.0, 1.0]),
+        xr.DataArray([-3.0, 1.0, 1.0]),
+    ]
+    prep_stack.replace_nans_with_zeros(xrs, minimum_valid_data_percent=0.8)
+    assert all(a.identical(b) for a, b in zip(xrs, expected))
 
 
 def test_align_to_common_reference_date():

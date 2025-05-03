@@ -71,7 +71,6 @@ def load_sw_disp_granule(granule: Granule) -> xr.DataArray:
 
     Args:
         granule: The granule to load
-
     Returns:
         The short wavelength displacement data as an xarray DataArray
     """
@@ -85,11 +84,24 @@ def load_sw_disp_granule(granule: Granule) -> xr.DataArray:
     return sw_cumul_disp_xr
 
 
+def replace_nans_with_zeros(granule_xrs: list[xr.DataArray], minimum_valid_data_percent: float = 0.9) -> None:
+    """
+    if more than X% of granules have valid (non-nan) data for a pixel, set any nan values for that pixel to zero
+    Args:
+        granule_xrs: A list of granule xarray DataArrays to update
+        minimum_valid_data_percent: The percent of granules that must have valid data for a given pixel
+    """
+    valid_data_percent = sum(~np.isnan(granule_xr) for granule_xr in granule_xrs) / len(granule_xrs)
+    for granule_xr in granule_xrs:
+        values_to_update = np.logical_and(valid_data_percent >= minimum_valid_data_percent, np.isnan(granule_xr))
+        granule_xr[values_to_update] = 0.0
+
+
 def check_connected_network(granule_xrs: list[xr.DataArray]) -> None:
     """Check that cumulative displacement can reconstructed using given granule set.
 
     Args:
-        granules_xr: A list of granule xarray DataArrays
+        granule_xrs: A list of granule xarray DataArrays
     """
     reference_dates = sorted(list({g.reference_date for g in granule_xrs}))
     secondary_dates = sorted(list({g.secondary_date for g in granule_xrs}))
@@ -139,5 +151,6 @@ def load_sw_disp_stack(frame_id: int, begin_date: datetime, end_date: datetime, 
     """
     granules = find_needed_granules(frame_id, begin_date, end_date, strategy)
     granule_xrs = [load_sw_disp_granule(x) for x in granules]
+    replace_nans_with_zeros(granule_xrs)
     align_to_common_reference_date(granule_xrs, min(g.reference_date for g in granule_xrs))
     return granule_xrs
