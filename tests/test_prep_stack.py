@@ -79,27 +79,19 @@ def test_restrict_to_spanning_set():
 
 
 def test_replace_nans_with_zeros():
-    def create_data_array(data, ref_date, sec_date):
-        coords = {'x': [1, 2, 3]}
-        da = xr.DataArray(
-            data=data,
-            attrs={'reference_date': ref_date, 'secondary_date': sec_date, 'frame_id': 1},
-            coords=coords,
-        )
-        return da
     xrs = [
-        create_data_array([1.0, 0.0, 1.0], datetime(1, 1, 1), datetime(1, 1, 2)),
-        create_data_array([5.0, np.nan, np.nan], datetime(1, 1, 1), datetime(1, 1, 3)),
-        create_data_array([-1.0, 0.0, np.nan], datetime(1, 1, 3), datetime(1, 1, 4)),
-        create_data_array([7.0, 0.0, 1.0], datetime(1, 1, 3), datetime(1, 1, 5)),
-        create_data_array([-3.0, 1.0, 1.0], datetime(1, 1, 5), datetime(1, 1, 6)),
+        xr.DataArray([1.0, 0.0, 1.0]),
+        xr.DataArray([5.0, np.nan, np.nan]),
+        xr.DataArray([-1.0, 0.0, np.nan]),
+        xr.DataArray([7.0, 0.0, 1.0]),
+        xr.DataArray([-3.0, 1.0, 1.0]),
     ]
     expected = [
-        create_data_array([1.0, 0.0, 1.0], datetime(1, 1, 1), datetime(1, 1, 2)),
-        create_data_array([5.0, 0.0, np.nan], datetime(1, 1, 1), datetime(1, 1, 3)),
-        create_data_array([-1.0, 0.0, np.nan], datetime(1, 1, 3), datetime(1, 1, 4)),
-        create_data_array([7.0, 0.0, 1.0], datetime(1, 1, 3), datetime(1, 1, 5)),
-        create_data_array([-3.0, 1.0, 1.0], datetime(1, 1, 5), datetime(1, 1, 6)),
+        xr.DataArray([1.0, 0.0, 1.0]),
+        xr.DataArray([5.0, 0.0, np.nan]),
+        xr.DataArray([-1.0, 0.0, np.nan]),
+        xr.DataArray([7.0, 0.0, 1.0]),
+        xr.DataArray([-3.0, 1.0, 1.0]),
     ]
     prep_stack.replace_nans_with_zeros(xrs, minimum_valid_data_percent=0.8)
     assert all(a.identical(b) for a, b in zip(xrs, expected))
