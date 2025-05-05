@@ -87,7 +87,7 @@ The general strategy used to produce the mosaic visualizations is as follows:
       1. Find the minimum set of granules spanning the full temporal extent of the available data
       1. Create a short wavelength displacement time series from those granules
       1. Take a linear regression of that time series to determine velocity
-         2. If a pixel is NoData in <= 10% of granules, treat NoData as zero in the time series for that pixel
+         1. If a pixel is NoData in <= 10% of granules, treat NoData as zero in the time series for that pixel
          1. If a pixel is NoData in > 10% of granules, set the velocity for that pixel to NoData
       1. Set values outside [-0.03 m/yr, +0.03 m/yr] to -0.03 and +0.03
       1. Write the average velocity values to a geotiff
