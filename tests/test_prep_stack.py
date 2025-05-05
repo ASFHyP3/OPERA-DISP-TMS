@@ -97,7 +97,6 @@ def test_replace_nans_with_zeros():
     prep_stack.replace_nans_with_zeros(xrs, minimum_valid_data_percent=0.8)
     assert all(a.identical(b) for a, b in zip(xrs, expected))
 
-
     xrs = [
         xr.DataArray([[1.0, 0.0], [1.0, 0.0]]),
         xr.DataArray([[5.0, np.nan], [np.nan, 0.0]]),
