@@ -80,20 +80,38 @@ def test_restrict_to_spanning_set():
 
 def test_replace_nans_with_zeros():
     xrs = [
-        xr.DataArray([1.0, 0.0, 1.0]),
-        xr.DataArray([5.0, np.nan, np.nan]),
-        xr.DataArray([-1.0, 0.0, np.nan]),
-        xr.DataArray([7.0, 0.0, 1.0]),
-        xr.DataArray([-3.0, 1.0, 1.0]),
+        xr.DataArray([[1.0, 0.0], [1.0, 0.0]]),
+        xr.DataArray([[5.0, np.nan], [np.nan, 0.0]]),
+        xr.DataArray([[-1.0, 0.0], [np.nan, np.nan]]),
+        xr.DataArray([[7.0, 0.0], [1.0, np.nan]]),
+        xr.DataArray([[-3.0, 1.0], [1.0, np.nan]]),
     ]
     expected = [
-        xr.DataArray([1.0, 0.0, 1.0]),
-        xr.DataArray([5.0, 0.0, np.nan]),
-        xr.DataArray([-1.0, 0.0, np.nan]),
-        xr.DataArray([7.0, 0.0, 1.0]),
-        xr.DataArray([-3.0, 1.0, 1.0]),
+        xr.DataArray([[1.0, 0.0], [1.0, 0.0]]),
+        xr.DataArray([[5.0, 0.0], [np.nan, 0.0]]),
+        xr.DataArray([[-1.0, 0.0], [np.nan, np.nan]]),
+        xr.DataArray([[7.0, 0.0], [1.0, np.nan]]),
+        xr.DataArray([[-3.0, 1.0], [1.0, np.nan]]),
     ]
     prep_stack.replace_nans_with_zeros(xrs, minimum_valid_data_percent=0.8)
+    assert all(a.identical(b) for a, b in zip(xrs, expected))
+
+
+    xrs = [
+        xr.DataArray([[1.0, 0.0], [1.0, 0.0]]),
+        xr.DataArray([[5.0, np.nan], [np.nan, 0.0]]),
+        xr.DataArray([[-1.0, 0.0], [np.nan, np.nan]]),
+        xr.DataArray([[7.0, 0.0], [1.0, np.nan]]),
+        xr.DataArray([[-3.0, 1.0], [1.0, np.nan]]),
+    ]
+    expected = [
+        xr.DataArray([[1.0, 0.0], [1.0, 0.0]]),
+        xr.DataArray([[5.0, 0.0], [0.0, 0.0]]),
+        xr.DataArray([[-1.0, 0.0], [0.0, np.nan]]),
+        xr.DataArray([[7.0, 0.0], [1.0, np.nan]]),
+        xr.DataArray([[-3.0, 1.0], [1.0, np.nan]]),
+    ]
+    prep_stack.replace_nans_with_zeros(xrs, minimum_valid_data_percent=0.6)
     assert all(a.identical(b) for a, b in zip(xrs, expected))
 
 
