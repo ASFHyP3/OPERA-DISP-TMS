@@ -94,11 +94,11 @@ def replace_nans_with_zeros(granule_xrs: list[xr.DataArray], minimum_valid_data_
     valid_data_percent = sum(~np.isnan(granule_xr) for granule_xr in granule_xrs) / len(granule_xrs)
     for granule_xr in granule_xrs:
         values_to_update = np.logical_and(valid_data_percent >= minimum_valid_data_percent, np.isnan(granule_xr))
-        granule_xr[values_to_update] = 0.0
+        granule_xr.data[values_to_update] = 0.0
 
 
 def check_connected_network(granule_xrs: list[xr.DataArray]) -> None:
-    """Check that cumulative displacement can reconstructed using given granule set.
+    """Check that cumulative displacement can be reconstructed using given granule set.
 
     Args:
         granule_xrs: A list of granule xarray DataArrays

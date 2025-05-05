@@ -86,6 +86,7 @@ def test_replace_nans_with_zeros():
         xr.DataArray([[7.0, 0.0], [1.0, np.nan]]),
         xr.DataArray([[-3.0, 1.0], [1.0, np.nan]]),
     ]
+
     expected = [
         xr.DataArray([[1.0, 0.0], [1.0, 0.0]]),
         xr.DataArray([[5.0, 0.0], [np.nan, 0.0]]),
