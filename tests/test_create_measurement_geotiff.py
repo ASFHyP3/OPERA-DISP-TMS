@@ -60,15 +60,17 @@ def test_linear_regression_leastsquares():
 
 
 def test_parallel_linear_regression():
-    y_col = np.arange(3, dtype='float64')
-    y = np.ones((3, 5, 5), dtype='float64') * -1
-    indexes = np.arange(5)
-    for i in indexes:
-        for j in indexes:
-            y[:, i, j] = y_col
-    x = np.arange(3, dtype='float64')
-    slope = geo.parallel_linear_regression(x, y)
-    assert np.all(np.isclose(slope, 1.0, atol=1e-6))
+    for dtype in (np.float32, np.float64, np.int8):
+        y_col = np.arange(3, dtype=dtype)
+        y = np.ones((3, 5, 5), dtype=dtype) * -1
+        indexes = np.arange(5)
+        for i in indexes:
+            for j in indexes:
+                y[:, i, j] = y_col
+        x = np.arange(3, dtype=dtype)
+        slope = geo.parallel_linear_regression(x, y)
+        assert np.all(np.isclose(slope, 1.0, atol=1e-6))
+        assert slope.dtype == dtype
 
 
 def test_compute_measurement():

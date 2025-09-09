@@ -116,14 +116,14 @@ def test_replace_nans_with_zeros():
 
 
 def test_align_to_common_reference_date():
-    def create_data_array(data, ref_date, sec_date):
+    def create_data_array(data, ref_date, sec_date, dtype=np.float64):
         coords = {'x': [1, 2]}
         da = xr.DataArray(
             data=data,
             attrs={'reference_date': ref_date, 'secondary_date': sec_date, 'frame_id': 1},
             coords=coords,
         )
-        return da
+        return da.astype(dtype)
 
     xrs = [
         create_data_array([1.0, 0.0], datetime(1, 1, 1), datetime(1, 1, 2)),
@@ -142,24 +142,26 @@ def test_align_to_common_reference_date():
     ]
     prep_stack.align_to_common_reference_date(xrs, start_date=datetime(1, 1, 1))
     assert all(a.identical(b) for a, b in zip(xrs, expected))
+    assert all(xr.dtype == np.float64 for xr in xrs)
 
     xrs = [
-        create_data_array([1.0, 0.0], datetime(1, 1, 1), datetime(1, 1, 2)),
-        create_data_array([5.0, 0.0], datetime(1, 1, 1), datetime(1, 1, 3)),
-        create_data_array([-1.0, 0.0], datetime(1, 1, 3), datetime(1, 1, 4)),
-        create_data_array([7.0, 0.0], datetime(1, 1, 3), datetime(1, 1, 5)),
-        create_data_array([-3.0, 1.0], datetime(1, 1, 5), datetime(1, 1, 6)),
+        create_data_array([1.0, 0.0], datetime(1, 1, 1), datetime(1, 1, 2), np.float32),
+        create_data_array([5.0, 0.0], datetime(1, 1, 1), datetime(1, 1, 3), np.float32),
+        create_data_array([-1.0, 0.0], datetime(1, 1, 3), datetime(1, 1, 4), np.float32),
+        create_data_array([7.0, 0.0], datetime(1, 1, 3), datetime(1, 1, 5), np.float32),
+        create_data_array([-3.0, 1.0], datetime(1, 1, 5), datetime(1, 1, 6), np.float32),
     ]
     expected = [
-        create_data_array([0.0, 0.0], datetime(1, 1, 2), datetime(1, 1, 2)),
-        create_data_array([4.0, 0.0], datetime(1, 1, 2), datetime(1, 1, 3)),
-        create_data_array([3.0, 0.0], datetime(1, 1, 2), datetime(1, 1, 4)),
-        create_data_array([11.0, 0.0], datetime(1, 1, 2), datetime(1, 1, 5)),
-        create_data_array([8.0, 1.0], datetime(1, 1, 2), datetime(1, 1, 6)),
+        create_data_array([0.0, 0.0], datetime(1, 1, 2), datetime(1, 1, 2), np.float32),
+        create_data_array([4.0, 0.0], datetime(1, 1, 2), datetime(1, 1, 3), np.float32),
+        create_data_array([3.0, 0.0], datetime(1, 1, 2), datetime(1, 1, 4), np.float32),
+        create_data_array([11.0, 0.0], datetime(1, 1, 2), datetime(1, 1, 5), np.float32),
+        create_data_array([8.0, 1.0], datetime(1, 1, 2), datetime(1, 1, 6), np.float32),
     ]
 
     prep_stack.align_to_common_reference_date(xrs, start_date=datetime(1, 1, 1, 12))
     assert all(a.identical(b) for a, b in zip(xrs, expected))
+    assert all(xr.dtype==np.float32 for xr in xrs)
 
     xrs = [create_data_array([20.0, -5.0], datetime(1, 1, 1), datetime(1, 1, 2))]
     expected = [
