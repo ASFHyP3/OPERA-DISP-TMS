@@ -161,7 +161,7 @@ def test_align_to_common_reference_date():
 
     prep_stack.align_to_common_reference_date(xrs, start_date=datetime(1, 1, 1, 12))
     assert all(a.identical(b) for a, b in zip(xrs, expected))
-    assert all(xr.dtype==np.float32 for xr in xrs)
+    assert all(xr.dtype == np.float32 for xr in xrs)
 
     xrs = [create_data_array([20.0, -5.0], datetime(1, 1, 1), datetime(1, 1, 2))]
     expected = [
