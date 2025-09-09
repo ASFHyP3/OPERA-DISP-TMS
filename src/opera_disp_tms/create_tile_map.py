@@ -81,6 +81,7 @@ def create_tile_map(measurement_type: str, input_rasters: list[Path]) -> Path:
             f'--processes={multiprocessing.cpu_count()}',
             '--webviewer=openlayers',
             '--resampling=med',
+            '--exclude',
             byte_vrt.name,
             str(output_dir),
         ]

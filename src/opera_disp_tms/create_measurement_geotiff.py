@@ -133,7 +133,7 @@ def create_measurement_geotiff(measurement_type: str, frame_id: int, begin_date:
 
     product_name = create_geotiff_name(measurement_type, frame_id, begin_date, end_date)
     product_path = Path.cwd() / product_name
-    data.rio.to_raster(product_path.name)
+    data.rio.to_raster(product_path.name, compress='DEFLATE', tiled=True)
     return product_path
 
 
