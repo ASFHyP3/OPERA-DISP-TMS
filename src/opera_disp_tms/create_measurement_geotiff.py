@@ -72,7 +72,7 @@ def parallel_linear_regression(x: np.ndarray, y: np.ndarray) -> np.ndarray:
         y: A 3D array of dependent variables with dimensions (time, y, x)
     """
     n, m, p = y.shape
-    slope_array = np.zeros((m, p))
+    slope_array = np.zeros(shape=(m, p), dtype=y.dtype)
     for i in prange(m):
         for j in prange(p):
             slope, intercept = linear_regression_leastsquares(x, y[:, i, j].copy())
@@ -110,7 +110,7 @@ def compute_measurement(measurement_type: str, stack: list[xr.DataArray]) -> xr.
     cube = cube.assign_coords(years_since_start=years_since_start)
 
     # Using xarray's polyfit is 13x slower when running a regression for 44 time steps
-    slope = parallel_linear_regression(cube.years_since_start.data.astype('float64'), cube.data.astype('float64'))
+    slope = parallel_linear_regression(cube.years_since_start.data, cube.data)
 
     new_coords = {'x': cube.x, 'y': cube.y, 'spatial_ref': cube.spatial_ref}
     slope_da = xr.DataArray(slope, dims=('y', 'x'), coords=new_coords, attrs=stack[-1].attrs)
@@ -133,7 +133,7 @@ def create_measurement_geotiff(measurement_type: str, frame_id: int, begin_date:
 
     product_name = create_geotiff_name(measurement_type, frame_id, begin_date, end_date)
     product_path = Path.cwd() / product_name
-    data.rio.to_raster(product_path.name)
+    data.rio.to_raster(product_path.name, compress='DEFLATE', tiled=True)
     return product_path
 
 
