@@ -21,8 +21,9 @@ dependencies:
   - h5py
   - h5netcdf
   - xarray
-  - rioxarray
+  - rioxarray>=0.13
   - numba
+  - scipy
   - s3fs
   - cachetools
   - numpy
